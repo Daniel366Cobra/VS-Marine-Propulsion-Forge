@@ -1,0 +1,29 @@
+{
+  "block.vs_marinepropulsion.large_ship_propeller": "Большой гребной винт",
+  "block.vs_marinepropulsion.large_ship_propeller.tooltip.summary": "Придает тягу кораблю пропорционально скорости вращения.",
+
+  "block.vs_marinepropulsion.engine_order_telegraph": "Машинный телеграф",
+  "block.vs_marinepropulsion.engine_order_telegraph.tooltip.summary": "Когда в руке: ПКМ по блоку Вариатора для установки связи. Когда размещен: ПКМ для увеличения заданной скорости, Присесть + ПКМ для уменьшения.",
+
+  "block.vs_marinepropulsion.variator": "Вариатор",
+  "block.vs_marinepropulsion.variator.tooltip.summary": "Устанавливает выходную скорость вращения согласно команде связанного Машинного телеграфа.",
+
+  "vs_marinepropulsion.tooltip.current_order": "Текущий ход: ",
+  "vs_marinepropulsion.tooltip.full_astern": "Полный назад",
+  "vs_marinepropulsion.tooltip.half_astern": "Средний назад",
+  "vs_marinepropulsion.tooltip.slow_astern": "Малый назад",
+  "vs_marinepropulsion.tooltip.stop": "Стоп",
+  "vs_marinepropulsion.tooltip.slow_ahead": "Малый вперед",
+  "vs_marinepropulsion.tooltip.half_ahead": "Средний вперед",
+  "vs_marinepropulsion.tooltip.full_ahead": "Полный вперед",
+
+  "vs_marinepropulsion.engine_order_telegraph.clear": "Привязка Машинного телеграфа отменена!",
+  "vs_marinepropulsion.engine_order_telegraph.add": "Блок привязан к Машинному телеграфу",
+  "vs_marinepropulsion.engine_order_telegraph.remove": "Блок отвязан от Машинного телеграфа",
+  "vs_marinepropulsion.engine_order_telegraph.success": "Машинный телеграф успешно настроен!",
+
+  "itemGroup.vs_marinepropulsion.main": "VS Marine Propulsion",
+
+  "sound.engine_order_telegraph.ding": "Звонок Машинного телеграфа",
+  "sound.engine_order_telegraph.bell": "Колокол Машинного телеграфа"
+}

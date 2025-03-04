@@ -1,0 +1,379 @@
+{
+  "variants": {
+    "facing=down,linked=false,order=0": {
+      "model": "vs_marinepropulsion:block/variator/block_unlinked",
+      "x": 180
+    },
+    "facing=down,linked=false,order=1": {
+      "model": "vs_marinepropulsion:block/variator/block_unlinked",
+      "x": 180
+    },
+    "facing=down,linked=false,order=2": {
+      "model": "vs_marinepropulsion:block/variator/block_unlinked",
+      "x": 180
+    },
+    "facing=down,linked=false,order=3": {
+      "model": "vs_marinepropulsion:block/variator/block_unlinked",
+      "x": 180
+    },
+    "facing=down,linked=false,order=4": {
+      "model": "vs_marinepropulsion:block/variator/block_unlinked",
+      "x": 180
+    },
+    "facing=down,linked=false,order=5": {
+      "model": "vs_marinepropulsion:block/variator/block_unlinked",
+      "x": 180
+    },
+    "facing=down,linked=false,order=6": {
+      "model": "vs_marinepropulsion:block/variator/block_unlinked",
+      "x": 180
+    },
+
+    "facing=down,linked=true,order=0": {
+      "model": "vs_marinepropulsion:block/variator/block_linked_full_astern",
+      "x": 180
+    },
+    "facing=down,linked=true,order=1": {
+      "model": "vs_marinepropulsion:block/variator/block_linked_half_astern",
+      "x": 180
+    },
+    "facing=down,linked=true,order=2": {
+      "model": "vs_marinepropulsion:block/variator/block_linked_slow_astern",
+      "x": 180
+    },
+    "facing=down,linked=true,order=3": {
+      "model": "vs_marinepropulsion:block/variator/block_linked_stop",
+      "x": 180
+    },
+    "facing=down,linked=true,order=4": {
+      "model": "vs_marinepropulsion:block/variator/block_linked_slow_ahead",
+      "x": 180
+    },
+    "facing=down,linked=true,order=5": {
+      "model": "vs_marinepropulsion:block/variator/block_linked_half_ahead",
+      "x": 180
+    },
+    "facing=down,linked=true,order=6": {
+      "model": "vs_marinepropulsion:block/variator/block_linked_full_ahead",
+      "x": 180
+    },
+
+    "facing=east,linked=false,order=0": {
+      "model": "vs_marinepropulsion:block/variator/block_unlinked",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,linked=false,order=1": {
+      "model": "vs_marinepropulsion:block/variator/block_unlinked",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,linked=false,order=2": {
+      "model": "vs_marinepropulsion:block/variator/block_unlinked",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,linked=false,order=3": {
+      "model": "vs_marinepropulsion:block/variator/block_unlinked",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,linked=false,order=4": {
+      "model": "vs_marinepropulsion:block/variator/block_unlinked",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,linked=false,order=5": {
+      "model": "vs_marinepropulsion:block/variator/block_unlinked",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,linked=false,order=6": {
+      "model": "vs_marinepropulsion:block/variator/block_unlinked",
+      "x": 90,
+      "y": 90
+    },
+
+    "facing=east,linked=true,order=0": {
+      "model": "vs_marinepropulsion:block/variator/block_linked_full_astern",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,linked=true,order=1": {
+      "model": "vs_marinepropulsion:block/variator/block_linked_half_astern",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,linked=true,order=2": {
+      "model": "vs_marinepropulsion:block/variator/block_linked_slow_astern",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,linked=true,order=3": {
+      "model": "vs_marinepropulsion:block/variator/block_linked_stop",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,linked=true,order=4": {
+      "model": "vs_marinepropulsion:block/variator/block_linked_slow_ahead",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,linked=true,order=5": {
+      "model": "vs_marinepropulsion:block/variator/block_linked_half_ahead",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,linked=true,order=6": {
+      "model": "vs_marinepropulsion:block/variator/block_linked_full_ahead",
+      "x": 90,
+      "y": 90
+    },
+
+    "facing=north,linked=false,order=0": {
+      "model": "vs_marinepropulsion:block/variator/block_unlinked",
+      "x": 90
+    },
+    "facing=north,linked=false,order=1": {
+      "model": "vs_marinepropulsion:block/variator/block_unlinked",
+      "x": 90
+    },
+    "facing=north,linked=false,order=2": {
+      "model": "vs_marinepropulsion:block/variator/block_unlinked",
+      "x": 90
+    },
+    "facing=north,linked=false,order=3": {
+      "model": "vs_marinepropulsion:block/variator/block_unlinked",
+      "x": 90
+    },
+    "facing=north,linked=false,order=4": {
+      "model": "vs_marinepropulsion:block/variator/block_unlinked",
+      "x": 90
+    },
+    "facing=north,linked=false,order=5": {
+      "model": "vs_marinepropulsion:block/variator/block_unlinked",
+      "x": 90
+    },
+    "facing=north,linked=false,order=6": {
+      "model": "vs_marinepropulsion:block/variator/block_unlinked",
+      "x": 90
+    },
+
+    "facing=north,linked=true,order=0": {
+      "model": "vs_marinepropulsion:block/variator/block_linked_full_astern",
+      "x": 90
+    },
+    "facing=north,linked=true,order=1": {
+      "model": "vs_marinepropulsion:block/variator/block_linked_half_astern",
+      "x": 90
+    },
+    "facing=north,linked=true,order=2": {
+      "model": "vs_marinepropulsion:block/variator/block_linked_slow_astern",
+      "x": 90
+    },
+    "facing=north,linked=true,order=3": {
+      "model": "vs_marinepropulsion:block/variator/block_linked_stop",
+      "x": 90
+    },
+    "facing=north,linked=true,order=4": {
+      "model": "vs_marinepropulsion:block/variator/block_linked_slow_ahead",
+      "x": 90
+    },
+    "facing=north,linked=true,order=5": {
+      "model": "vs_marinepropulsion:block/variator/block_linked_half_ahead",
+      "x": 90
+    },
+    "facing=north,linked=true,order=6": {
+      "model": "vs_marinepropulsion:block/variator/block_linked_full_ahead",
+      "x": 90
+    },
+
+    "facing=south,linked=false,order=0": {
+      "model": "vs_marinepropulsion:block/variator/block_unlinked",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,linked=false,order=1": {
+      "model": "vs_marinepropulsion:block/variator/block_unlinked",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,linked=false,order=2": {
+      "model": "vs_marinepropulsion:block/variator/block_unlinked",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,linked=false,order=3": {
+      "model": "vs_marinepropulsion:block/variator/block_unlinked",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,linked=false,order=4": {
+      "model": "vs_marinepropulsion:block/variator/block_unlinked",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,linked=false,order=5": {
+      "model": "vs_marinepropulsion:block/variator/block_unlinked",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,linked=false,order=6": {
+      "model": "vs_marinepropulsion:block/variator/block_unlinked",
+      "x": 90,
+      "y": 180
+    },
+
+    "facing=south,linked=true,order=0": {
+      "model": "vs_marinepropulsion:block/variator/block_linked_full_astern",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,linked=true,order=1": {
+      "model": "vs_marinepropulsion:block/variator/block_linked_half_astern",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,linked=true,order=2": {
+      "model": "vs_marinepropulsion:block/variator/block_linked_slow_astern",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,linked=true,order=3": {
+      "model": "vs_marinepropulsion:block/variator/block_linked_stop",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,linked=true,order=4": {
+      "model": "vs_marinepropulsion:block/variator/block_linked_slow_ahead",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,linked=true,order=5": {
+      "model": "vs_marinepropulsion:block/variator/block_linked_half_ahead",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,linked=true,order=6": {
+      "model": "vs_marinepropulsion:block/variator/block_linked_full_ahead",
+      "x": 90,
+      "y": 180
+    },
+
+    "facing=up,linked=false,order=0": {
+      "model": "vs_marinepropulsion:block/variator/block_unlinked"
+    },
+    "facing=up,linked=false,order=1": {
+      "model": "vs_marinepropulsion:block/variator/block_unlinked"
+    },
+    "facing=up,linked=false,order=2": {
+      "model": "vs_marinepropulsion:block/variator/block_unlinked"
+    },
+    "facing=up,linked=false,order=3": {
+      "model": "vs_marinepropulsion:block/variator/block_unlinked"
+    },
+    "facing=up,linked=false,order=4": {
+      "model": "vs_marinepropulsion:block/variator/block_unlinked"
+    },
+    "facing=up,linked=false,order=5": {
+      "model": "vs_marinepropulsion:block/variator/block_unlinked"
+    },
+    "facing=up,linked=false,order=6": {
+      "model": "vs_marinepropulsion:block/variator/block_unlinked"
+    },
+
+    "facing=up,linked=true,order=0": {
+      "model": "vs_marinepropulsion:block/variator/block_linked_full_astern"
+    },
+    "facing=up,linked=true,order=1": {
+      "model": "vs_marinepropulsion:block/variator/block_linked_half_astern"
+    },
+    "facing=up,linked=true,order=2": {
+      "model": "vs_marinepropulsion:block/variator/block_linked_slow_astern"
+    },
+    "facing=up,linked=true,order=3": {
+      "model": "vs_marinepropulsion:block/variator/block_linked_stop"
+    },
+    "facing=up,linked=true,order=4": {
+      "model": "vs_marinepropulsion:block/variator/block_linked_slow_ahead"
+    },
+    "facing=up,linked=true,order=5": {
+      "model": "vs_marinepropulsion:block/variator/block_linked_half_ahead"
+    },
+    "facing=up,linked=true,order=6": {
+      "model": "vs_marinepropulsion:block/variator/block_linked_full_ahead"
+    },
+
+    "facing=west,linked=false,order=0": {
+      "model": "vs_marinepropulsion:block/variator/block_unlinked",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,linked=false,order=1": {
+      "model": "vs_marinepropulsion:block/variator/block_unlinked",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,linked=false,order=2": {
+      "model": "vs_marinepropulsion:block/variator/block_unlinked",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,linked=false,order=3": {
+      "model": "vs_marinepropulsion:block/variator/block_unlinked",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,linked=false,order=4": {
+      "model": "vs_marinepropulsion:block/variator/block_unlinked",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,linked=false,order=5": {
+      "model": "vs_marinepropulsion:block/variator/block_unlinked",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,linked=false,order=6": {
+      "model": "vs_marinepropulsion:block/variator/block_unlinked",
+      "x": 90,
+      "y": 270
+    },
+
+    "facing=west,linked=true,order=0": {
+      "model": "vs_marinepropulsion:block/variator/block_linked_full_astern",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,linked=true,order=1": {
+      "model": "vs_marinepropulsion:block/variator/block_linked_half_astern",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,linked=true,order=2": {
+      "model": "vs_marinepropulsion:block/variator/block_linked_slow_astern",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,linked=true,order=3": {
+      "model": "vs_marinepropulsion:block/variator/block_linked_stop",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,linked=true,order=4": {
+      "model": "vs_marinepropulsion:block/variator/block_linked_slow_ahead",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,linked=true,order=5": {
+      "model": "vs_marinepropulsion:block/variator/block_linked_half_ahead",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,linked=true,order=6": {
+      "model": "vs_marinepropulsion:block/variator/block_linked_full_ahead",
+      "x": 90,
+      "y": 270
+    }
+  }
+}

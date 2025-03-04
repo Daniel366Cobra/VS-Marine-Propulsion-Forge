@@ -1,0 +1,32 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "vs_marinepropulsion:block/large_ship_propeller/base",
+      "y": 0,
+      "x": 90
+    },
+    "facing=east": {
+      "model": "vs_marinepropulsion:block/large_ship_propeller/base",
+      "y": 90,
+      "x": 90
+    },
+    "facing=south": {
+      "model": "vs_marinepropulsion:block/large_ship_propeller/base",
+      "y": 180,
+      "x": 90
+    },
+    "facing=west": {
+      "model": "vs_marinepropulsion:block/large_ship_propeller/base",
+      "y": 270,
+      "x": 90
+    },
+    "facing=up": {
+      "model": "vs_marinepropulsion:block/large_ship_propeller/base",
+      "x": 0
+    },
+    "facing=down": {
+      "model": "vs_marinepropulsion:block/large_ship_propeller/base",
+      "x": 180
+    }
+  }
+}

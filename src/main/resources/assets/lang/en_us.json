@@ -1,0 +1,29 @@
+{
+  "block.vs_marinepropulsion.large_ship_propeller": "Large Ship Propeller",
+  "block.vs_marinepropulsion.large_ship_propeller.tooltip.summary": "Provides thrust to the Ship, proportional to the input speed.",
+
+  "block.vs_marinepropulsion.engine_order_telegraph": "Engine Order Telegraph",
+  "block.vs_marinepropulsion.engine_order_telegraph.tooltip.summary": "When held in hand: RMB on a Variator block to link. When placed: RMB to increase set speed, Sneak + RMB to decrease it.",
+
+  "block.vs_marinepropulsion.variator": "Variator",
+  "block.vs_marinepropulsion.variator.tooltip.summary": "Controls output speed according to linked Engine Order Telegraph.",
+
+  "vs_marinepropulsion.tooltip.current_order": "Current order: ",
+  "vs_marinepropulsion.tooltip.full_astern": "Full astern",
+  "vs_marinepropulsion.tooltip.half_astern": "Half astern",
+  "vs_marinepropulsion.tooltip.slow_astern": "Slow astern",
+  "vs_marinepropulsion.tooltip.stop": "Stop",
+  "vs_marinepropulsion.tooltip.slow_ahead": "Slow ahead",
+  "vs_marinepropulsion.tooltip.half_ahead": "Half ahead",
+  "vs_marinepropulsion.tooltip.full_ahead": "Full ahead",
+
+  "itemGroup.vs_marinepropulsion.main": "VS Marine Propulsion",
+
+  "vs_marinepropulsion.engine_order_telegraph.clear": "Engine Order Telegraph unlinked!",
+  "vs_marinepropulsion.engine_order_telegraph.add": "Engine Order Telegraph target added",
+  "vs_marinepropulsion.engine_order_telegraph.remove": "Engine Order Telegraph target removed",
+  "vs_marinepropulsion.engine_order_telegraph.success": "Engine Order Telegraph configured!",
+
+  "sound.engine_order_telegraph.ding": "Engine Order Telegraph dings",
+  "sound.engine_order_telegraph.bell": "Engine Order Telegraph bell rings"
+}

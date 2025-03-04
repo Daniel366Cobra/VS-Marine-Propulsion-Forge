@@ -1,0 +1,7 @@
+{
+  "parent": "vs_marinepropulsion:block/variator/block_unlinked",
+  "textures": {
+    "0": "vs_marinepropulsion:block/variator/variator_linked_slow_ahead",
+    "particle": "vs_marinepropulsion:block/variator/variator_linked_slow_ahead"
+  }
+}
