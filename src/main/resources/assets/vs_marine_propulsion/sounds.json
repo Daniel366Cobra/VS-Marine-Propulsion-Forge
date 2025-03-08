@@ -1,0 +1,22 @@
+{
+  "engine_order_telegraph_ding": {
+    "subtitle": "sound.engine_order_telegraph.ding",
+    "sounds": [
+      {
+        "name": "vs_marine_propulsion:engine_order_telegraph_ding",
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "engine_order_telegraph_bell": {
+    "subtitle": "sound.engine_order_telegraph.bell",
+    "sounds": [
+      {
+        "name": "vs_marine_propulsion:engine_order_telegraph_bell",
+        "volume": 2.0,
+        "pitch": 1.0
+      }
+    ]
+  }
+}

@@ -1,0 +1,14 @@
+[
+  {
+    "block": "engine_order_telegraph",
+    "mass": 100
+  },
+  {
+    "block": "variator",
+    "mass": 1000
+  },
+  {
+    "block": "large_ship_propeller",
+    "mass": 2000
+  }
+]

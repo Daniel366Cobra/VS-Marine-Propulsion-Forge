@@ -1,0 +1,7 @@
+{
+  "parent": "create:block/clutch/block",
+  "textures": {
+    "0": "vs_marine_propulsion:block/variator/variator_unlinked",
+    "particle": "vs_marine_propulsion:block/variator/variator_unlinked"
+  }
+}
