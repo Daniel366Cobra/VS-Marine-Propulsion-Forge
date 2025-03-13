@@ -1,15 +1,20 @@
 package io.github.daniel366cobra.vs_marine_propulsion.ship_control;
 
-import com.fasterxml.jackson.databind.annotation.JsonAppend;
+import io.github.daniel366cobra.vs_marine_propulsion.VSMarinePropulsionMod;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
+import org.joml.Matrix4d;
+import org.joml.Vector3d;
+import org.joml.Vector3dc;
 import org.valkyrienskies.core.api.ships.PhysShip;
 import org.valkyrienskies.core.api.ships.ServerShip;
 import org.valkyrienskies.core.api.ships.ShipForcesInducer;
+import org.valkyrienskies.core.impl.game.ships.PhysShipImpl;
 import org.valkyrienskies.mod.common.VSGameUtilsKt;
-import org.valkyrienskies.mod.common.world.ChunkManagement;
+import org.valkyrienskies.mod.common.util.VectorConversionsMCKt;
 
 import javax.annotation.Nullable;
 import java.util.Map;
@@ -64,7 +69,29 @@ public class ShipControl implements ShipForcesInducer {
     }
 
     @Override
-    public void applyForces(@NotNull PhysShip physShip) {
+    public void applyForces(@NotNull PhysShip physicsShip) {
+        PhysShipImpl physShip = (PhysShipImpl) physicsShip;
+
+        propulsors.forEach((pos, data) -> {
+            float thrust = data.thrust;
+            Vector3d dir = data.dir;
+
+            if (thrust == 0.0f) return;
+
+            Vector3d thrustPos = VectorConversionsMCKt.toJOMLD(pos)
+                    .add(0.5, 0.5, 0.5, new Vector3d())
+                    .sub(physShip.getTransform().getPositionInShip());
+
+
+            Vector3d thrustForce = physShip.getTransform().getShipToWorldRotation().transform(dir, new Vector3d());
+
+            //VSMarinePropulsionMod.LOGGER.info("DIR: " + dir.toString() + ", THRUST_FORCE: " + thrustForce.toString() + ", THRUST: " + thrust);
+
+            thrustForce.mul(thrust);
+
+            physShip.applyInvariantForceToPos(thrustForce, thrustPos);
+
+        });
 
     }
 

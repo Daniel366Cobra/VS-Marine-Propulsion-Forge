@@ -1,14 +1,14 @@
 [
   {
-    "block": "engine_order_telegraph",
+    "block": "vs_marine_propulsion:engine_order_telegraph",
     "mass": 100
   },
   {
-    "block": "variator",
+    "block": "vs_marine_propulsion:variator",
     "mass": 1000
   },
   {
-    "block": "large_ship_propeller",
+    "block": "vs_marine_propulsion:large_ship_propeller",
     "mass": 2000
   }
 ]

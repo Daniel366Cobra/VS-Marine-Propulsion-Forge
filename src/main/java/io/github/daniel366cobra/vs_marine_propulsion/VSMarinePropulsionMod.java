@@ -1,6 +1,5 @@
 package io.github.daniel366cobra.vs_marine_propulsion;
 
-import com.simibubi.create.Create;
 import com.simibubi.create.foundation.data.CreateRegistrate;
 import com.simibubi.create.foundation.item.ItemDescription;
 import com.simibubi.create.foundation.item.KineticStats;
@@ -10,14 +9,12 @@ import io.github.daniel366cobra.vs_marine_propulsion.config.VSMarinePropulsionCo
 import io.github.daniel366cobra.vs_marine_propulsion.creative_tabs.VSMarinePropulsionCreativeTab;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.valkyrienskies.core.impl.hooks.VSEvents;
-import org.valkyrienskies.mod.common.ValkyrienSkiesMod;
 
 /**
  * Temporary borrows:

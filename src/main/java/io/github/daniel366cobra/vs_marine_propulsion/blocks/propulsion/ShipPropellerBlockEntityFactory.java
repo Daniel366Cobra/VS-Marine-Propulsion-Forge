@@ -16,8 +16,7 @@ public class ShipPropellerBlockEntityFactory implements BlockEntityBuilder.Block
 
     @Override
     public @NotNull ShipPropellerBlockEntity create(BlockEntityType<ShipPropellerBlockEntity> type, BlockPos pos, BlockState state) {
-        ShipPropellerBlockEntity blockEntity = new ShipPropellerBlockEntity(type, pos, state);
-        blockEntity.setThrustCurve(thrustCurve);
+        ShipPropellerBlockEntity blockEntity = new ShipPropellerBlockEntity(type, pos, state, thrustCurve);
         return blockEntity;
     }
 }

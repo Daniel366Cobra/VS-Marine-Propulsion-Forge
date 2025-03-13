@@ -17,9 +17,9 @@ public class VSMarinePropulsionConfig {
     static {
         BUILDER.push("Propulsors");
 
-        LARGE_SHIP_PROPELLER_MAX_THRUST = BUILDER.comment("Large Ship Propeller maximum thrust").define("large_ship_propeller_max_thrust", 1000);
-        LARGE_SHIP_PROPELLER_MAX_THRUST_RPM = BUILDER.comment("Large Ship Propeller maximum thrust RPM").define("large_ship_propeller_max_thrust_RPM", 32);
-        LARGE_SHIP_PROPELLER_CAVITATION_RPM = BUILDER.comment("Large Ship Propeller cavitation RPM").define("large_ship_propeller_cavitation_RPM", 48);
+        LARGE_SHIP_PROPELLER_MAX_THRUST = BUILDER.comment("Large Ship Propeller maximum thrust").define("large_ship_propeller_max_thrust", 40000);
+        LARGE_SHIP_PROPELLER_MAX_THRUST_RPM = BUILDER.comment("Large Ship Propeller maximum thrust RPM").define("large_ship_propeller_max_thrust_RPM", 64);
+        LARGE_SHIP_PROPELLER_CAVITATION_RPM = BUILDER.comment("Large Ship Propeller cavitation RPM").define("large_ship_propeller_cavitation_RPM", 96);
 
         BUILDER.pop();
 

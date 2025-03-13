@@ -11,6 +11,7 @@ import com.simibubi.create.content.kinetics.base.flwdata.RotatingData;
 import com.simibubi.create.foundation.utility.AngleHelper;
 import com.simibubi.create.foundation.utility.AnimationTickHolder;
 import net.minecraft.core.Direction;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import org.joml.Quaternionf;
 
 import java.util.Map;
@@ -55,8 +56,9 @@ public class ShipPropellerInstance extends KineticBlockEntityInstance<ShipPropel
 
             propellerModel = propellerModelsMap.get(blockEntity.propellerHandedness);
             propellerInstance = getOrientedMaterial()
-                    .getModel(propellerModel, blockState, facingDirection)
+                    .getModel(propellerModel, blockState)
                     .createInstance();
+
             propellerInstance.setPosition(getInstancePosition()).setRotation(blockOrientation);
             updateLight();
         }
@@ -82,19 +84,6 @@ public class ShipPropellerInstance extends KineticBlockEntityInstance<ShipPropel
 
     }
 
-    static Quaternionf getBlockStateOrientation(Direction facing) {
-        Quaternionf orientation;
-
-        if (facing.getAxis().isHorizontal()) {
-            orientation = Axis.YP.rotationDegrees(AngleHelper.horizontalAngle(facing.getOpposite()));
-        } else {
-            orientation = new Quaternionf();
-        }
-
-        orientation.mul(Axis.XP.rotationDegrees(-90 - AngleHelper.verticalAngle(facing)));
-        return orientation;
-    }
-
     @Override
     public void updateLight() {
         super.updateLight();
@@ -106,4 +95,20 @@ public class ShipPropellerInstance extends KineticBlockEntityInstance<ShipPropel
         shaft.delete();
         propellerInstance.delete();
     }
+
+    static Quaternionf getBlockStateOrientation(Direction facing) {
+        Quaternionf orientation;
+
+        if (facing.getAxis().isHorizontal()) {
+            orientation = Axis.YP.rotationDegrees(AngleHelper.horizontalAngle(facing.getOpposite()));
+        } else {
+            orientation = new Quaternionf();
+        }
+
+        orientation.mul(Axis.XP.rotationDegrees(-90 - AngleHelper.verticalAngle(facing)));
+        return orientation;
+
+    }
+
+
 }
