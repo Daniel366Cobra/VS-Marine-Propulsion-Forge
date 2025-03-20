@@ -9,6 +9,7 @@ import com.simibubi.create.foundation.utility.AngleHelper;
 import com.simibubi.create.foundation.utility.VecHelper;
 import com.simibubi.create.foundation.utility.animation.LerpedFloat;
 import io.github.daniel366cobra.vs_marine_propulsion.VSMarinePropulsionMod;
+import io.github.daniel366cobra.vs_marine_propulsion.ship_control.PropellerThrustCalculator;
 import io.github.daniel366cobra.vs_marine_propulsion.ship_control.PropellerThrustCurve;
 import io.github.daniel366cobra.vs_marine_propulsion.ship_control.PropulsorData;
 import io.github.daniel366cobra.vs_marine_propulsion.ship_control.ShipControl;
@@ -18,6 +19,7 @@ import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
@@ -34,8 +36,7 @@ import static com.simibubi.create.content.kinetics.base.DirectionalKineticBlock.
 
 public class ShipPropellerBlockEntity extends KineticBlockEntity {
 
-    //Thrust curve for the propeller block entity. Assigned at registration.
-    private final PropellerThrustCurve thrustCurve;
+    private final PropellerThrustCalculator thrustCalculator;
 
     //Propulsor data for the propeller block entity.
     private final PropulsorData propulsorData;
@@ -46,13 +47,13 @@ public class ShipPropellerBlockEntity extends KineticBlockEntity {
     protected ScrollOptionBehaviour<WindmillBearingBlockEntity.RotationDirection> rotationDirectionBehavior;
 
     public int propellerHandedness = 1;
-    public LerpedFloat visualSpeed = LerpedFloat.linear();
+    public LerpedFloat actualSpeed = LerpedFloat.linear();
     public float angle;
 
     //FACING is where the propeller's hub is looking, the thrust is in the opposite direction
-    public ShipPropellerBlockEntity(BlockEntityType<?> typeIn, BlockPos pos, BlockState state, PropellerThrustCurve thrustCurve) {
+    public ShipPropellerBlockEntity(BlockEntityType<?> typeIn, BlockPos pos, BlockState state, PropellerThrustCalculator thrustCalculator) {
         super(typeIn, pos, state);
-        this.thrustCurve = thrustCurve;
+        this.thrustCalculator = thrustCalculator;
         this.propulsorData = new PropulsorData(VectorConversionsMCKt.toJOMLD(getBlockState().getValue(FACING).getOpposite().getNormal()), 0.0f);
     }
 
@@ -73,20 +74,19 @@ public class ShipPropellerBlockEntity extends KineticBlockEntity {
         else
             this.propellerHandedness = 1;
 
-        if (clientPacket) {
-            visualSpeed.chase(getGeneratedSpeed(), 1 / 64f, LerpedFloat.Chaser.EXP);
-        }
+        if (compound.contains("PropellerSpeed"))
+            this.actualSpeed.updateChaseTarget(compound.getFloat("PropellerSpeed"));
+        else
+            this.actualSpeed.updateChaseTarget(0.0f);
+
+        actualSpeed.chase(getGeneratedSpeed(), 1 / 64f, LerpedFloat.Chaser.EXP);
     }
 
     @Override
     public void write(CompoundTag compound, boolean clientPacket) {
         super.write(compound, clientPacket);
         compound.putInt("PropellerHandedness", this.propellerHandedness);
-    }
-
-    public Direction getThrustOriginSide() {
-        return this.getBlockState()
-                .getValue(BlockStateProperties.FACING);
+        compound.putFloat("PropellerSpeed", this.actualSpeed.getValue());
     }
 
     public void onRotationDirectionChanged() {
@@ -115,18 +115,37 @@ public class ShipPropellerBlockEntity extends KineticBlockEntity {
     public void tick() {
         super.tick();
 
-        if (level.isClientSide || isVirtual()) {
-            float targetSpeed = this.getSpeed();
-            visualSpeed.updateChaseTarget(targetSpeed);
-            visualSpeed.tickChaser();
-            angle += visualSpeed.getValue() * 3 / 10f;
-            angle %= 360;
+        Level level = this.getLevel();
+        if (level == null) return;
 
-            if (Math.abs(this.getSpeed()) >= 0.1f) {
-                updateParticles();
+        BlockPos blockPos = this.getBlockPos();
+
+        float targetSpeed = this.getSpeed();
+
+        actualSpeed.updateChaseTarget(targetSpeed);
+        actualSpeed.tickChaser();
+        angle += actualSpeed.getValue() * 3 / 10f;
+        angle %= 360;
+
+        Ship ship = VSGameUtilsKt.getShipManagingPos(level, blockPos);
+
+
+        if (ship == null) return;
+
+
+
+        if (level.isClientSide || isVirtual()) {
+            if (Math.abs(this.actualSpeed.getValue()) >= 0.1f) {
+                updateParticles(ship);
             }
 
         } else {
+            ShipControl shipControl = ShipControl.get(level, blockPos);
+
+            if (shipControl != null) {
+                if (shipControl.getPropulsorAtPos(blockPos) == null)
+                    shipControl.addPropulsor(blockPos, this.propulsorData);
+            }
             if (thrustUpdateCooldown-- <= 0) {
                 thrustUpdateCooldown = 5;
                 updateThrust = true;
@@ -134,21 +153,43 @@ public class ShipPropellerBlockEntity extends KineticBlockEntity {
 
             if (updateThrust) {
                 updateThrust = false;
-                updateThrust();
-                sendData();
+                updateThrust(ship);
             }
+
+            sendData();
         }
+    }
+
+    //TODO: adding propellers to a ship does not update their thrust before saving & reloading
+    public void updateThrust(Ship ship) {
+
+        float RPM = this.actualSpeed.getValue();
+
+        //CRINGE x2
+        int dirMultiplier = this.getBlockState().getValue(FACING).getOpposite().getAxisDirection().getStep();
+
+        float estThrust = this.thrustCalculator.thrust(Math.abs(RPM));
+
+        float shipVelocity = (float)ship.getVelocity().length();
+
+        VSMarinePropulsionMod.LOGGER.info("SHIP SPEED: " + shipVelocity
+                + ", Ca/CaCrit: " + this.thrustCalculator.caNumber(Math.abs(RPM), shipVelocity, 1.0f) / this.thrustCalculator.caNumberCritKeller()
+                + ", EAR/EARmin: " + this.thrustCalculator.getPropEffectiveArea() / this.thrustCalculator.earKeller(estThrust, 1.0f)
+        );
+
+        Vector3d transformedPosVector = new Vector3d(ship.getTransform().getShipToWorld()
+                .transformPosition(VectorConversionsMCKt.toJOMLD(this.getBlockPos())
+                        .add(0.5, 0.5, 0.5)));
+
+        this.propulsorData.submerged = this.getLevel().isWaterAt(new BlockPos((int) transformedPosVector.x, (int) transformedPosVector.y, (int) transformedPosVector.z));
+
+        this.propulsorData.thrust = this.thrustCalculator.thrust(RPM * dirMultiplier) * this.propellerHandedness;
 
     }
 
-    public void updateParticles() {
-        Ship ship = VSGameUtilsKt.getShipManagingPos(level, this.getBlockPos());
-        // If we aren't on a ship, then skip
-        if (ship == null) {
-            return;
-        }
+    public void updateParticles(Ship ship) {
 
-        VSMarinePropulsionMod.LOGGER.info("ANGLE: " + angle + ", SPEED: " + this.getSpeed() + ", HANDEDNESS: " + propellerHandedness);
+        //VSMarinePropulsionMod.LOGGER.info("ANGLE: " + angle + ", SPEED: " + this.getSpeed() + ", HANDEDNESS: " + propellerHandedness);
 
         Vec3 shipyardBlockCenter = this.getBlockPos().getCenter();
         Vector3d worldBlockCenter = ship.getTransform().getShipToWorld().transformPosition(new Vector3d(shipyardBlockCenter.x, shipyardBlockCenter.y, shipyardBlockCenter.z));
@@ -164,12 +205,14 @@ public class ShipPropellerBlockEntity extends KineticBlockEntity {
         float propellerRadius = 1.5f;
         float propellerPitchAngle = 22.5f;
 
-        float visualSpeed = this.visualSpeed.getValue();
-        int absSpeed = (int) Math.abs(visualSpeed);
+        float shipSpeed = (float) ship.getVelocity().length();
+        float propellerSpeed = this.actualSpeed.getValue();
+        int absSpeed = (int) Math.abs(propellerSpeed);
+
 
         //TODO: get rid of (-1) in particles speed direction?
         float particleSpeedScalar = (float) (Math.PI * propellerRadius * Math.tan(Math.toRadians(propellerPitchAngle))
-                * visualSpeed * this.propellerHandedness * (-dirMultiplier) / 30.0f);
+                * propellerSpeed * this.propellerHandedness * (-dirMultiplier) / 30.0f);
         Vector3d particleSpeed = new Vector3d().set(worldFacingVector).mul(particleSpeedScalar);
 
         Vector3d orthogonal = new Vector3d().orthogonalize(worldFacingVector);
@@ -178,8 +221,9 @@ public class ShipPropellerBlockEntity extends KineticBlockEntity {
         Vector3d bladeCircleOffset = new Vector3d().set(worldFacingVector).mul(0.3);
         Vector3d bladeCircleCenter = new Vector3d().set(worldBlockCenter).add(bladeCircleOffset);
 
-        int particleCount = (int) (maxParticleCount * absSpeed / this.thrustCurve.cavitationRPM);
-        float bubbleCount = Math.max(0, particleCount *  (absSpeed - this.thrustCurve.maxThrustRPM)) / (this.thrustCurve.cavitationRPM - this.thrustCurve.maxThrustRPM);
+        int particleCount = maxParticleCount * absSpeed / 256;
+        float bubbleCount = Math.max(0, particleCount
+                * (this.thrustCalculator.caNumber(absSpeed, shipSpeed, 1.0f) / this.thrustCalculator.caNumberCritKeller()));
 
         for (int j = 0; j < 4; j++) {
             orthogonal.rotateAxis(Math.PI / 2, forceVector.x, forceVector.y, forceVector.z);
@@ -195,23 +239,6 @@ public class ShipPropellerBlockEntity extends KineticBlockEntity {
                         particleSpeed.x, particleSpeed.y, particleSpeed.z);
             }
         }
-    }
-
-    public void updateThrust() {
-
-        ShipControl shipControl = ShipControl.get(this.getLevel(), this.getBlockPos());
-
-        if (shipControl != null) {
-            if (shipControl.getPropulsorAtPos(this.getBlockPos()) == null)
-                shipControl.addPropulsor(this.getBlockPos(), this.propulsorData);
-        }
-
-        //CRINGE x2
-        int dirMultiplier = this.getBlockState().getValue(FACING).getOpposite().getAxisDirection().getStep();
-
-        //CCW is <0 for speed, and -1 for propeller handedness
-        this.propulsorData.thrust = this.thrustCurve.calculateThrust(this.getSpeed() * dirMultiplier, this.propellerHandedness);
-
     }
 
     private static class RotationDirectionValueBox extends CenteredSideValueBoxTransform {

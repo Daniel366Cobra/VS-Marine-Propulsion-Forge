@@ -7,10 +7,12 @@ public class PropulsorData {
 
     public final Vector3d dir;
     public volatile float thrust;
+    public volatile boolean submerged;
 
     public PropulsorData(Vector3d dir, float thrust) {
         this.dir = dir;
         this.thrust = thrust;
+        this.submerged = false;
     }
 
     public String toString() {

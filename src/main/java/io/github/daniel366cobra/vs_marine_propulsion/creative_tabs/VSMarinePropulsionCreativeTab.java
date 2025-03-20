@@ -21,7 +21,9 @@ public class VSMarinePropulsionCreativeTab {
     public static final List<ItemProviderEntry<?>> ITEMS = List.of(
             VSMarinePropulsionBlocks.LARGE_SHIP_PROPELLER,
             VSMarinePropulsionBlocks.ENGINE_ORDER_TELEGRAPH,
-            VSMarinePropulsionBlocks.VARIATOR
+            VSMarinePropulsionBlocks.VARIATOR,
+            VSMarinePropulsionBlocks.RUDDER_BEARING,
+            VSMarinePropulsionBlocks.RUDDER
     );
 
     public static final RegistryObject<CreativeModeTab> MAIN = CREATIVE_MODE_TABS.register("main",

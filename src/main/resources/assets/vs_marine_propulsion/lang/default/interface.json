@@ -1,0 +1,16 @@
+{
+  "vs_marine_propulsion.propeller.rotation_direction": "Forward thrust rotation direction",
+  "vs_marine_propulsion.propeller.rotation.clockwise": "Right-handed (CW)",
+  "vs_marine_propulsion.propeller.rotation.counterclockwise": "Left-handed (CCW)",
+  
+  "vs_marine_propulsion.engine_order_telegraph.clear": "Engine Order Telegraph unlinked!",
+  "vs_marine_propulsion.engine_order_telegraph.add": "Engine Order Telegraph target added",
+  "vs_marine_propulsion.engine_order_telegraph.remove": "Engine Order Telegraph target removed",
+  "vs_marine_propulsion.engine_order_telegraph.success": "Engine Order Telegraph configured!",
+  "vs_marine_propulsion.engine_order_telegraph.failure": "Target already connected to an Engine Order Telegraph!",
+
+  "itemGroup.vs_marine_propulsion.main": "VS Marine Propulsion",
+
+  "sound.engine_order_telegraph.ding": "Engine Order Telegraph dings",
+  "sound.engine_order_telegraph.bell": "Engine Order Telegraph bell rings"
+}

@@ -75,8 +75,9 @@ public class ShipControl implements ShipForcesInducer {
         propulsors.forEach((pos, data) -> {
             float thrust = data.thrust;
             Vector3d dir = data.dir;
+            boolean submerged = data.submerged;
 
-            if (thrust == 0.0f) return;
+            if (thrust == 0.0f || !submerged) return;
 
             Vector3d thrustPos = VectorConversionsMCKt.toJOMLD(pos)
                     .add(0.5, 0.5, 0.5, new Vector3d())

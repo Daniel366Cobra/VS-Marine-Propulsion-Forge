@@ -159,7 +159,7 @@ public class EngineOrderTelegraphBlockEntity extends SmartBlockEntity implements
 
         LangBuilder langBuilder = new LangBuilder(VSMarinePropulsionMod.MOD_ID);
 
-        langBuilder.add(Component.translatable("vs_marine_propulsion.tooltip.current_order"))
+        langBuilder.add(Component.translatable("block.vs_marine_propulsion.engine_order_telegraph.tooltip.current_order"))
                 .add(Component.translatable(EngineOrder.throttleDescription(this.throttleOrder)))
                 .forGoggles(tooltip);
 
@@ -171,13 +171,13 @@ public class EngineOrderTelegraphBlockEntity extends SmartBlockEntity implements
     }
 
     public enum EngineOrder {
-        FULL_ASTERN(-3, "vs_marine_propulsion.tooltip.full_astern"),
-        HALF_ASTERN(-2, "vs_marine_propulsion.tooltip.half_astern"),
-        SLOW_ASTERN(-1, "vs_marine_propulsion.tooltip.slow_astern"),
-        STOP(0, "vs_marine_propulsion.tooltip.stop"),
-        SLOW_AHEAD(1, "vs_marine_propulsion.tooltip.slow_ahead"),
-        HALF_AHEAD(2, "vs_marine_propulsion.tooltip.half_ahead"),
-        FULL_AHEAD(3, "vs_marine_propulsion.tooltip.full_ahead");
+        FULL_ASTERN(-3, "block.vs_marine_propulsion.engine_order_telegraph.tooltip.full_astern"),
+        HALF_ASTERN(-2, "block.vs_marine_propulsion.engine_order_telegraph.tooltip.half_astern"),
+        SLOW_ASTERN(-1, "block.vs_marine_propulsion.engine_order_telegraph.tooltip.slow_astern"),
+        STOP(0, "block.vs_marine_propulsion.engine_order_telegraph.tooltip.stop"),
+        SLOW_AHEAD(1, "block.vs_marine_propulsion.engine_order_telegraph.tooltip.slow_ahead"),
+        HALF_AHEAD(2, "block.vs_marine_propulsion.engine_order_telegraph.tooltip.half_ahead"),
+        FULL_AHEAD(3, "block.vs_marine_propulsion.engine_order_telegraph.tooltip.full_ahead");
 
         private final int orderThrottle;
         private final String orderDescription;

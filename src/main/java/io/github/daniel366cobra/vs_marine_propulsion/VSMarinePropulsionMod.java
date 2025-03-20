@@ -5,9 +5,12 @@ import com.simibubi.create.foundation.item.ItemDescription;
 import com.simibubi.create.foundation.item.KineticStats;
 import com.simibubi.create.foundation.item.TooltipHelper;
 import com.simibubi.create.foundation.item.TooltipModifier;
+import com.tterrag.registrate.util.nullness.NonNullSupplier;
 import io.github.daniel366cobra.vs_marine_propulsion.config.VSMarinePropulsionConfig;
 import io.github.daniel366cobra.vs_marine_propulsion.creative_tabs.VSMarinePropulsionCreativeTab;
+import io.github.daniel366cobra.vs_marine_propulsion.data.VSMarinePropulsionDatagen;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
@@ -30,17 +33,17 @@ public class VSMarinePropulsionMod {
 
     public static final String NAME = "VS Marine Propulsion";
     public static final Logger LOGGER = LoggerFactory.getLogger(NAME);
-    public static final CreateRegistrate REGISTRATE = CreateRegistrate.create(VSMarinePropulsionMod.MOD_ID);
+    public static final NonNullSupplier<CreateRegistrate> REGISTRATE = NonNullSupplier.lazy(() -> CreateRegistrate.create(VSMarinePropulsionMod.MOD_ID));
 
     static {
-        REGISTRATE.setTooltipModifierFactory(
+        REGISTRATE.get().setTooltipModifierFactory(
                 item -> new ItemDescription.Modifier(item, TooltipHelper.Palette.STANDARD_CREATE)
                         .andThen(TooltipModifier.mapNull(KineticStats.create(item))));
     }
 
     public VSMarinePropulsionMod() {
         IEventBus eventBus = FMLJavaModLoadingContext.get().getModEventBus();
-        VSMarinePropulsionMod.REGISTRATE.registerEventListeners(eventBus);
+
         LOGGER.info("{} initializing!", NAME);
 
         VSMarinePropulsionBlocks.register();
@@ -50,6 +53,10 @@ public class VSMarinePropulsionMod {
         VSMarinePropulsionSounds.register(eventBus);
         VSMarinePropulsionPartialModels.init();
         VSMarinePropulsionCreativeTab.register(eventBus);
+
+        eventBus.addListener(EventPriority.LOWEST, VSMarinePropulsionDatagen::gatherData);
+
+        VSMarinePropulsionMod.REGISTRATE.get().registerEventListeners(eventBus);
 
         VSEvents.ShipLoadEvent.Companion.on(e -> {
 
@@ -62,6 +69,6 @@ public class VSMarinePropulsionMod {
     }
 
     public static CreateRegistrate getRegistrate() {
-        return REGISTRATE;
+        return REGISTRATE.get();
     }
 }

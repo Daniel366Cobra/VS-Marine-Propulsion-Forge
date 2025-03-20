@@ -11,7 +11,6 @@ import com.simibubi.create.content.kinetics.base.flwdata.RotatingData;
 import com.simibubi.create.foundation.utility.AngleHelper;
 import com.simibubi.create.foundation.utility.AnimationTickHolder;
 import net.minecraft.core.Direction;
-import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import org.joml.Quaternionf;
 
 import java.util.Map;
@@ -74,7 +73,7 @@ public class ShipPropellerInstance extends KineticBlockEntityInstance<ShipPropel
     public void beginFrame() {
 
         float partialTicks = AnimationTickHolder.getPartialTicks();
-        float speed = blockEntity.visualSpeed.getValue(partialTicks) * 3 / 10f;
+        float speed = blockEntity.actualSpeed.getValue(partialTicks) * 3 / 10f;
         float angle = blockEntity.angle + speed * partialTicks;
 
         Quaternionf rotation = rotationAxis.rotationDegrees(angle);
