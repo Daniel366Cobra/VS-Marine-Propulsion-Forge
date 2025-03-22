@@ -9,6 +9,8 @@ public class VSMarinePropulsionPartialModels {
 
     public static final PartialModel ENGINE_ORDER_TELEGRAPH_LEVER = block("engine_order_telegraph/lever");
 
+    public static final PartialModel RUDDER_BEARING_ROTATOR = block("rudder_bearing/top");
+
     private static PartialModel block(String path) {
         return new PartialModel(VSMarinePropulsionMod.resourceLocationFromPath("block/" + path));
     }

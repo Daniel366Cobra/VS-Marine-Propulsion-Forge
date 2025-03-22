@@ -156,10 +156,10 @@ public class EngineOrderTelegraphBlockEntity extends SmartBlockEntity implements
 
     @Override
     public boolean addToTooltip(List<Component> tooltip, boolean isPlayerSneaking) {
+        String modId = VSMarinePropulsionMod.MOD_ID;
+        LangBuilder langBuilder = new LangBuilder(modId);
 
-        LangBuilder langBuilder = new LangBuilder(VSMarinePropulsionMod.MOD_ID);
-
-        langBuilder.add(Component.translatable("block.vs_marine_propulsion.engine_order_telegraph.tooltip.current_order"))
+        langBuilder.add(Component.translatable("block." + modId + ".engine_order_telegraph.tooltip.current_order"))
                 .add(Component.translatable(EngineOrder.throttleDescription(this.throttleOrder)))
                 .forGoggles(tooltip);
 
@@ -171,13 +171,13 @@ public class EngineOrderTelegraphBlockEntity extends SmartBlockEntity implements
     }
 
     public enum EngineOrder {
-        FULL_ASTERN(-3, "block.vs_marine_propulsion.engine_order_telegraph.tooltip.full_astern"),
-        HALF_ASTERN(-2, "block.vs_marine_propulsion.engine_order_telegraph.tooltip.half_astern"),
-        SLOW_ASTERN(-1, "block.vs_marine_propulsion.engine_order_telegraph.tooltip.slow_astern"),
-        STOP(0, "block.vs_marine_propulsion.engine_order_telegraph.tooltip.stop"),
-        SLOW_AHEAD(1, "block.vs_marine_propulsion.engine_order_telegraph.tooltip.slow_ahead"),
-        HALF_AHEAD(2, "block.vs_marine_propulsion.engine_order_telegraph.tooltip.half_ahead"),
-        FULL_AHEAD(3, "block.vs_marine_propulsion.engine_order_telegraph.tooltip.full_ahead");
+        FULL_ASTERN(-3, "full_astern"),
+        HALF_ASTERN(-2, "half_astern"),
+        SLOW_ASTERN(-1, "slow_astern"),
+        STOP(0, "stop"),
+        SLOW_AHEAD(1, "slow_ahead"),
+        HALF_AHEAD(2, "half_ahead"),
+        FULL_AHEAD(3, "full_ahead");
 
         private final int orderThrottle;
         private final String orderDescription;
@@ -192,9 +192,10 @@ public class EngineOrderTelegraphBlockEntity extends SmartBlockEntity implements
         }
 
         public static String throttleDescription(int order) {
+            String modId = VSMarinePropulsionMod.MOD_ID;
             for (EngineOrder eo : EngineOrder.values()) {
                 if (eo.orderThrottle == order) {
-                    return eo.orderDescription;
+                    return "block." + modId + ".engine_order_telegraph.tooltip." + eo.orderDescription;
                 }
             }
             throw new IllegalArgumentException("Invalid engine order: " + order);

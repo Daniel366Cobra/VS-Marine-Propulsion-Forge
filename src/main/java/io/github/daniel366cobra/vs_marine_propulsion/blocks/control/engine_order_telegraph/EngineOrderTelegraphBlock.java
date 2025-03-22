@@ -1,7 +1,7 @@
 package io.github.daniel366cobra.vs_marine_propulsion.blocks.control.engine_order_telegraph;
 
 import com.simibubi.create.foundation.block.IBE;
-import io.github.daniel366cobra.vs_marine_propulsion.VSMarinePropulsionBlockEntities;
+import io.github.daniel366cobra.vs_marine_propulsion.VSMarinePropulsionEntities;
 import io.github.daniel366cobra.vs_marine_propulsion.VSMarinePropulsionShapes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -59,7 +59,7 @@ public class EngineOrderTelegraphBlock extends FaceAttachedHorizontalDirectional
 
     @Override
     public BlockEntityType<? extends EngineOrderTelegraphBlockEntity> getBlockEntityType() {
-        return VSMarinePropulsionBlockEntities.ENGINE_ORDER_TELEGRAPH_BLOCK_ENTITY.get();
+        return VSMarinePropulsionEntities.ENGINE_ORDER_TELEGRAPH_BLOCK_ENTITY.get();
     }
 
     @Override

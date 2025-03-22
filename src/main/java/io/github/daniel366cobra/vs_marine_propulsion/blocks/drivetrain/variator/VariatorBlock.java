@@ -2,7 +2,7 @@ package io.github.daniel366cobra.vs_marine_propulsion.blocks.drivetrain.variator
 
 import com.simibubi.create.content.kinetics.base.DirectionalKineticBlock;
 import com.simibubi.create.foundation.block.IBE;
-import io.github.daniel366cobra.vs_marine_propulsion.VSMarinePropulsionBlockEntities;
+import io.github.daniel366cobra.vs_marine_propulsion.VSMarinePropulsionEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.item.context.BlockPlaceContext;
@@ -48,7 +48,7 @@ public class VariatorBlock extends DirectionalKineticBlock implements IBE<Variat
 
     @Override
     public BlockEntityType<? extends VariatorBlockEntity> getBlockEntityType() {
-        return VSMarinePropulsionBlockEntities.VARIATOR_BLOCK_ENTITY.get();
+        return VSMarinePropulsionEntities.VARIATOR_BLOCK_ENTITY.get();
     }
 
     @Override

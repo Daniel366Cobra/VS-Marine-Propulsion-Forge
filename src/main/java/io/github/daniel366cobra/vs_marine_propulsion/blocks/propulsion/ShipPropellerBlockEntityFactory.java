@@ -2,7 +2,6 @@ package io.github.daniel366cobra.vs_marine_propulsion.blocks.propulsion;
 
 import com.tterrag.registrate.builders.BlockEntityBuilder;
 import io.github.daniel366cobra.vs_marine_propulsion.ship_control.PropellerThrustCalculator;
-import io.github.daniel366cobra.vs_marine_propulsion.ship_control.PropellerThrustCurve;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;

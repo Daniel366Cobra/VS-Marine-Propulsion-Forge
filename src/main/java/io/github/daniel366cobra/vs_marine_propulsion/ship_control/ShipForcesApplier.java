@@ -1,14 +1,10 @@
 package io.github.daniel366cobra.vs_marine_propulsion.ship_control;
 
-import io.github.daniel366cobra.vs_marine_propulsion.VSMarinePropulsionMod;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
-import org.joml.Matrix4d;
 import org.joml.Vector3d;
-import org.joml.Vector3dc;
 import org.valkyrienskies.core.api.ships.PhysShip;
 import org.valkyrienskies.core.api.ships.ServerShip;
 import org.valkyrienskies.core.api.ships.ShipForcesInducer;
@@ -20,32 +16,32 @@ import javax.annotation.Nullable;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class ShipControl implements ShipForcesInducer {
+public class ShipForcesApplier implements ShipForcesInducer {
 
     private String dimensionId = null;
 
     public Map<BlockPos, PropulsorData> propulsors = new ConcurrentHashMap<>();
 
-    public ShipControl() {}
+    public ShipForcesApplier() {}
 
-    public ShipControl(String dimensionId) {
+    public ShipForcesApplier(String dimensionId) {
         this.dimensionId = dimensionId;
     }
 
-    public static ShipControl getOrCreate(ServerShip ship, String dimensionId) {
-        ShipControl shipControl = ship.getAttachment(ShipControl.class);
+    public static ShipForcesApplier getOrCreate(ServerShip ship, String dimensionId) {
+        ShipForcesApplier shipControl = ship.getAttachment(ShipForcesApplier.class);
         if (shipControl == null) {
-            shipControl = new ShipControl(dimensionId);
-            ship.saveAttachment(ShipControl.class, shipControl);
+            shipControl = new ShipForcesApplier(dimensionId);
+            ship.saveAttachment(ShipForcesApplier.class, shipControl);
         }
         return shipControl;
     }
 
-    public static ShipControl getOrCreate(ServerShip ship) {
+    public static ShipForcesApplier getOrCreate(ServerShip ship) {
         return  getOrCreate(ship, ship.getChunkClaimDimension());
     }
 
-    public static ShipControl get(Level level, BlockPos pos) {
+    public static ShipForcesApplier get(Level level, BlockPos pos) {
         ServerLevel serverLevel = (ServerLevel) level;
         ServerShip ship = VSGameUtilsKt.getShipObjectManagingPos(serverLevel, pos);
         if (ship == null) {

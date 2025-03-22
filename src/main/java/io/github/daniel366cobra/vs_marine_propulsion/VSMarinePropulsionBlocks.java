@@ -1,36 +1,22 @@
 package io.github.daniel366cobra.vs_marine_propulsion;
 
 import com.simibubi.create.content.kinetics.BlockStressDefaults;
-import com.simibubi.create.content.kinetics.base.DirectionalAxisKineticBlock;
 import com.simibubi.create.foundation.data.BlockStateGen;
 import com.simibubi.create.foundation.data.CreateRegistrate;
 import com.simibubi.create.foundation.data.SharedProperties;
 import com.simibubi.create.foundation.item.ItemDescription;
-import com.tterrag.registrate.builders.BlockBuilder;
-import com.tterrag.registrate.providers.DataGenContext;
-import com.tterrag.registrate.providers.RegistrateBlockstateProvider;
 import com.tterrag.registrate.util.entry.BlockEntry;
-import com.tterrag.registrate.util.nullness.NonNullUnaryOperator;
 import io.github.daniel366cobra.vs_marine_propulsion.blocks.control.engine_order_telegraph.EngineOrderTelegraphBlock;
 import io.github.daniel366cobra.vs_marine_propulsion.blocks.drivetrain.variator.VariatorBlock;
 import io.github.daniel366cobra.vs_marine_propulsion.blocks.propulsion.large_ship_propeller.LargeShipPropellerBlock;
-import io.github.daniel366cobra.vs_marine_propulsion.blocks.steering.RudderBearingBlock;
-import io.github.daniel366cobra.vs_marine_propulsion.blocks.steering.RudderBlock;
+import io.github.daniel366cobra.vs_marine_propulsion.blocks.steering.rudder_bearing.RudderBearingBlock;
+import io.github.daniel366cobra.vs_marine_propulsion.blocks.steering.rudder.RudderBlock;
 import io.github.daniel366cobra.vs_marine_propulsion.items.EngineOrderTelegraphBlockItem;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.MapColor;
-import net.minecraftforge.client.model.generators.ModelFile;
-import org.antlr.v4.runtime.atn.SemanticContext;
-
-import java.util.function.BiFunction;
-import java.util.function.Function;
 
 import static com.simibubi.create.foundation.data.AssetLookup.partialBaseModel;
-import static com.simibubi.create.foundation.data.AssetLookup.standardModel;
 import static com.simibubi.create.foundation.data.ModelGen.customItemModel;
 import static com.simibubi.create.foundation.data.TagGen.axeOrPickaxe;
 import static com.simibubi.create.foundation.data.TagGen.pickaxeOnly;
@@ -41,7 +27,6 @@ public class VSMarinePropulsionBlocks {
 
     private static final CreateRegistrate REGISTRATE = VSMarinePropulsionMod.getRegistrate();
 
-    //TODO: add datagen-based localizations
     public static final BlockEntry<LargeShipPropellerBlock> LARGE_SHIP_PROPELLER = REGISTRATE
             .block("large_ship_propeller", LargeShipPropellerBlock::new)
             .initialProperties(SharedProperties::softMetal)
@@ -117,7 +102,7 @@ public class VSMarinePropulsionBlocks {
                     .noOcclusion()
                     .mapColor(MapColor.DEEPSLATE))
             .transform(pickaxeOnly())
-            .blockstate(BlockStateGen.directionalBlockProvider(false))
+            .blockstate(BlockStateGen.axisBlockProvider(false))
             .lang("Rudder")
             .onRegisterAfter(Registries.ITEM, v -> ItemDescription.useKey(v, "block." + VSMarinePropulsionMod.MOD_ID + ".rudder"))
             .simpleItem()

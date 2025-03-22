@@ -1,7 +1,5 @@
 package io.github.daniel366cobra.vs_marine_propulsion;
 
-import com.simibubi.create.content.contraptions.bearing.BearingInstance;
-import com.simibubi.create.content.contraptions.bearing.BearingRenderer;
 import com.simibubi.create.content.kinetics.transmission.SplitShaftInstance;
 import com.simibubi.create.content.kinetics.transmission.SplitShaftRenderer;
 import com.simibubi.create.foundation.data.CreateRegistrate;
@@ -11,14 +9,15 @@ import io.github.daniel366cobra.vs_marine_propulsion.blocks.control.engine_order
 import io.github.daniel366cobra.vs_marine_propulsion.blocks.control.engine_order_telegraph.EngineOrderTelegraphInstance;
 import io.github.daniel366cobra.vs_marine_propulsion.blocks.drivetrain.variator.VariatorBlockEntity;
 import io.github.daniel366cobra.vs_marine_propulsion.blocks.propulsion.*;
-import io.github.daniel366cobra.vs_marine_propulsion.blocks.steering.RudderBearingBlockEntity;
+import io.github.daniel366cobra.vs_marine_propulsion.blocks.steering.rudder_bearing.RudderBearingBlockEntity;
+import io.github.daniel366cobra.vs_marine_propulsion.blocks.steering.rudder_bearing.RudderBearingBlockEntityRenderer;
+import io.github.daniel366cobra.vs_marine_propulsion.blocks.steering.rudder_bearing.RudderBearingInstance;
 import io.github.daniel366cobra.vs_marine_propulsion.ship_control.PropellerThrustCalculator;
-import io.github.daniel366cobra.vs_marine_propulsion.ship_control.PropellerThrustCurve;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 
-public class VSMarinePropulsionBlockEntities {
+public class VSMarinePropulsionEntities {
     private static final CreateRegistrate REGISTRATE = VSMarinePropulsionMod.getRegistrate();
 
 
@@ -54,13 +53,12 @@ public class VSMarinePropulsionBlockEntities {
 
     public static final BlockEntityEntry<RudderBearingBlockEntity> RUDDER_BEARING_BLOCK_ENTITY = REGISTRATE
             .blockEntity("rudder_bearing_entity", RudderBearingBlockEntity::new)
-            .instance(() -> BearingInstance::new, false)
-            .validBlocks(VSMarinePropulsionBlocks.ENGINE_ORDER_TELEGRAPH)
-            .renderer(() -> BearingRenderer::new)
+            .instance(() -> RudderBearingInstance::new, false)
+            .validBlocks(VSMarinePropulsionBlocks.RUDDER_BEARING)
+            .renderer(() -> RudderBearingBlockEntityRenderer::new)
             .register();
 
-
     public static void register() {
-        VSMarinePropulsionMod.LOGGER.info("Registering block entities for " + VSMarinePropulsionMod.NAME);
+        VSMarinePropulsionMod.LOGGER.info("Registering entities for " + VSMarinePropulsionMod.NAME);
     }
 }

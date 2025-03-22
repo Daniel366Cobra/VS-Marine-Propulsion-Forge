@@ -2,21 +2,18 @@ package io.github.daniel366cobra.vs_marine_propulsion.blocks.propulsion.large_sh
 
 import com.simibubi.create.content.kinetics.base.DirectionalKineticBlock;
 import com.simibubi.create.foundation.block.IBE;
-import io.github.daniel366cobra.vs_marine_propulsion.VSMarinePropulsionBlockEntities;
+import io.github.daniel366cobra.vs_marine_propulsion.VSMarinePropulsionEntities;
 import io.github.daniel366cobra.vs_marine_propulsion.blocks.propulsion.ShipPropellerBlockEntity;
-import io.github.daniel366cobra.vs_marine_propulsion.ship_control.PropulsorData;
-import io.github.daniel366cobra.vs_marine_propulsion.ship_control.ShipControl;
+import io.github.daniel366cobra.vs_marine_propulsion.ship_control.ShipForcesApplier;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
-import org.valkyrienskies.mod.common.util.VectorConversionsMCKt;
 
 public class LargeShipPropellerBlock extends DirectionalKineticBlock implements IBE<ShipPropellerBlockEntity> {
 
@@ -33,7 +30,7 @@ public class LargeShipPropellerBlock extends DirectionalKineticBlock implements 
     public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
         super.onRemove(state, level, pos, newState, isMoving);
         if (level.isClientSide()) return;
-        ShipControl shipControl = ShipControl.get(level, pos);
+        ShipForcesApplier shipControl = ShipForcesApplier.get(level, pos);
         if (shipControl != null)
             shipControl.removePropulsor(pos);
     }
@@ -71,6 +68,6 @@ public class LargeShipPropellerBlock extends DirectionalKineticBlock implements 
 
     @Override
     public BlockEntityType<? extends ShipPropellerBlockEntity> getBlockEntityType() {
-        return VSMarinePropulsionBlockEntities.LARGE_SHIP_PROPELLER_BLOCK_ENTITY.get();
+        return VSMarinePropulsionEntities.LARGE_SHIP_PROPELLER_BLOCK_ENTITY.get();
     }
 }

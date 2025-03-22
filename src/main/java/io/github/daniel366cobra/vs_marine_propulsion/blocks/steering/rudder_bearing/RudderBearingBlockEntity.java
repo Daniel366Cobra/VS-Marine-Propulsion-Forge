@@ -1,34 +1,16 @@
-package io.github.daniel366cobra.vs_marine_propulsion.blocks.steering;
+package io.github.daniel366cobra.vs_marine_propulsion.blocks.steering.rudder_bearing;
 
 import com.simibubi.create.AllSoundEvents;
-import com.simibubi.create.content.contraptions.AbstractContraptionEntity;
 import com.simibubi.create.content.contraptions.AssemblyException;
 import com.simibubi.create.content.contraptions.ControlledContraptionEntity;
-import com.simibubi.create.content.contraptions.IDisplayAssemblyExceptions;
 import com.simibubi.create.content.contraptions.bearing.BearingBlock;
-import com.simibubi.create.content.contraptions.bearing.BearingContraption;
-import com.simibubi.create.content.contraptions.bearing.IBearingBlockEntity;
 import com.simibubi.create.content.contraptions.bearing.MechanicalBearingBlockEntity;
-import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
-import com.simibubi.create.content.kinetics.transmission.sequencer.SequencerInstructions;
-import com.simibubi.create.foundation.advancement.AllAdvancements;
-import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
-import com.simibubi.create.foundation.blockEntity.behaviour.ValueBoxTransform;
-import com.simibubi.create.foundation.blockEntity.behaviour.scrollValue.ScrollOptionBehaviour;
-import com.simibubi.create.foundation.item.TooltipHelper;
-import com.simibubi.create.foundation.utility.AngleHelper;
-import com.simibubi.create.foundation.utility.Lang;
-import com.simibubi.create.foundation.utility.ServerSpeedProvider;
+import io.github.daniel366cobra.vs_marine_propulsion.blocks.steering.RudderContraption;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.chat.Component;
-import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.state.properties.BlockStateProperties;
-
-import java.util.List;
 
 public class RudderBearingBlockEntity extends MechanicalBearingBlockEntity {
 
@@ -37,12 +19,28 @@ public class RudderBearingBlockEntity extends MechanicalBearingBlockEntity {
         super(type, pos, state);
     }
 
+    @Override
+    public void remove() {
+        super.remove();
+    }
+
+    @Override
+    public void write(CompoundTag compound, boolean clientPacket) {
+        super.write(compound, clientPacket);
+    }
+
+    @Override
+    protected void read(CompoundTag compound, boolean clientPacket) {
+            super.read(compound, clientPacket);
+    }
+
+    @Override
     public void assemble() {
         if (!(level.getBlockState(worldPosition)
-                .getBlock() instanceof BearingBlock))
+                .getBlock() instanceof RudderBearingBlock))
             return;
 
-        Direction direction = getBlockState().getValue(BearingBlock.FACING);
+        Direction direction = getBlockState().getValue(RudderBearingBlock.FACING);
         RudderContraption contraption = new RudderContraption(direction);
         try {
             if (!contraption.assemble(level, worldPosition))
@@ -70,6 +68,30 @@ public class RudderBearingBlockEntity extends MechanicalBearingBlockEntity {
     }
 
     @Override
+    public void disassemble() {
+        if (!running && movedContraption == null)
+            return;
+        angle = 0;
+        sequencedAngleLimit = -1;
+
+        if (movedContraption != null) {
+            movedContraption.disassemble();
+            AllSoundEvents.CONTRAPTION_DISASSEMBLE.playOnServer(level, worldPosition);
+        }
+
+        movedContraption = null;
+        running = false;
+        assembleNextTick = false;
+        sendData();
+    }
+
+    @Override
+    public void tick() {
+        sequencedAngleLimit = 45;
+        super.tick();
+    }
+
+    @Override
     public void attach(ControlledContraptionEntity contraption) {
         BlockState blockState = getBlockState();
         if (!(contraption.getContraption() instanceof RudderContraption))
@@ -86,4 +108,6 @@ public class RudderBearingBlockEntity extends MechanicalBearingBlockEntity {
             sendData();
         }
     }
+
+
 }

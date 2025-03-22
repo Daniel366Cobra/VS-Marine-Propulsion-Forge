@@ -1,7 +1,6 @@
 package io.github.daniel366cobra.vs_marine_propulsion.blocks.propulsion;
 
 import com.jozufozu.flywheel.core.PartialModel;
-import com.simibubi.create.content.contraptions.bearing.WindmillBearingBlockEntity;
 import com.tterrag.registrate.util.nullness.NonNullFunction;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;

@@ -5,11 +5,12 @@ import com.simibubi.create.content.contraptions.Contraption;
 import com.simibubi.create.content.contraptions.ContraptionType;
 import com.simibubi.create.content.contraptions.bearing.AnchoredLighter;
 import com.simibubi.create.content.contraptions.render.ContraptionLighter;
-import com.simibubi.create.foundation.utility.Lang;
 import io.github.daniel366cobra.vs_marine_propulsion.VSMarinePropulsionBlocks;
+import io.github.daniel366cobra.vs_marine_propulsion.VSMarinePropulsionContraptionTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
@@ -36,8 +37,20 @@ public class RudderContraption extends Contraption {
         startMoving(world);
         expandBoundsAroundAxis(facing.getAxis());
         if (rudderBlocks == 0)
-            throw new AssemblyException(Lang.translateDirect("gui.assembly.exception.no_rudders"));
+            throw new AssemblyException(Component.translatable("gui.assembly.exception.no_rudders"));
         return !blocks.isEmpty();
+    }
+
+    @Override
+    public boolean canBeStabilized(Direction facing, BlockPos localPos) {
+        if (facing.getOpposite() == this.facing && BlockPos.ZERO.equals(localPos))
+            return false;
+        return facing.getAxis() == this.facing.getAxis();
+    }
+
+    @Override
+    public ContraptionType getType() {
+        return VSMarinePropulsionContraptionTypes.RUDDER;
     }
 
     @Override
@@ -45,7 +58,8 @@ public class RudderContraption extends Contraption {
         return pos.equals(anchor.relative(facing.getOpposite()));
     }
 
-    public void addBlock(Level level, BlockPos pos, Pair<StructureTemplate.StructureBlockInfo, BlockEntity> capture) {
+    @Override
+    public void addBlock(BlockPos pos, Pair<StructureTemplate.StructureBlockInfo, BlockEntity> capture) {
         BlockPos localPos = pos.subtract(anchor);
         if (!getBlocks().containsKey(localPos) && capture.getKey().state().is(VSMarinePropulsionBlocks.RUDDER.get()))
             rudderBlocks++;
@@ -56,7 +70,6 @@ public class RudderContraption extends Contraption {
     public CompoundTag writeNBT(boolean spawnPacket) {
         CompoundTag tag = super.writeNBT(spawnPacket);
         tag.putInt("Rudders", rudderBlocks);
-        tag.putInt("Facing", facing.get3DDataValue());
         return tag;
     }
 
@@ -75,22 +88,10 @@ public class RudderContraption extends Contraption {
         return facing;
     }
 
-
-    @Override
-    public boolean canBeStabilized(Direction facing, BlockPos localPos) {
-        if (facing.getOpposite() == this.facing && BlockPos.ZERO.equals(localPos))
-            return false;
-        return facing.getAxis() == this.facing.getAxis();
-    }
-
-    @Override
-    public ContraptionType getType() {
-        return ContraptionType.BEARING;
-    }
-
     @OnlyIn(Dist.CLIENT)
     @Override
     public ContraptionLighter<?> makeLighter() {
         return new AnchoredLighter(this);
     }
+
 }

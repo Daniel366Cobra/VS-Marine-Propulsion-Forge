@@ -1,9 +1,8 @@
-package io.github.daniel366cobra.vs_marine_propulsion.blocks.steering;
+package io.github.daniel366cobra.vs_marine_propulsion.blocks.steering.rudder_bearing;
 
 import com.simibubi.create.content.contraptions.bearing.BearingBlock;
 import com.simibubi.create.foundation.block.IBE;
-import io.github.daniel366cobra.vs_marine_propulsion.VSMarinePropulsionBlockEntities;
-import io.github.daniel366cobra.vs_marine_propulsion.VSMarinePropulsionMod;
+import io.github.daniel366cobra.vs_marine_propulsion.VSMarinePropulsionEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -48,7 +47,7 @@ public class RudderBearingBlock extends BearingBlock implements IBE<RudderBearin
 
         @Override
         public BlockEntityType<? extends RudderBearingBlockEntity> getBlockEntityType() {
-                return VSMarinePropulsionBlockEntities.RUDDER_BEARING_BLOCK_ENTITY.get();
+                return VSMarinePropulsionEntities.RUDDER_BEARING_BLOCK_ENTITY.get();
         }
 
 }

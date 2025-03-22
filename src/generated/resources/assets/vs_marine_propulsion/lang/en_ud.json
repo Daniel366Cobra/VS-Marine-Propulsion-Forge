@@ -25,6 +25,7 @@
   "block.vs_marine_propulsion.rudder_bearing.tooltip.summary": "˙sdıɥs oʇ buıɹǝǝʇs ǝpıʌoɹd oʇ sʞɔoןᗺ ‾ɹǝppnᴚ‾ pǝɥɔɐʇʇɐ sʇɔǝןɟǝᗡ",
   "block.vs_marine_propulsion.variator": "ɹoʇɐıɹɐΛ",
   "block.vs_marine_propulsion.variator.tooltip.summary": "˙‾ɥdɐɹbǝןǝ⟘ ɹǝpɹO ǝuıbuƎ‾ pǝʞuıן oʇ buıpɹoɔɔɐ pǝǝds ʇndʇno sןoɹʇuoƆ",
+  "gui.assembly.exception.no_rudders": "sɹǝppnɹ ɥbnouǝ ʇoN",
   "itemGroup.vs_marine_propulsion.main": "uoısןndoɹԀ ǝuıɹɐW SΛ",
   "sound.engine_order_telegraph.bell": "sbuıɹ ןןǝq ɥdɐɹbǝןǝ⟘ ɹǝpɹO ǝuıbuƎ",
   "sound.engine_order_telegraph.ding": "sbuıp ɥdɐɹbǝןǝ⟘ ɹǝpɹO ǝuıbuƎ",
@@ -33,7 +34,5 @@
   "vs_marine_propulsion.engine_order_telegraph.failure": "¡ɥdɐɹbǝןǝ⟘ ɹǝpɹO ǝuıbuƎ uɐ oʇ pǝʇɔǝuuoɔ ʎpɐǝɹןɐ ʇǝbɹɐ⟘",
   "vs_marine_propulsion.engine_order_telegraph.remove": "pǝʌoɯǝɹ ʇǝbɹɐʇ ɥdɐɹbǝןǝ⟘ ɹǝpɹO ǝuıbuƎ",
   "vs_marine_propulsion.engine_order_telegraph.success": "¡pǝɹnbıɟuoɔ ɥdɐɹbǝןǝ⟘ ɹǝpɹO ǝuıbuƎ",
-  "vs_marine_propulsion.propeller.rotation.clockwise": ")MƆ( pǝpuɐɥ-ʇɥbıᴚ",
-  "vs_marine_propulsion.propeller.rotation.counterclockwise": ")MƆƆ( pǝpuɐɥ-ʇɟǝꞀ",
   "vs_marine_propulsion.propeller.rotation_direction": "uoıʇɔǝɹıp uoıʇɐʇoɹ ʇsnɹɥʇ pɹɐʍɹoℲ"
 }

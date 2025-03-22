@@ -47,7 +47,8 @@ public class VSMarinePropulsionMod {
         LOGGER.info("{} initializing!", NAME);
 
         VSMarinePropulsionBlocks.register();
-        VSMarinePropulsionBlockEntities.register();
+        VSMarinePropulsionEntities.register();
+        VSMarinePropulsionContraptionTypes.init();
         VSMarinePropulsionConfig.register(ModLoadingContext.get());
 
         VSMarinePropulsionSounds.register(eventBus);

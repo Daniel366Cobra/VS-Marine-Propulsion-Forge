@@ -10,9 +10,8 @@ import com.simibubi.create.foundation.utility.VecHelper;
 import com.simibubi.create.foundation.utility.animation.LerpedFloat;
 import io.github.daniel366cobra.vs_marine_propulsion.VSMarinePropulsionMod;
 import io.github.daniel366cobra.vs_marine_propulsion.ship_control.PropellerThrustCalculator;
-import io.github.daniel366cobra.vs_marine_propulsion.ship_control.PropellerThrustCurve;
 import io.github.daniel366cobra.vs_marine_propulsion.ship_control.PropulsorData;
-import io.github.daniel366cobra.vs_marine_propulsion.ship_control.ShipControl;
+import io.github.daniel366cobra.vs_marine_propulsion.ship_control.ShipForcesApplier;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
@@ -22,7 +21,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3d;
 import org.valkyrienskies.core.api.ships.Ship;
@@ -47,7 +45,7 @@ public class ShipPropellerBlockEntity extends KineticBlockEntity {
     protected ScrollOptionBehaviour<WindmillBearingBlockEntity.RotationDirection> rotationDirectionBehavior;
 
     public int propellerHandedness = 1;
-    public LerpedFloat actualSpeed = LerpedFloat.linear();
+    public LerpedFloat actualSpeed;
     public float angle;
 
     //FACING is where the propeller's hub is looking, the thrust is in the opposite direction
@@ -55,13 +53,16 @@ public class ShipPropellerBlockEntity extends KineticBlockEntity {
         super(typeIn, pos, state);
         this.thrustCalculator = thrustCalculator;
         this.propulsorData = new PropulsorData(VectorConversionsMCKt.toJOMLD(getBlockState().getValue(FACING).getOpposite().getNormal()), 0.0f);
+        this.actualSpeed = LerpedFloat.linear()
+                .startWithValue(0)
+                .chase(0, 1 / 64f, LerpedFloat.Chaser.EXP);
     }
 
     @Override
     public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
         super.addBehaviours(behaviours);
         rotationDirectionBehavior = new ScrollOptionBehaviour<>(WindmillBearingBlockEntity.RotationDirection.class,
-                Component.translatable("propeller.rotation_direction"), this, new RotationDirectionValueBox());
+                Component.translatable(VSMarinePropulsionMod.MOD_ID + ".propeller.rotation_direction"), this, new RotationDirectionValueBox());
         rotationDirectionBehavior.withCallback(cb -> onRotationDirectionChanged());
         behaviours.add(rotationDirectionBehavior);
     }
@@ -75,18 +76,14 @@ public class ShipPropellerBlockEntity extends KineticBlockEntity {
             this.propellerHandedness = 1;
 
         if (compound.contains("PropellerSpeed"))
-            this.actualSpeed.updateChaseTarget(compound.getFloat("PropellerSpeed"));
-        else
-            this.actualSpeed.updateChaseTarget(0.0f);
-
-        actualSpeed.chase(getGeneratedSpeed(), 1 / 64f, LerpedFloat.Chaser.EXP);
+            this.actualSpeed.readNBT(compound.getCompound("PropellerSpeed"), clientPacket);
     }
 
     @Override
     public void write(CompoundTag compound, boolean clientPacket) {
         super.write(compound, clientPacket);
         compound.putInt("PropellerHandedness", this.propellerHandedness);
-        compound.putFloat("PropellerSpeed", this.actualSpeed.getValue());
+        compound.put("PropellerSpeed", this.actualSpeed.writeNBT());
     }
 
     public void onRotationDirectionChanged() {
@@ -98,7 +95,7 @@ public class ShipPropellerBlockEntity extends KineticBlockEntity {
     @Override
     public void remove() {
         if (!this.getLevel().isClientSide()) {
-            ShipControl shipControl = ShipControl.get(this.getLevel(), this.getBlockPos());
+            ShipForcesApplier shipControl = ShipForcesApplier.get(this.getLevel(), this.getBlockPos());
             if (shipControl != null)
                 shipControl.removePropulsor(this.getBlockPos());
         }
@@ -120,19 +117,17 @@ public class ShipPropellerBlockEntity extends KineticBlockEntity {
 
         BlockPos blockPos = this.getBlockPos();
 
-        float targetSpeed = this.getSpeed();
+        float chaseSpeed = this.getSpeed();
 
-        actualSpeed.updateChaseTarget(targetSpeed);
+        actualSpeed.updateChaseTarget(chaseSpeed);
         actualSpeed.tickChaser();
+
         angle += actualSpeed.getValue() * 3 / 10f;
         angle %= 360;
 
         Ship ship = VSGameUtilsKt.getShipManagingPos(level, blockPos);
 
-
         if (ship == null) return;
-
-
 
         if (level.isClientSide || isVirtual()) {
             if (Math.abs(this.actualSpeed.getValue()) >= 0.1f) {
@@ -140,7 +135,7 @@ public class ShipPropellerBlockEntity extends KineticBlockEntity {
             }
 
         } else {
-            ShipControl shipControl = ShipControl.get(level, blockPos);
+            ShipForcesApplier shipControl = ShipForcesApplier.get(level, blockPos);
 
             if (shipControl != null) {
                 if (shipControl.getPropulsorAtPos(blockPos) == null)
@@ -160,7 +155,6 @@ public class ShipPropellerBlockEntity extends KineticBlockEntity {
         }
     }
 
-    //TODO: adding propellers to a ship does not update their thrust before saving & reloading
     public void updateThrust(Ship ship) {
 
         float RPM = this.actualSpeed.getValue();
