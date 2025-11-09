@@ -27,7 +27,7 @@ public class EngineOrderTelegraphBlockEntityRenderer extends SafeBlockEntityRend
         if (Backend.canUseInstancing(be.getLevel())) return;
 
         BlockState leverState = be.getBlockState();
-        float state = be.clientState.getValue(partialTicks);
+        float state = be.clientLeverState.getValue(partialTicks);
 
         VertexConsumer vb = buffer.getBuffer(RenderType.solid());
 
@@ -40,13 +40,6 @@ public class EngineOrderTelegraphBlockEntityRenderer extends SafeBlockEntityRend
                 .translate(-1 / 2f, -1 / 4f, -1 / 2f);
         handle.light(light)
                 .renderInto(ms, vb);
-
-        //// Indicator
-        //int color = Color.mixColors(0x2C0300, 0xCD0000, state / 15f);
-        //SuperByteBuffer indicator = transform(CachedBufferer.partial(AllPartialModels.ANALOG_LEVER_INDICATOR, leverState), leverState);
-        //indicator.light(light)
-        //		.color(color)
-        //		.renderInto(ms, vb);
     }
 
     private SuperByteBuffer transform(SuperByteBuffer buffer, BlockState leverState) {

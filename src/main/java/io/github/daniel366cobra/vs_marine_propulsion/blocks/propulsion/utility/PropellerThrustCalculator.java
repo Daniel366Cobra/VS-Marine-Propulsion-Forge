@@ -1,4 +1,4 @@
-package io.github.daniel366cobra.vs_marine_propulsion.ship_control;
+package io.github.daniel366cobra.vs_marine_propulsion.blocks.propulsion.utility;
 
 public class PropellerThrustCalculator {
 

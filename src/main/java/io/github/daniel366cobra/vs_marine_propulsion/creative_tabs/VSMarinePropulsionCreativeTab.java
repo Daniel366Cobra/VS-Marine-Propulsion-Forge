@@ -23,7 +23,8 @@ public class VSMarinePropulsionCreativeTab {
             VSMarinePropulsionBlocks.ENGINE_ORDER_TELEGRAPH,
             VSMarinePropulsionBlocks.VARIATOR,
             VSMarinePropulsionBlocks.RUDDER_BEARING,
-            VSMarinePropulsionBlocks.RUDDER
+            VSMarinePropulsionBlocks.RUDDER,
+            VSMarinePropulsionBlocks.HELM_BLOCK
     );
 
     public static final RegistryObject<CreativeModeTab> MAIN = CREATIVE_MODE_TABS.register("main",

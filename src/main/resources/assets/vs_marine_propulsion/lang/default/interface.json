@@ -7,9 +7,13 @@
   "vs_marine_propulsion.engine_order_telegraph.success": "Engine Order Telegraph configured!",
   "vs_marine_propulsion.engine_order_telegraph.failure": "Target already connected to an Engine Order Telegraph!",
 
+  "vs_marine_propulsion.helm.set_direction": "Helm active, ship forward direction set:",
+  "vs_marine_propulsion.helm.mismatched_facing": "Cannot place helm: mismatched facing, must be",
+
   "itemGroup.vs_marine_propulsion.main": "VS Marine Propulsion",
 
-  "gui.assembly.exception.no_rudders": "Not enough rudders",
+  "gui.assembly.exception.no_rudders": "Not enough Rudder blocks",
+  "gui.assembly.exception.mismatched_rudders": "Some Rudder blocks have mismatched directions",
 
   "sound.engine_order_telegraph.ding": "Engine Order Telegraph dings",
   "sound.engine_order_telegraph.bell": "Engine Order Telegraph bell rings"

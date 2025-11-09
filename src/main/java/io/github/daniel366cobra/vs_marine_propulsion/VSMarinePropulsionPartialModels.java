@@ -11,6 +11,8 @@ public class VSMarinePropulsionPartialModels {
 
     public static final PartialModel RUDDER_BEARING_ROTATOR = block("rudder_bearing/top");
 
+    public static final PartialModel HELM_WHEEL = block("helm/wheel");
+
     private static PartialModel block(String path) {
         return new PartialModel(VSMarinePropulsionMod.resourceLocationFromPath("block/" + path));
     }

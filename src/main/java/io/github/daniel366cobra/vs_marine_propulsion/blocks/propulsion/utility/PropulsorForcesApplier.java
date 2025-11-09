@@ -1,13 +1,14 @@
-package io.github.daniel366cobra.vs_marine_propulsion.ship_control;
+package io.github.daniel366cobra.vs_marine_propulsion.blocks.propulsion.utility;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
-import org.jetbrains.annotations.NotNull;
+import org.antlr.v4.runtime.misc.NotNull;
 import org.joml.Vector3d;
 import org.valkyrienskies.core.api.ships.PhysShip;
 import org.valkyrienskies.core.api.ships.ServerShip;
 import org.valkyrienskies.core.api.ships.ShipForcesInducer;
+import org.valkyrienskies.core.api.ships.properties.ShipTransform;
 import org.valkyrienskies.core.impl.game.ships.PhysShipImpl;
 import org.valkyrienskies.mod.common.VSGameUtilsKt;
 import org.valkyrienskies.mod.common.util.VectorConversionsMCKt;
@@ -16,32 +17,32 @@ import javax.annotation.Nullable;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class ShipForcesApplier implements ShipForcesInducer {
+public class PropulsorForcesApplier implements ShipForcesInducer {
 
     private String dimensionId = null;
 
     public Map<BlockPos, PropulsorData> propulsors = new ConcurrentHashMap<>();
 
-    public ShipForcesApplier() {}
+    public PropulsorForcesApplier() {}
 
-    public ShipForcesApplier(String dimensionId) {
+    public PropulsorForcesApplier(String dimensionId) {
         this.dimensionId = dimensionId;
     }
 
-    public static ShipForcesApplier getOrCreate(ServerShip ship, String dimensionId) {
-        ShipForcesApplier shipControl = ship.getAttachment(ShipForcesApplier.class);
+    public static PropulsorForcesApplier getOrCreate(ServerShip ship, String dimensionId) {
+        PropulsorForcesApplier shipControl = ship.getAttachment(PropulsorForcesApplier.class);
         if (shipControl == null) {
-            shipControl = new ShipForcesApplier(dimensionId);
-            ship.saveAttachment(ShipForcesApplier.class, shipControl);
+            shipControl = new PropulsorForcesApplier(dimensionId);
+            ship.saveAttachment(PropulsorForcesApplier.class, shipControl);
         }
         return shipControl;
     }
 
-    public static ShipForcesApplier getOrCreate(ServerShip ship) {
+    public static PropulsorForcesApplier getOrCreate(ServerShip ship) {
         return  getOrCreate(ship, ship.getChunkClaimDimension());
     }
 
-    public static ShipForcesApplier get(Level level, BlockPos pos) {
+    public static PropulsorForcesApplier get(Level level, BlockPos pos) {
         ServerLevel serverLevel = (ServerLevel) level;
         ServerShip ship = VSGameUtilsKt.getShipObjectManagingPos(serverLevel, pos);
         if (ship == null) {
@@ -54,7 +55,6 @@ public class ShipForcesApplier implements ShipForcesInducer {
     public void addPropulsor(BlockPos pos, PropulsorData data) {
         propulsors.put(pos, data);
     }
-
     public void removePropulsor(BlockPos pos) {
         propulsors.remove(pos);
     }
@@ -67,32 +67,27 @@ public class ShipForcesApplier implements ShipForcesInducer {
     @Override
     public void applyForces(@NotNull PhysShip physicsShip) {
         PhysShipImpl physShip = (PhysShipImpl) physicsShip;
+        final ShipTransform transform = physShip.getTransform();
 
         propulsors.forEach((pos, data) -> {
             float thrust = data.thrust;
-            Vector3d dir = data.dir;
+            Vector3d dir = data.thrustDirection;
             boolean submerged = data.submerged;
 
             if (thrust == 0.0f || !submerged) return;
 
+            // Calculate position relative to ship's center of mass in ship coordinates
             Vector3d thrustPos = VectorConversionsMCKt.toJOMLD(pos)
                     .add(0.5, 0.5, 0.5, new Vector3d())
-                    .sub(physShip.getTransform().getPositionInShip());
+                    .sub(transform.getPositionInShip());
 
+            // Transform thrust direction from ship-local to world coordinates
+            Vector3d thrustForce = transform.getShipToWorld().transformDirection(dir, new Vector3d());
+            thrustForce.normalize().mul(thrust);
 
-            Vector3d thrustForce = physShip.getTransform().getShipToWorldRotation().transform(dir, new Vector3d());
-
-            //VSMarinePropulsionMod.LOGGER.info("DIR: " + dir.toString() + ", THRUST_FORCE: " + thrustForce.toString() + ", THRUST: " + thrust);
-
-            thrustForce.mul(thrust);
-
+            // Apply force at the specific position - THIS IS THE CRITICAL FIX
             physShip.applyInvariantForceToPos(thrustForce, thrustPos);
-
         });
-
     }
 
-    private void setLevel(String levelId) {
-
-    }
 }

@@ -1,5 +1,6 @@
 {
   "values": [
-    "vs_marine_propulsion:variator"
+    "vs_marine_propulsion:variator",
+    "vs_marine_propulsion:helm"
   ]
 }

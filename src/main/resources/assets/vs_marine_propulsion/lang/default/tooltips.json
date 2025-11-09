@@ -24,5 +24,11 @@
 
   "block.vs_marine_propulsion.rudder.tooltip.summary": "Provides a means to steer a ship.",
   "block.vs_marine_propulsion.rudder.tooltip.condition1": "When deflected by a Rudder Bearing:",
-  "block.vs_marine_propulsion.rudder.tooltip.behaviour1": "Applies steering torque to the ship, dependent on the speed and deflection angle."
+  "block.vs_marine_propulsion.rudder.tooltip.behaviour1": "Applies steering torque to the ship, dependent on the speed and deflection angle.",
+
+  "block.vs_marine_propulsion.helm.tooltip.summary": "Controls attached _Rudder Bearings_.",
+  "block.vs_marine_propulsion.helm.tooltip.condition1": "When in hand:",
+  "block.vs_marine_propulsion.helm.tooltip.behaviour1": "R-Click on a Rudder Bearing block to place it under control,",
+  "block.vs_marine_propulsion.helm.tooltip.condition1": "When placed:",
+  "block.vs_marine_propulsion.helm.tooltip.behaviour1": "R-Click to man the helm, then use A/D to steer."
 }

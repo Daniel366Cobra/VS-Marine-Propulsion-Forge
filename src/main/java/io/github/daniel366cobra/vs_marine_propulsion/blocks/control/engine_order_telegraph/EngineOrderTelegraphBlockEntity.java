@@ -27,13 +27,13 @@ public class EngineOrderTelegraphBlockEntity extends SmartBlockEntity implements
     int throttleOrder = 0;
     int changeTimer;
     boolean variatorsRelinkNeeded = true;
-    LerpedFloat clientState;
+    LerpedFloat clientLeverState;
 
     private Set<BlockPos> linkedVariatorBlockPos = new HashSet<>();
 
     public EngineOrderTelegraphBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
-        clientState = LerpedFloat.linear();
+        clientLeverState = LerpedFloat.linear();
     }
 
     @Override
@@ -62,7 +62,7 @@ public class EngineOrderTelegraphBlockEntity extends SmartBlockEntity implements
         linkedVariatorsTag.forEach(variatorTag -> linkedVariatorBlockPos
                 .add(NbtUtils.readBlockPos((CompoundTag) variatorTag)));
         variatorsRelinkNeeded = true;
-        clientState.chase(throttleOrder, 0.2f, LerpedFloat.Chaser.EXP);
+        clientLeverState.chase(throttleOrder, 0.2f, LerpedFloat.Chaser.EXP);
 
     }
 
@@ -78,7 +78,7 @@ public class EngineOrderTelegraphBlockEntity extends SmartBlockEntity implements
         }
 
         if (level.isClientSide)
-            clientState.tickChaser();
+            clientLeverState.tickChaser();
     }
 
     @Override
@@ -127,7 +127,7 @@ public class EngineOrderTelegraphBlockEntity extends SmartBlockEntity implements
             level.playSound(null, getBlockPos(), VSMarinePropulsionSounds.ENGINE_ORDER_TELEGRAPH_DING.get(), SoundSource.BLOCKS, 1.0f, 1.0f);
         }
 
-        sendData();
+        notifyUpdate();
     }
 
     @Override

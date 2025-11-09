@@ -12,12 +12,13 @@ import io.github.daniel366cobra.vs_marine_propulsion.data.VSMarinePropulsionData
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.valkyrienskies.core.impl.hooks.VSEvents;
 
 /**
  * Temporary borrows:
@@ -30,10 +31,10 @@ import org.valkyrienskies.core.impl.hooks.VSEvents;
 public class VSMarinePropulsionMod {
     public static final String MOD_ID = "vs_marine_propulsion";
 
-
     public static final String NAME = "VS Marine Propulsion";
     public static final Logger LOGGER = LoggerFactory.getLogger(NAME);
     public static final NonNullSupplier<CreateRegistrate> REGISTRATE = NonNullSupplier.lazy(() -> CreateRegistrate.create(VSMarinePropulsionMod.MOD_ID));
+
 
     static {
         REGISTRATE.get().setTooltipModifierFactory(
@@ -46,22 +47,23 @@ public class VSMarinePropulsionMod {
 
         LOGGER.info("{} initializing!", NAME);
 
-        VSMarinePropulsionBlocks.register();
-        VSMarinePropulsionEntities.register();
-        VSMarinePropulsionContraptionTypes.init();
-        VSMarinePropulsionConfig.register(ModLoadingContext.get());
-
-        VSMarinePropulsionSounds.register(eventBus);
-        VSMarinePropulsionPartialModels.init();
-        VSMarinePropulsionCreativeTab.register(eventBus);
-
         eventBus.addListener(EventPriority.LOWEST, VSMarinePropulsionDatagen::gatherData);
+        eventBus.addListener(this::onCommonSetup);
 
         VSMarinePropulsionMod.REGISTRATE.get().registerEventListeners(eventBus);
 
-        VSEvents.ShipLoadEvent.Companion.on(e -> {
+        VSMarinePropulsionConfig.register(ModLoadingContext.get());
+        VSMarinePropulsionCreativeTab.register(eventBus);
+        VSMarinePropulsionBlocks.register();
+        VSMarinePropulsionEntities.register();
+        VSMarinePropulsionSounds.register(eventBus);
+        VSMarinePropulsionPartialModels.init();
+        VSMarinePropulsionContraptionTypes.init();
 
-        });
+    }
+
+    public void onCommonSetup(FMLCommonSetupEvent event) {
+        VSMarinePropulsionPacketHandler.register();
     }
 
 

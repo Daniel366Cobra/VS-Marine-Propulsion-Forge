@@ -9,9 +9,12 @@ import com.simibubi.create.foundation.utility.AngleHelper;
 import com.simibubi.create.foundation.utility.VecHelper;
 import com.simibubi.create.foundation.utility.animation.LerpedFloat;
 import io.github.daniel366cobra.vs_marine_propulsion.VSMarinePropulsionMod;
-import io.github.daniel366cobra.vs_marine_propulsion.ship_control.PropellerThrustCalculator;
-import io.github.daniel366cobra.vs_marine_propulsion.ship_control.PropulsorData;
-import io.github.daniel366cobra.vs_marine_propulsion.ship_control.ShipForcesApplier;
+import io.github.daniel366cobra.vs_marine_propulsion.VSMarinePropulsionPacketHandler;
+import io.github.daniel366cobra.vs_marine_propulsion.blocks.propulsion.utility.PropulsorForcesApplier;
+import io.github.daniel366cobra.vs_marine_propulsion.debug.ForceDebugPacket;
+import io.github.daniel366cobra.vs_marine_propulsion.debug.ForceVectorData;
+import io.github.daniel366cobra.vs_marine_propulsion.blocks.propulsion.utility.PropellerThrustCalculator;
+import io.github.daniel366cobra.vs_marine_propulsion.blocks.propulsion.utility.PropulsorData;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
@@ -22,6 +25,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.network.PacketDistributor;
 import org.joml.Vector3d;
 import org.valkyrienskies.core.api.ships.Ship;
 import org.valkyrienskies.mod.common.VSGameUtilsKt;
@@ -95,7 +99,7 @@ public class ShipPropellerBlockEntity extends KineticBlockEntity {
     @Override
     public void remove() {
         if (!this.getLevel().isClientSide()) {
-            ShipForcesApplier shipControl = ShipForcesApplier.get(this.getLevel(), this.getBlockPos());
+            PropulsorForcesApplier shipControl = PropulsorForcesApplier.get(this.getLevel(), this.getBlockPos());
             if (shipControl != null)
                 shipControl.removePropulsor(this.getBlockPos());
         }
@@ -135,7 +139,7 @@ public class ShipPropellerBlockEntity extends KineticBlockEntity {
             }
 
         } else {
-            ShipForcesApplier shipControl = ShipForcesApplier.get(level, blockPos);
+            PropulsorForcesApplier shipControl = PropulsorForcesApplier.get(level, blockPos);
 
             if (shipControl != null) {
                 if (shipControl.getPropulsorAtPos(blockPos) == null)
@@ -179,6 +183,17 @@ public class ShipPropellerBlockEntity extends KineticBlockEntity {
 
         this.propulsorData.thrust = this.thrustCalculator.thrust(RPM * dirMultiplier) * this.propellerHandedness;
 
+
+        Vector3d thrustForce = ship.getTransform().getShipToWorldRotation().transform(this.propulsorData.thrustDirection, new Vector3d());
+
+        ForceVectorData debugData = new ForceVectorData(
+                transformedPosVector,
+                thrustForce,
+                2 // Display for 2 ticks
+        );
+
+        VSMarinePropulsionPacketHandler.CHANNEL.send(PacketDistributor.NEAR.with(() -> new PacketDistributor.TargetPoint(transformedPosVector.x, transformedPosVector.y, transformedPosVector.z, 64, level.dimension())), new ForceDebugPacket(debugData));
+
     }
 
     public void updateParticles(Ship ship) {
@@ -188,7 +203,7 @@ public class ShipPropellerBlockEntity extends KineticBlockEntity {
         Vec3 shipyardBlockCenter = this.getBlockPos().getCenter();
         Vector3d worldBlockCenter = ship.getTransform().getShipToWorld().transformPosition(new Vector3d(shipyardBlockCenter.x, shipyardBlockCenter.y, shipyardBlockCenter.z));
 
-        Vector3d shipyardFacingVector = new Vector3d(propulsorData.dir).negate();
+        Vector3d shipyardFacingVector = new Vector3d(propulsorData.thrustDirection).negate();
 
         int dirMultiplier = this.getBlockState().getValue(FACING).getAxisDirection().getStep();
 
@@ -262,6 +277,5 @@ public class ShipPropellerBlockEntity extends KineticBlockEntity {
         }
 
     }
-
 
 }

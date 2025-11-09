@@ -23,8 +23,8 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 
 public class EngineOrderTelegraphBlock extends FaceAttachedHorizontalDirectionalBlock implements IBE<EngineOrderTelegraphBlockEntity> {
 
-    public EngineOrderTelegraphBlock(Properties p_i48402_1_) {
-        super(p_i48402_1_);
+    public EngineOrderTelegraphBlock(Properties properties) {
+        super(properties);
     }
 
     @Override

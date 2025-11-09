@@ -10,5 +10,9 @@
   {
     "block": "vs_marine_propulsion:large_ship_propeller",
     "mass": 2000
+  },
+  {
+    "block": "vs_marine_propulsion:helm",
+    "mass": 100
   }
 ]

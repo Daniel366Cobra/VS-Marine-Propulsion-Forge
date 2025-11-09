@@ -37,12 +37,12 @@ public class EngineOrderTelegraphInstance extends BlockEntityInstance<EngineOrde
 
     @Override
     public void beginFrame() {
-        if (!blockEntity.clientState.settled())
+        if (!blockEntity.clientLeverState.settled())
             animateLever();
     }
 
     protected void animateLever() {
-        float state = blockEntity.clientState.getValue(AnimationTickHolder.getPartialTicks());
+        float state = blockEntity.clientLeverState.getValue(AnimationTickHolder.getPartialTicks());
 
         float angle = (float) ((state / 7) * 120 / 180 * Math.PI);
 

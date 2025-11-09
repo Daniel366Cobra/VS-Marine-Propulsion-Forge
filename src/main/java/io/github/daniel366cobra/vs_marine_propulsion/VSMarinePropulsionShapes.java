@@ -9,10 +9,10 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 
 import java.util.function.BiFunction;
 
-import static net.minecraft.core.Direction.SOUTH;
-import static net.minecraft.core.Direction.UP;
+import static net.minecraft.core.Direction.*;
 
 public class VSMarinePropulsionShapes {
+
     public static final VoxelShaper ENGINE_ORDER_TELEGRAPH_FLOOR = shape(4, 0, 0, 12, 5, 16)
             .forHorizontalAxis();
 
@@ -22,6 +22,12 @@ public class VSMarinePropulsionShapes {
     public static final VoxelShaper ENGINE_ORDER_TELEGRAPH_WALL = shape(4, 0, 0, 12, 16, 5)
             .forHorizontal(SOUTH);
 
+    public static final VoxelShaper RUDDER = shape(0, 6, 0, 16, 10, 16)
+            .forDirectional();
+
+    public static final VoxelShaper HELM = shape(5,0,2,11,16,11)
+            .add(0, 5, 0, 16, 21, 2)
+            .forHorizontal(SOUTH);
 
     private static VSMarinePropulsionShapes.Builder shape(VoxelShape shape) {
         return new VSMarinePropulsionShapes.Builder(shape);

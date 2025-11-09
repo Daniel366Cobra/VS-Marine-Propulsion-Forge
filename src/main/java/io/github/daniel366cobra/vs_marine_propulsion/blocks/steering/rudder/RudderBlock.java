@@ -5,6 +5,7 @@ import com.simibubi.create.foundation.placement.PlacementHelpers;
 import com.simibubi.create.foundation.placement.PlacementOffset;
 import com.simibubi.create.foundation.utility.Iterate;
 import io.github.daniel366cobra.vs_marine_propulsion.VSMarinePropulsionBlocks;
+import io.github.daniel366cobra.vs_marine_propulsion.VSMarinePropulsionShapes;
 import net.minecraft.MethodsReturnNonnullByDefault;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -15,10 +16,14 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.RotatedPillarBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.VoxelShape;
+import org.valkyrienskies.core.impl.shadow.Ax;
 
 import java.util.List;
 import java.util.function.Predicate;
@@ -29,6 +34,11 @@ public class RudderBlock extends RotatedPillarBlock {
 
     public RudderBlock(Properties pProperties) {
         super(pProperties);
+    }
+
+    public VoxelShape getShape(BlockState state, BlockGetter world, BlockPos pos, CollisionContext context) {
+        Axis axis = state.getValue(RudderBlock.AXIS);
+        return VSMarinePropulsionShapes.RUDDER.get(axis);
     }
 
     public BlockState getStateForPlacement(BlockPlaceContext context) {
@@ -51,15 +61,15 @@ public class RudderBlock extends RotatedPillarBlock {
 
         for (Direction side : Iterate.directions) {
             BlockState blockState = context.getLevel()
-                            .getBlockState(context.getClickedPos()
+                    .getBlockState(context.getClickedPos()
                             .relative(side));
             if (blockState.getBlock() instanceof RudderBlock) {
-                    if (preferredAxis != null && preferredAxis != side.getAxis()) {
-                        preferredAxis = null;
-                        break; //found conflicting axes so we drop the preferred axis to null and break
-                    } else {
-                        preferredAxis = side.getAxis(); //set the preferred axis to be the same as surrounding blocks
-                    }
+                if (preferredAxis != null && preferredAxis != side.getAxis()) {
+                    preferredAxis = null;
+                    break; //found conflicting axes so we drop the preferred axis to null and break
+                } else {
+                    preferredAxis = side.getAxis(); //set the preferred axis to be the same as surrounding blocks
+                }
             }
         }
         return preferredAxis;
@@ -98,7 +108,7 @@ public class RudderBlock extends RotatedPillarBlock {
         @Override
         public PlacementOffset getOffset(Player player, Level world, BlockState state, BlockPos pos, BlockHitResult ray) {
 
-            Axis currentAxis = state.getValue(AXIS);
+            Direction.Axis currentAxis = state.getValue(AXIS);
             Direction clickedFace = ray.getDirection();
 
             //clicked the 16x16 face

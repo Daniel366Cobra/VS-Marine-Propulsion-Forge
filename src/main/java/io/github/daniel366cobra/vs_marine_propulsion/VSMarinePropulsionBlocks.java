@@ -7,11 +7,13 @@ import com.simibubi.create.foundation.data.SharedProperties;
 import com.simibubi.create.foundation.item.ItemDescription;
 import com.tterrag.registrate.util.entry.BlockEntry;
 import io.github.daniel366cobra.vs_marine_propulsion.blocks.control.engine_order_telegraph.EngineOrderTelegraphBlock;
+import io.github.daniel366cobra.vs_marine_propulsion.blocks.control.helm.HelmBlock;
 import io.github.daniel366cobra.vs_marine_propulsion.blocks.drivetrain.variator.VariatorBlock;
 import io.github.daniel366cobra.vs_marine_propulsion.blocks.propulsion.large_ship_propeller.LargeShipPropellerBlock;
 import io.github.daniel366cobra.vs_marine_propulsion.blocks.steering.rudder_bearing.RudderBearingBlock;
 import io.github.daniel366cobra.vs_marine_propulsion.blocks.steering.rudder.RudderBlock;
 import io.github.daniel366cobra.vs_marine_propulsion.items.EngineOrderTelegraphBlockItem;
+import io.github.daniel366cobra.vs_marine_propulsion.items.HelmBlockItem;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.material.MapColor;
@@ -106,6 +108,22 @@ public class VSMarinePropulsionBlocks {
             .lang("Rudder")
             .onRegisterAfter(Registries.ITEM, v -> ItemDescription.useKey(v, "block." + VSMarinePropulsionMod.MOD_ID + ".rudder"))
             .simpleItem()
+            .register();
+
+    public static final BlockEntry<HelmBlock> HELM_BLOCK = REGISTRATE
+            .block("helm", HelmBlock::new)
+            .initialProperties(SharedProperties::wooden)
+            .properties(p -> p
+                    .noOcclusion()
+                    .mapColor(MapColor.WOOD))
+            .transform(axeOrPickaxe())
+            //.blockstate(BlockStateGen.horizontalBlockProvider(false))
+            .blockstate((ctx, prov ) -> prov.horizontalBlock(ctx.get(), partialBaseModel(ctx, prov)))
+            .lang("Helm")
+            .onRegisterAfter(Registries.ITEM, v -> ItemDescription.useKey(v, "block." + VSMarinePropulsionMod.MOD_ID + ".helm_block"))
+            .item(HelmBlockItem::new)
+            .model((ctx, prov) -> prov.withExistingParent(ctx.getName(), prov.modLoc("block/" + ctx.getName() + "/item")))
+            .build()
             .register();
 
     public static void register() {

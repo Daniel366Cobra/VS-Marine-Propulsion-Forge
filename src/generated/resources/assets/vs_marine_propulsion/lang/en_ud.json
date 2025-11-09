@@ -13,6 +13,10 @@
   "block.vs_marine_propulsion.engine_order_telegraph.tooltip.slow_astern": "uɹǝʇsɐ ʍoןS",
   "block.vs_marine_propulsion.engine_order_telegraph.tooltip.stop": "doʇS",
   "block.vs_marine_propulsion.engine_order_telegraph.tooltip.summary": "˙sʞɔoןq ‾ɹoʇɐıɹɐΛ‾ pǝʞuıן ɟo pǝǝds ʇndʇno ןoɹʇuoɔ oʇ sʍoןןⱯ",
+  "block.vs_marine_propulsion.helm": "ɯןǝH",
+  "block.vs_marine_propulsion.helm.tooltip.behaviour1": "˙ɹǝǝʇs oʇ ᗡ/Ɐ ǝsn uǝɥʇ 'ɯןǝɥ ǝɥʇ uɐɯ oʇ ʞɔıןƆ-ᴚ",
+  "block.vs_marine_propulsion.helm.tooltip.condition1": ":pǝɔɐןd uǝɥM",
+  "block.vs_marine_propulsion.helm.tooltip.summary": "˙‾sbuıɹɐǝᗺ ɹǝppnᴚ‾ pǝɥɔɐʇʇɐ sןoɹʇuoƆ",
   "block.vs_marine_propulsion.large_ship_propeller": "ɹǝןןǝdoɹԀ dıɥS ǝbɹɐꞀ",
   "block.vs_marine_propulsion.large_ship_propeller.tooltip.behaviour1": "˙pǝǝds ʇnduı ǝɥʇ uo ʇuǝpuǝdǝp 'dıɥs ǝɥʇ oʇ ʇsnɹɥʇ sǝıןddⱯ",
   "block.vs_marine_propulsion.large_ship_propeller.tooltip.condition1": ":sɔıʇǝuıʞ ʎq pǝɹǝʍod uǝɥM",
@@ -25,7 +29,8 @@
   "block.vs_marine_propulsion.rudder_bearing.tooltip.summary": "˙sdıɥs oʇ buıɹǝǝʇs ǝpıʌoɹd oʇ sʞɔoןᗺ ‾ɹǝppnᴚ‾ pǝɥɔɐʇʇɐ sʇɔǝןɟǝᗡ",
   "block.vs_marine_propulsion.variator": "ɹoʇɐıɹɐΛ",
   "block.vs_marine_propulsion.variator.tooltip.summary": "˙‾ɥdɐɹbǝןǝ⟘ ɹǝpɹO ǝuıbuƎ‾ pǝʞuıן oʇ buıpɹoɔɔɐ pǝǝds ʇndʇno sןoɹʇuoƆ",
-  "gui.assembly.exception.no_rudders": "sɹǝppnɹ ɥbnouǝ ʇoN",
+  "gui.assembly.exception.mismatched_rudders": "suoıʇɔǝɹıp pǝɥɔʇɐɯsıɯ ǝʌɐɥ sʞɔoןq ɹǝppnᴚ ǝɯoS",
+  "gui.assembly.exception.no_rudders": "sʞɔoןq ɹǝppnᴚ ɥbnouǝ ʇoN",
   "itemGroup.vs_marine_propulsion.main": "uoısןndoɹԀ ǝuıɹɐW SΛ",
   "sound.engine_order_telegraph.bell": "sbuıɹ ןןǝq ɥdɐɹbǝןǝ⟘ ɹǝpɹO ǝuıbuƎ",
   "sound.engine_order_telegraph.ding": "sbuıp ɥdɐɹbǝןǝ⟘ ɹǝpɹO ǝuıbuƎ",
@@ -34,5 +39,7 @@
   "vs_marine_propulsion.engine_order_telegraph.failure": "¡ɥdɐɹbǝןǝ⟘ ɹǝpɹO ǝuıbuƎ uɐ oʇ pǝʇɔǝuuoɔ ʎpɐǝɹןɐ ʇǝbɹɐ⟘",
   "vs_marine_propulsion.engine_order_telegraph.remove": "pǝʌoɯǝɹ ʇǝbɹɐʇ ɥdɐɹbǝןǝ⟘ ɹǝpɹO ǝuıbuƎ",
   "vs_marine_propulsion.engine_order_telegraph.success": "¡pǝɹnbıɟuoɔ ɥdɐɹbǝןǝ⟘ ɹǝpɹO ǝuıbuƎ",
+  "vs_marine_propulsion.helm.mismatched_facing": "ǝq ʇsnɯ 'buıɔɐɟ pǝɥɔʇɐɯsıɯ :ɯןǝɥ ǝɔɐןd ʇouuɐƆ",
+  "vs_marine_propulsion.helm.set_direction": ":ʇǝs uoıʇɔǝɹıp pɹɐʍɹoɟ dıɥs 'ǝʌıʇɔɐ ɯןǝH",
   "vs_marine_propulsion.propeller.rotation_direction": "uoıʇɔǝɹıp uoıʇɐʇoɹ ʇsnɹɥʇ pɹɐʍɹoℲ"
 }

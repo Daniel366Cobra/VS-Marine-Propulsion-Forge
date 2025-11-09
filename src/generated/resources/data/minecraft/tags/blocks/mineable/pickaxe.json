@@ -4,6 +4,7 @@
     "vs_marine_propulsion:variator",
     "vs_marine_propulsion:engine_order_telegraph",
     "vs_marine_propulsion:rudder_bearing",
-    "vs_marine_propulsion:rudder"
+    "vs_marine_propulsion:rudder",
+    "vs_marine_propulsion:helm"
   ]
 }
