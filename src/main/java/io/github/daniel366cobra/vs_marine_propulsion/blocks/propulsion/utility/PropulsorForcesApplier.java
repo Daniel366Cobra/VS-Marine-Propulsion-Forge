@@ -1,5 +1,8 @@
 package io.github.daniel366cobra.vs_marine_propulsion.blocks.propulsion.utility;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
@@ -15,13 +18,22 @@ import org.valkyrienskies.mod.common.util.VectorConversionsMCKt;
 
 import javax.annotation.Nullable;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+@JsonAutoDetect(
+        fieldVisibility = JsonAutoDetect.Visibility.ANY,
+        getterVisibility = JsonAutoDetect.Visibility.NONE,
+        isGetterVisibility = JsonAutoDetect.Visibility.NONE,
+        setterVisibility = JsonAutoDetect.Visibility.NONE
+)
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class PropulsorForcesApplier implements ShipForcesInducer {
 
     private String dimensionId = null;
 
-    public Map<BlockPos, PropulsorData> propulsors = new ConcurrentHashMap<>();
+    // Use Set instead of Map - each PropulsorData contains its own position
+    private Set<PropulsorData> propulsors = ConcurrentHashMap.newKeySet();
 
     public PropulsorForcesApplier() {}
 
@@ -30,16 +42,16 @@ public class PropulsorForcesApplier implements ShipForcesInducer {
     }
 
     public static PropulsorForcesApplier getOrCreate(ServerShip ship, String dimensionId) {
-        PropulsorForcesApplier shipControl = ship.getAttachment(PropulsorForcesApplier.class);
-        if (shipControl == null) {
-            shipControl = new PropulsorForcesApplier(dimensionId);
-            ship.saveAttachment(PropulsorForcesApplier.class, shipControl);
+        PropulsorForcesApplier propulsorAttachment = ship.getAttachment(PropulsorForcesApplier.class);
+        if (propulsorAttachment == null) {
+            propulsorAttachment = new PropulsorForcesApplier(dimensionId);
+            ship.saveAttachment(PropulsorForcesApplier.class, propulsorAttachment);
         }
-        return shipControl;
+        return propulsorAttachment;
     }
 
     public static PropulsorForcesApplier getOrCreate(ServerShip ship) {
-        return  getOrCreate(ship, ship.getChunkClaimDimension());
+        return getOrCreate(ship, ship.getChunkClaimDimension());
     }
 
     public static PropulsorForcesApplier get(Level level, BlockPos pos) {
@@ -48,28 +60,40 @@ public class PropulsorForcesApplier implements ShipForcesInducer {
         if (ship == null) {
             ship = VSGameUtilsKt.getShipManagingPos(serverLevel, pos);
         }
-
         return ship != null ? getOrCreate(ship) : null;
     }
 
     public void addPropulsor(BlockPos pos, PropulsorData data) {
-        propulsors.put(pos, data);
+        // Create new data with the correct position to ensure consistency
+        PropulsorData newData = new PropulsorData(pos, data.thrustDirection, data.thrust);
+        newData.submerged = data.submerged;
+        propulsors.add(newData);
     }
+
     public void removePropulsor(BlockPos pos) {
-        propulsors.remove(pos);
+        // Create temporary object for removal (uses position-based equality)
+        PropulsorData tempForRemoval = new PropulsorData(pos, new Vector3d(), 0.0f);
+        propulsors.remove(tempForRemoval);
     }
 
     @Nullable
     public PropulsorData getPropulsorAtPos(BlockPos pos) {
-        return propulsors.get(pos);
+        // Create temporary object for lookup
+        PropulsorData tempForLookup = new PropulsorData(pos, new Vector3d(), 0.0f);
+        for (PropulsorData data : propulsors) {
+            if (data.equals(tempForLookup)) {
+                return data;
+            }
+        }
+        return null;
     }
 
     @Override
-    public void applyForces(@NotNull PhysShip physicsShip) {
+    public void applyForces(PhysShip physicsShip) {
         PhysShipImpl physShip = (PhysShipImpl) physicsShip;
         final ShipTransform transform = physShip.getTransform();
 
-        propulsors.forEach((pos, data) -> {
+        propulsors.forEach(data -> {
             float thrust = data.thrust;
             Vector3d dir = data.thrustDirection;
             boolean submerged = data.submerged;
@@ -77,7 +101,7 @@ public class PropulsorForcesApplier implements ShipForcesInducer {
             if (thrust == 0.0f || !submerged) return;
 
             // Calculate position relative to ship's center of mass in ship coordinates
-            Vector3d thrustPos = VectorConversionsMCKt.toJOMLD(pos)
+            Vector3d thrustPos = VectorConversionsMCKt.toJOMLD(data.getBlockPos())
                     .add(0.5, 0.5, 0.5, new Vector3d())
                     .sub(transform.getPositionInShip());
 
@@ -85,9 +109,13 @@ public class PropulsorForcesApplier implements ShipForcesInducer {
             Vector3d thrustForce = transform.getShipToWorld().transformDirection(dir, new Vector3d());
             thrustForce.normalize().mul(thrust);
 
-            // Apply force at the specific position - THIS IS THE CRITICAL FIX
+            // Apply force at the specific position
             physShip.applyInvariantForceToPos(thrustForce, thrustPos);
         });
     }
 
+    @JsonIgnore
+    public int getTotalPropulsors() {
+        return propulsors.size();
+    }
 }

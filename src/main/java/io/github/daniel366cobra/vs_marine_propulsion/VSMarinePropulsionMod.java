@@ -12,7 +12,6 @@ import io.github.daniel366cobra.vs_marine_propulsion.data.VSMarinePropulsionData
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
@@ -23,7 +22,6 @@ import org.slf4j.LoggerFactory;
 /**
  * Temporary borrows:
  * Ship propeller model & texture - VS Tournament
- * Stepped Lever model & texture - Design N Decor
  * Parts of the Freewheel clutch texture - Create Connected
  */
 

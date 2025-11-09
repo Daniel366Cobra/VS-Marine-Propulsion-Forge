@@ -56,10 +56,12 @@ public class ShipPropellerBlockEntity extends KineticBlockEntity {
     public ShipPropellerBlockEntity(BlockEntityType<?> typeIn, BlockPos pos, BlockState state, PropellerThrustCalculator thrustCalculator) {
         super(typeIn, pos, state);
         this.thrustCalculator = thrustCalculator;
-        this.propulsorData = new PropulsorData(VectorConversionsMCKt.toJOMLD(getBlockState().getValue(FACING).getOpposite().getNormal()), 0.0f);
-        this.actualSpeed = LerpedFloat.linear()
-                .startWithValue(0)
-                .chase(0, 1 / 64f, LerpedFloat.Chaser.EXP);
+
+        // Initialize with zero values - will be synced with persistent data in initialize()
+        Vector3d initialDirection = VectorConversionsMCKt.toJOMLD(state.getValue(FACING).getOpposite().getNormal());
+        this.propulsorData = new PropulsorData(pos, initialDirection, 0.0f);
+
+        this.actualSpeed = LerpedFloat.linear().startWithValue(0).chase(0, 1 / 64f, LerpedFloat.Chaser.EXP);
     }
 
     @Override
@@ -139,12 +141,7 @@ public class ShipPropellerBlockEntity extends KineticBlockEntity {
             }
 
         } else {
-            PropulsorForcesApplier shipControl = PropulsorForcesApplier.get(level, blockPos);
 
-            if (shipControl != null) {
-                if (shipControl.getPropulsorAtPos(blockPos) == null)
-                    shipControl.addPropulsor(blockPos, this.propulsorData);
-            }
             if (thrustUpdateCooldown-- <= 0) {
                 thrustUpdateCooldown = 5;
                 updateThrust = true;
@@ -160,14 +157,17 @@ public class ShipPropellerBlockEntity extends KineticBlockEntity {
     }
 
     public void updateThrust(Ship ship) {
+        // Get the persistent data from forces applier
+        PropulsorForcesApplier shipControl = PropulsorForcesApplier.get(level, worldPosition);
+        if (shipControl == null) return;
+
+        PropulsorData persistentData = shipControl.getPropulsorAtPos(worldPosition);
+        if (persistentData == null) return;
 
         float RPM = this.actualSpeed.getValue();
-
-        //CRINGE x2
         int dirMultiplier = this.getBlockState().getValue(FACING).getOpposite().getAxisDirection().getStep();
 
         float estThrust = this.thrustCalculator.thrust(Math.abs(RPM));
-
         float shipVelocity = (float)ship.getVelocity().length();
 
         VSMarinePropulsionMod.LOGGER.info("SHIP SPEED: " + shipVelocity
@@ -179,12 +179,16 @@ public class ShipPropellerBlockEntity extends KineticBlockEntity {
                 .transformPosition(VectorConversionsMCKt.toJOMLD(this.getBlockPos())
                         .add(0.5, 0.5, 0.5)));
 
-        this.propulsorData.submerged = this.getLevel().isWaterAt(new BlockPos((int) transformedPosVector.x, (int) transformedPosVector.y, (int) transformedPosVector.z));
+        // Update the PERSISTENT data (used for physics)
+        persistentData.submerged = this.getLevel().isWaterAt(new BlockPos((int) transformedPosVector.x, (int) transformedPosVector.y, (int) transformedPosVector.z));
+        persistentData.thrust = this.thrustCalculator.thrust(RPM * dirMultiplier) * this.propellerHandedness;
 
-        this.propulsorData.thrust = this.thrustCalculator.thrust(RPM * dirMultiplier) * this.propellerHandedness;
+        // Also update our local reference (used for particles)
+        this.propulsorData.submerged = persistentData.submerged;
+        this.propulsorData.thrust = persistentData.thrust;
 
-
-        Vector3d thrustForce = ship.getTransform().getShipToWorldRotation().transform(this.propulsorData.thrustDirection, new Vector3d());
+        /*
+        Vector3d thrustForce = ship.getTransform().getShipToWorldRotation().transform(persistentData.thrustDirection, new Vector3d());
 
         ForceVectorData debugData = new ForceVectorData(
                 transformedPosVector,
@@ -194,6 +198,7 @@ public class ShipPropellerBlockEntity extends KineticBlockEntity {
 
         VSMarinePropulsionPacketHandler.CHANNEL.send(PacketDistributor.NEAR.with(() -> new PacketDistributor.TargetPoint(transformedPosVector.x, transformedPosVector.y, transformedPosVector.z, 64, level.dimension())), new ForceDebugPacket(debugData));
 
+         */
     }
 
     public void updateParticles(Ship ship) {
@@ -246,6 +251,28 @@ public class ShipPropellerBlockEntity extends KineticBlockEntity {
                         particleType,
                         particleOriginVector.x, particleOriginVector.y, particleOriginVector.z,
                         particleSpeed.x, particleSpeed.y, particleSpeed.z);
+            }
+        }
+    }
+
+    @Override
+    public void initialize() {
+        super.initialize();
+        syncWithPropulsorData();
+    }
+
+    private void syncWithPropulsorData() {
+        if (level == null || level.isClientSide) return;
+
+        PropulsorForcesApplier shipControl = PropulsorForcesApplier.get(level, worldPosition);
+        if (shipControl != null) {
+            PropulsorData existingData = shipControl.getPropulsorAtPos(worldPosition);
+            if (existingData != null) {
+                // Sync our reference with the persistent data
+                // We need to update our local propulsorData to match the persistent one
+                this.propulsorData.thrustDirection.set(existingData.thrustDirection);
+                this.propulsorData.thrust = existingData.thrust;
+                this.propulsorData.submerged = existingData.submerged;
             }
         }
     }

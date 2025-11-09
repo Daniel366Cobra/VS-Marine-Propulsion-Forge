@@ -5,6 +5,7 @@ import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour
 import com.simibubi.create.foundation.utility.animation.LerpedFloat;
 import io.github.daniel366cobra.vs_marine_propulsion.VSMarinePropulsionPacketHandler;
 import io.github.daniel366cobra.vs_marine_propulsion.blocks.control.utility.HelmAttachment;
+import io.github.daniel366cobra.vs_marine_propulsion.blocks.control.utility.HelmData;
 import io.github.daniel366cobra.vs_marine_propulsion.network.WheelAnglePacket;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.BlockPos;
@@ -46,6 +47,9 @@ public class HelmBlockEntity extends SmartBlockEntity {
     public int wheelAngle;
     public static int maxAngle;
 
+    // Track if this helm is the captain
+    private boolean isCaptain = false;
+
     public HelmBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState blockState) {
         super(type, pos, blockState);
         wheelAngle = 360;
@@ -58,36 +62,60 @@ public class HelmBlockEntity extends SmartBlockEntity {
     @Override
     public void initialize() {
         super.initialize();
+        // Sync with helm attachment when block entity loads
+        syncWithHelmAttachment();
     }
 
     @Override
     public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
     }
 
-    public boolean startRiding(Player player, boolean force, BlockPos pos, BlockState state, ServerLevel world) {
+    /**
+     * Sync this block entity with the helm attachment data
+     */
+    private void syncWithHelmAttachment() {
+        if (level == null || level.isClientSide) return;
 
-        for (int i = seats.size() - 1; i > 0; i--) {
-            if (!seats.get(i).isPassenger()) {
-                seats.get(i).kill();
-                seats.remove(i);
-            } else if (!seats.get(i).isAlive()) {
-                seats.remove(i);
+        LoadedServerShip ship = VSGameUtilsKt.getShipObjectManagingPos((ServerLevel) level, worldPosition);
+        if (ship != null) {
+            HelmAttachment helmAttachment = HelmAttachment.getOrCreate(ship);
+            if (helmAttachment != null) {
+                // Verify this helm is registered and get captain status
+                HelmData helmData = helmAttachment.getHelmData(worldPosition);
+                if (helmData != null) {
+                    this.isCaptain = helmData.isCaptain;
+                } else {
+                    // This helm isn't in the attachment - re-register it
+                    Direction facing = getBlockState().getValue(HelmBlock.FACING);
+                    helmAttachment.addHelm(facing, worldPosition);
+                    // Get the data after registration
+                    helmData = helmAttachment.getHelmData(worldPosition);
+                    if (helmData != null) {
+                        this.isCaptain = helmData.isCaptain;
+                    }
+                }
             }
         }
+    }
+
+    public boolean startRiding(Player player, boolean force, BlockPos pos, BlockState state, ServerLevel world) {
+        // Clean up unused seats
+        cleanupSeats();
 
         ShipMountingEntity seat = spawnSeat(pos, state, world);
-
         boolean ride = player.startRiding(seat, force);
 
-        if (ride) seats.add(seat);
+        if (ride) {
+            seats.add(seat);
+        } else {
+            seat.kill();
+        }
 
         return ride;
     }
 
     ShipMountingEntity spawnSeat(BlockPos pos, BlockState state, ServerLevel world) {
-        // USE THE CORRECT FACING PROPERTY
         Direction facing = state.getValue(HelmBlock.FACING);
-        BlockPos newPos = pos.relative(facing.getOpposite());
 
         Vector3dc mounterPos;
         if (facing == Direction.NORTH) {
@@ -101,7 +129,6 @@ public class HelmBlockEntity extends SmartBlockEntity {
         }
 
         ShipMountingEntity seatEntity = ValkyrienSkiesMod.SHIP_MOUNTING_ENTITY_TYPE.create(world);
-
         assert seatEntity != null;
         seatEntity.setPos(mounterPos.x(), mounterPos.y(), mounterPos.z());
         seatEntity.lookAt(EntityAnchorArgument.Anchor.EYES, new Vec3(pos.getX(), pos.getY(), pos.getZ()));
@@ -121,79 +148,64 @@ public class HelmBlockEntity extends SmartBlockEntity {
 
         Level level = this.getLevel();
         BlockPos blockPos = this.getBlockPos();
-        BlockState blockState = level.getBlockState(blockPos);
 
         if (!level.isClientSide) {
-
             if (VSGameUtilsKt.isBlockInShipyard(level, blockPos)) {
-                ChunkPos chunkPos = level.getChunk(blockPos).getPos();
-                LoadedServerShip ship = VSGameUtilsKt.getShipObjectManagingPos((ServerLevel) level, chunkPos);
-
+                LoadedServerShip ship = VSGameUtilsKt.getShipObjectManagingPos((ServerLevel) level, blockPos);
                 if (ship != null) {
                     SeatedControllingPlayer playerControl = ship.getAttachment(SeatedControllingPlayer.class);
 
-                    BlockEntity be = level.getBlockEntity(blockPos);
-                    if (be instanceof HelmBlockEntity blockEntity) {
-                        if (playerControl != null) {
-                            if (playerControl.getLeftImpulse() < 0) {
-                                blockEntity.rotateWheelRight(blockState, (ServerLevel)level, blockPos);
-                            } else if (playerControl.getLeftImpulse() > 0) {
-                                blockEntity.rotateWheelLeft(blockState, (ServerLevel)level, blockPos);
-                            }
+                    // Use 'this' directly instead of getting block entity from world
+                    if (playerControl != null) {
+                        if (playerControl.getLeftImpulse() < 0) {
+                            this.rotateWheelRight(getBlockState(), (ServerLevel) level, blockPos);
+                        } else if (playerControl.getLeftImpulse() > 0) {
+                            this.rotateWheelLeft(getBlockState(), (ServerLevel) level, blockPos);
                         }
-
-                        //Matrix3dc moiTensor = ship.getInertiaData().getMomentOfInertiaTensor();
-
                     }
                     notifyUpdate();
                 }
             }
-        }
-        else
-        {
+        } else {
             clientWheelAngle.tickChaser();
         }
     }
 
     @Override
     public void remove() {
+        if (level != null && !level.isClientSide) {
+            // Failsafe removal - keep this as backup
+            HelmAttachment helmAttachment = HelmAttachment.get(level, worldPosition);
+            if (helmAttachment != null) {
+                helmAttachment.removeHelm(worldPosition);
+            }
 
-        assert level != null;
-
-        if (!level.isClientSide) {
-
-            HelmAttachment helmAttachment = HelmAttachment.get(this.getLevel(), this.getBlockPos());
-            if (helmAttachment != null)
-                helmAttachment.removeHelm(this.getBlockPos());
-
-
-            seats.forEach((mountingEntity) -> {
-                mountingEntity.ejectPassengers();
-                mountingEntity.kill();
-            });
-
-            seats.clear();
-
+            cleanupSeats();
         }
         super.remove();
     }
 
-    public float getRenderWheelAngle(float partialTicks) {
-        if (level != null && level.isClientSide()) {
-            // Use LerpedFloat for smooth rendering
-            return clientWheelAngle.getValue(partialTicks);
-        }
-        return wheelAngle; // Fallback
+    private void cleanupSeats() {
+        seats.forEach(mountingEntity -> {
+            mountingEntity.ejectPassengers();
+            mountingEntity.kill();
+        });
+        seats.clear();
     }
 
+    public float getRenderWheelAngle(float partialTicks) {
+        if (level != null && level.isClientSide()) {
+            return clientWheelAngle.getValue(partialTicks);
+        }
+        return wheelAngle;
+    }
 
     public boolean rotateWheelRight(BlockState state, ServerLevel world, BlockPos pos) {
         boolean success = false;
-        if (wheelAngle-wheelInterval >= 0) {
-            wheelAngle-=wheelInterval;
+        if (wheelAngle - wheelInterval >= 0) {
+            wheelAngle -= wheelInterval;
             playWheelSounds(world, pos);
             success = true;
-
             clientWheelAngle.chase(wheelAngle, 0.2f, LerpedFloat.Chaser.EXP);
         }
 
@@ -208,11 +220,10 @@ public class HelmBlockEntity extends SmartBlockEntity {
 
     public boolean rotateWheelLeft(BlockState state, ServerLevel world, BlockPos pos) {
         boolean success = false;
-        if (wheelAngle+wheelInterval <= 720) {
-            wheelAngle+=wheelInterval;
+        if (wheelAngle + wheelInterval <= 720) {
+            wheelAngle += wheelInterval;
             playWheelSounds(world, pos);
             success = true;
-
             clientWheelAngle.chase(wheelAngle, 0.2f, LerpedFloat.Chaser.EXP);
         }
 
@@ -226,20 +237,16 @@ public class HelmBlockEntity extends SmartBlockEntity {
     }
 
     public float getRudderAngle() {
-        // Map wheel angle (0-720) to rudder angle (-40° to +40°)
-        // 360 = neutral (0° rudder)
-        // 0 = full left (-40° rudder)
-        // 720 = full right (+40° rudder)
-        return (wheelAngle - 360f) / 9f; // 360° wheel range = 40° rudder range
+        return (wheelAngle - 360f) / 9f;
     }
 
     private void playWheelSounds(Level world, BlockPos pos) {
-        if ((double)wheelAngle/ HelmBlockEntity.maxAngle == 0.5) {
+        if ((double) wheelAngle / maxAngle == 0.5) {
             world.playSound(null, pos.below(), SoundEvents.BAMBOO_WOOD_BUTTON_CLICK_ON,
                     SoundSource.BLOCKS, 1.5f, world.getRandom().nextFloat() * 0.1F + 0.9F);
             world.playSound(null, pos.below(), SoundEvents.ARMOR_EQUIP_CHAIN,
                     SoundSource.BLOCKS, 0.6f, world.getRandom().nextFloat() * 0.1F + 0.9F);
-        } else if (wheelAngle == HelmBlockEntity.maxAngle || wheelAngle == 0) {
+        } else if (wheelAngle == maxAngle || wheelAngle == 0) {
             world.playSound(null, pos.below(), SoundEvents.BAMBOO_WOOD_BUTTON_CLICK_ON,
                     SoundSource.BLOCKS, 1.5f, world.getRandom().nextFloat() * 0.1F + 0.9F);
         }
@@ -247,19 +254,14 @@ public class HelmBlockEntity extends SmartBlockEntity {
 
     @Override
     protected void read(CompoundTag tag, boolean clientPacket) {
-        //VSMarinePropulsionMod.LOGGER.info("Reading EOT Block Entity!");
         super.read(tag, clientPacket);
         wheelAngle = tag.getInt("WheelAngle");
-
         clientWheelAngle.chase(wheelAngle, 0.2f, LerpedFloat.Chaser.EXP);
-
     }
 
     @Override
     public void write(CompoundTag tag, boolean clientPacket) {
-        //VSMarinePropulsionMod.LOGGER.info("Writing EOT Block Entity!");
         super.write(tag, clientPacket);
-
         tag.putInt("WheelAngle", wheelAngle);
     }
 
@@ -267,4 +269,7 @@ public class HelmBlockEntity extends SmartBlockEntity {
         return wheelAngle;
     }
 
+    public boolean isCaptain() {
+        return isCaptain;
+    }
 }

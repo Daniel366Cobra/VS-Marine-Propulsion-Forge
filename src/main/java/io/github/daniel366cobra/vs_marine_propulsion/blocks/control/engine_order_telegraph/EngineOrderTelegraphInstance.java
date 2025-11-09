@@ -40,7 +40,7 @@ public class EngineOrderTelegraphInstance extends BlockEntityInstance<EngineOrde
         if (!blockEntity.clientLeverState.settled())
             animateLever();
     }
-
+    //TODO fix lever animation pivot
     protected void animateLever() {
         float state = blockEntity.clientLeverState.getValue(AnimationTickHolder.getPartialTicks());
 
@@ -49,9 +49,9 @@ public class EngineOrderTelegraphInstance extends BlockEntityInstance<EngineOrde
         if (blockState.getValue(EngineOrderTelegraphBlock.FACE) == AttachFace.WALL
                 || blockState.getValue(EngineOrderTelegraphBlock.FACE) == AttachFace.CEILING) angle = -angle;
 
-        transform(handle.loadIdentity()).translate(1 / 2f, 1 / 4f, 1 / 2f)
+        transform(handle.loadIdentity()).translate(0.5f, 0.25f, 0.5f)
                 .rotate(Direction.EAST, angle)
-                .translate(-1 / 2f, -1 / 4f, -1 / 2f);
+                .translate(-0.5f, -0.25f, -0.5f);
     }
 
     @Override

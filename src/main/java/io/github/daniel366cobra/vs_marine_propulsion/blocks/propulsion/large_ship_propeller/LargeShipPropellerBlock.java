@@ -4,6 +4,7 @@ import com.simibubi.create.content.kinetics.base.DirectionalKineticBlock;
 import com.simibubi.create.foundation.block.IBE;
 import io.github.daniel366cobra.vs_marine_propulsion.VSMarinePropulsionEntities;
 import io.github.daniel366cobra.vs_marine_propulsion.blocks.propulsion.ShipPropellerBlockEntity;
+import io.github.daniel366cobra.vs_marine_propulsion.blocks.propulsion.utility.PropulsorData;
 import io.github.daniel366cobra.vs_marine_propulsion.blocks.propulsion.utility.PropulsorForcesApplier;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -14,6 +15,8 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
+import org.joml.Vector3d;
+import org.valkyrienskies.mod.common.util.VectorConversionsMCKt;
 
 public class LargeShipPropellerBlock extends DirectionalKineticBlock implements IBE<ShipPropellerBlockEntity> {
 
@@ -24,6 +27,20 @@ public class LargeShipPropellerBlock extends DirectionalKineticBlock implements 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         super.createBlockStateDefinition(builder);
+    }
+
+    @Override
+    public void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean isMoving) {
+        super.onPlace(state, level, pos, oldState, isMoving);
+        if (level.isClientSide()) return;
+
+        PropulsorForcesApplier shipControl = PropulsorForcesApplier.get(level, pos);
+        if (shipControl != null) {
+            // Create initial propulsor data
+            Vector3d thrustDir = VectorConversionsMCKt.toJOMLD(state.getValue(FACING).getOpposite().getNormal());
+            PropulsorData data = new PropulsorData(pos, thrustDir, 0.0f);
+            shipControl.addPropulsor(pos, data);
+        }
     }
 
     @Override
