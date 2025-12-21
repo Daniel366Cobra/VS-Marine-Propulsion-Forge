@@ -61,7 +61,7 @@ public class HelmBlockEntity extends SmartBlockEntity {
     public void initialize() {
         super.initialize();
         // Sync with helm attachment when block entity loads
-        syncWithHelmAttachment();
+        syncWithShipAttachment();
     }
 
     @Override
@@ -69,9 +69,9 @@ public class HelmBlockEntity extends SmartBlockEntity {
     }
 
     /**
-     * Sync this block entity with the helm attachment data
+     * Sync this block entity with the ship attachment data
      */
-    private void syncWithHelmAttachment() {
+    private void syncWithShipAttachment() {
         if (level == null || level.isClientSide) return;
 
         LoadedServerShip ship = VSGameUtilsKt.getShipObjectManagingPos((ServerLevel) level, worldPosition);

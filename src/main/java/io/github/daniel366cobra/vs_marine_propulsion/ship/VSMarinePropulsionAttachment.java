@@ -63,64 +63,6 @@ public class VSMarinePropulsionAttachment implements ShipForcesInducer {
         return ship != null ? getOrCreate(ship) : null;
     }
 
-    //---------------CONTROL SURFACES--------------
-    public void addControlSurface(BlockPos pos, ControlSurfaceData data) {
-        ControlSurfaceData newData = new ControlSurfaceData(pos, data.normalDirection, data.axisDirection,
-                data.rudderBlocks);
-        newData.angle = data.angle;
-        newData.submergedPercentage = data.submergedPercentage;
-        controlSurfaces.add(newData);
-    }
-
-    public void removeControlSurface(BlockPos pos) {
-        // Create temporary object for removal (uses position-based equality)
-        ControlSurfaceData tempForRemoval = new ControlSurfaceData(pos, new Vector3d(), new Vector3d(), 0);
-        controlSurfaces.remove(tempForRemoval);
-    }
-
-    @Nullable
-    public ControlSurfaceData getControlSurfaceAtPos(BlockPos pos) {
-        // Create temporary object for lookup
-        ControlSurfaceData tempForLookup = new ControlSurfaceData(pos, new Vector3d(), new Vector3d(), 0);
-        for (ControlSurfaceData data : controlSurfaces) {
-            if (data.equals(tempForLookup)) {
-                return data;
-            }
-        }
-        return null;
-    }
-
-    //---------------PROPULSORS--------------
-    public void addPropulsor(BlockPos pos, PropulsorData data) {
-        // Create new data with the correct position to ensure consistency
-        PropulsorData newData = new PropulsorData(pos, data.thrustDirection, data.thrust);
-        newData.submerged = data.submerged;
-        propulsors.add(newData);
-    }
-
-    public void removePropulsor(BlockPos pos) {
-        // Create temporary object for removal (uses position-based equality)
-        PropulsorData tempForRemoval = new PropulsorData(pos, new Vector3d(), 0.0f);
-        propulsors.remove(tempForRemoval);
-    }
-
-    @Nullable
-    public PropulsorData getPropulsorAtPos(BlockPos pos) {
-        // Create temporary object for lookup
-        PropulsorData tempForLookup = new PropulsorData(pos, new Vector3d(), 0.0f);
-        for (PropulsorData data : propulsors) {
-            if (data.equals(tempForLookup)) {
-                return data;
-            }
-        }
-        return null;
-    }
-
-    @JsonIgnore
-    public int getTotalPropulsors() {
-        return propulsors.size();
-    }
-
     //---------------HELMS--------------
     public boolean addHelm(Direction helmFacing, BlockPos helmPos) {
         Direction requiredDirection = getCaptainDirection();
@@ -215,6 +157,64 @@ public class VSMarinePropulsionAttachment implements ShipForcesInducer {
         return !helms.isEmpty();
     }
 
+    //---------------PROPULSORS--------------
+    public void addPropulsor(BlockPos pos, PropulsorData data) {
+        // Create new data with the correct position to ensure consistency
+        PropulsorData newData = new PropulsorData(pos, data.thrustDirection, data.thrust);
+        newData.submerged = data.submerged;
+        propulsors.add(newData);
+    }
+
+    public void removePropulsor(BlockPos pos) {
+        // Create temporary object for removal (uses position-based equality)
+        PropulsorData tempForRemoval = new PropulsorData(pos, new Vector3d(), 0.0f);
+        propulsors.remove(tempForRemoval);
+    }
+
+    @Nullable
+    public PropulsorData getPropulsorAtPos(BlockPos pos) {
+        // Create temporary object for lookup
+        PropulsorData tempForLookup = new PropulsorData(pos, new Vector3d(), 0.0f);
+        for (PropulsorData data : propulsors) {
+            if (data.equals(tempForLookup)) {
+                return data;
+            }
+        }
+        return null;
+    }
+
+    @JsonIgnore
+    public int getTotalPropulsors() {
+        return propulsors.size();
+    }
+
+    //---------------CONTROL SURFACES--------------
+    public void addControlSurface(BlockPos pos, ControlSurfaceData data) {
+        ControlSurfaceData newData = new ControlSurfaceData(pos, data.normalDirection, data.axisDirection,
+                data.rudderBlocks);
+        newData.angle = data.angle;
+        newData.submergedPercentage = data.submergedPercentage;
+        controlSurfaces.add(newData);
+    }
+
+    public void removeControlSurface(BlockPos pos) {
+        // Create temporary object for removal (uses position-based equality)
+        ControlSurfaceData tempForRemoval = new ControlSurfaceData(pos, new Vector3d(), new Vector3d(), 0);
+        controlSurfaces.remove(tempForRemoval);
+    }
+
+    @Nullable
+    public ControlSurfaceData getControlSurfaceAtPos(BlockPos pos) {
+        // Create temporary object for lookup
+        ControlSurfaceData tempForLookup = new ControlSurfaceData(pos, new Vector3d(), new Vector3d(), 0);
+        for (ControlSurfaceData data : controlSurfaces) {
+            if (data.equals(tempForLookup)) {
+                return data;
+            }
+        }
+        return null;
+    }
+
     //---------------PHYSICS--------------
     @Override
     public void applyForces(PhysShip physicsShip) {
@@ -250,83 +250,48 @@ public class VSMarinePropulsionAttachment implements ShipForcesInducer {
         });
     }
 
-    //TODO NOT WORKING
+    //TODO WORKS BUT NEEDS ACC PHYSICS
     private void applyControlForces(PhysShipImpl physShip) {
 
         final ShipTransform transform = physShip.getTransform();
 
-        Vector3d shipForward = getForwardVector();
-
         controlSurfaces.forEach(data -> {
-            float rudderAngleDeg = data.angle; // -40 to +40 degrees
-            float submergedPercentage = data.submergedPercentage;
-            int rudderBlocks = data.rudderBlocks;
 
-            if (submergedPercentage < 0.05f) return;
+            // Skip if not submerged
+            if (data.submergedPercentage < 0.05f) {
+                return;
+            }
+            // Skip if no angle
+            if (Math.abs(data.angle) < 0.1f) {
+                return;
+            }
 
-            // Calculate position in ship coordinates
-            Vector3d rudderPosShip = VectorConversionsMCKt.toJOMLD(data.getBlockPos())
+            // 2. Simple force calculation
+            double baseForce = 5000.0; // Newtons - make this LARGE to see effect
+            double forceMagnitude = baseForce *
+                    data.angle / 40.0 * // Scale by angle (±40° max)
+                    data.submergedPercentage * // Scale by submersion
+                    data.rudderBlocks; // Scale by size
+
+
+            Vector3d forceDirection = new Vector3d(data.normalDirection);
+
+            forceDirection.normalize();
+
+            // 4. Apply force
+            Vector3d forceVector = forceDirection.mul(forceMagnitude);
+
+            // 5. Convert to world coordinates and apply
+            Vector3d forceWorld = transform.getShipToWorld().transformDirection(forceVector, new Vector3d());
+            Vector3d rudderPos = VectorConversionsMCKt.toJOMLD(data.getBlockPos())
                     .add(0.5, 0.5, 0.5, new Vector3d())
                     .sub(transform.getPositionInShip());
 
-            // Get ship velocity and angular velocity in ship coordinates
-            Vector3d shipVelocity = new Vector3d(physShip.getPoseVel().getVel());
-            Vector3d shipAngularVel = new Vector3d(physShip.getPoseVel().getOmega());
-            double shipSpeed = shipVelocity.length();
-
-            if (shipSpeed < 0.1) return;
-
-            // Water flow direction is OPPOSITE of ship's forward motion
-            Vector3d waterFlowDir = new Vector3d(shipForward).negate();
-
-            // BUT! If ship is turning, water flow has additional component
-            // At the rudder position, there's rotational velocity: ω × r
-            Vector3d rotationalFlow = new Vector3d();
-            shipAngularVel.cross(rudderPosShip, rotationalFlow);
-
-            // Total water flow = -shipForward + rotational component
-            Vector3d totalWaterFlow = new Vector3d(waterFlowDir).add(rotationalFlow);
-            totalWaterFlow.normalize();
-
-            // Convert rudder angle to radians
-            double rudderAngleRad = Math.toRadians(rudderAngleDeg);
-
-            // Rotate rudder normal by rudder angle around axis
-            Vector3d deflectedNormal = new Vector3d(data.normalDirection);
-            deflectedNormal.rotateAxis(rudderAngleRad,
-                    data.axisDirection.x, data.axisDirection.y, data.axisDirection.z);
-
-            // Effective angle of attack = angle between water flow and deflected rudder
-            double dot = totalWaterFlow.dot(deflectedNormal);
-            double effectiveAoA = Math.asin(Math.min(1.0, Math.max(-1.0, dot)));
-
-            // Calculate lift magnitude
-            double liftMagnitude = calculateLiftForce(
-                    Math.abs(effectiveAoA), shipSpeed, rudderBlocks, submergedPercentage
-            );
-
-            if (liftMagnitude < 0.001) return;
-
-            // Lift direction: perpendicular to both water flow and rudder axis
-            Vector3d liftDirection = new Vector3d();
-            totalWaterFlow.cross(data.axisDirection, liftDirection);
-            liftDirection.normalize();
-
-            // Apply sign based on EFFECTIVE AoA, not just rudder angle
-            // Positive AoA creates lift in one direction, negative in opposite
-            if (effectiveAoA < 0) {
-                liftDirection.negate();
-            }
-
-            // Apply force
-            Vector3d liftForce = new Vector3d(liftDirection).mul(liftMagnitude);
-            physShip.applyInvariantForceToPos(liftForce, rudderPosShip);
 
             // DEBUG
-            System.out.println(String.format(
-                    "Rudder: cmd=%.1f°, AoA=%.1f°, speed=%.2f, force=%.2f",
-                    rudderAngleDeg, Math.toDegrees(effectiveAoA), shipSpeed, liftMagnitude
-            ));
+            System.out.println("Rudder update: angle=" + data.angle);
+
+            physShip.applyInvariantForceToPos(forceWorld, rudderPos);
         });
     }
 

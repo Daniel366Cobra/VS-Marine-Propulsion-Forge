@@ -144,7 +144,6 @@ public class RudderBearingBlockEntity extends MechanicalBearingBlockEntity {
         BlockPos blockPos = this.getBlockPos();
         ControlledContraptionEntity controlledContraption = this.getMovedContraption();
         if (controlledContraption == null) {
-            // Lost our contraption - scuttle the data
             scuttleControlSurfaceData();
             return;
         }
@@ -153,23 +152,36 @@ public class RudderBearingBlockEntity extends MechanicalBearingBlockEntity {
         if (ship == null) return;
 
         if (!level.isClientSide && !isVirtual()) {
-            // Clamp angle and update control surface data
+            // Clamp angle
             if (this.angle > 40) this.angle = 40;
             else if (this.angle < -40) this.angle = -40;
 
-            this.controlSurfaceData.angle = this.angle;
-
-            // Register/update with force applier
+            // Get the attachment
             VSMarinePropulsionAttachment shipControl = VSMarinePropulsionAttachment.get(level, blockPos);
-            if (shipControl != null) {
-                shipControl.addControlSurface(blockPos, this.controlSurfaceData);
+            if (shipControl == null) return;
+
+            // Get OR create the persistent data
+            ControlSurfaceData persistentData = shipControl.getControlSurfaceAtPos(blockPos);
+            if (persistentData == null) {
+                // First time - create and add
+                persistentData = new ControlSurfaceData(
+                        blockPos,
+                        this.controlSurfaceData.normalDirection,
+                        this.controlSurfaceData.axisDirection,
+                        this.controlSurfaceData.rudderBlocks
+                );
+                shipControl.addControlSurface(blockPos, persistentData);
             }
 
-            // Update submerged status periodically
+            // Update the persistent data (like propulsors do!)
+            persistentData.angle = this.angle;
+
+            // Update submerged percentage
             fluidSamplingCooldown++;
             if (fluidSamplingCooldown > 10) {
                 fluidSamplingCooldown = 0;
                 updateSubmergedPercentage(controlledContraption, ship);
+                persistentData.submergedPercentage = this.controlSurfaceData.submergedPercentage;
             }
         }
     }

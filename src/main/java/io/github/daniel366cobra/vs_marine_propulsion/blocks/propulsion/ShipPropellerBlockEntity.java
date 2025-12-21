@@ -187,18 +187,6 @@ public class ShipPropellerBlockEntity extends KineticBlockEntity {
         this.propulsorData.submerged = persistentData.submerged;
         this.propulsorData.thrust = persistentData.thrust;
 
-        /*
-        Vector3d thrustForce = ship.getTransform().getShipToWorldRotation().transform(persistentData.thrustDirection, new Vector3d());
-
-        ForceVectorData debugData = new ForceVectorData(
-                transformedPosVector,
-                thrustForce,
-                2 // Display for 2 ticks
-        );
-
-        VSMarinePropulsionPacketHandler.CHANNEL.send(PacketDistributor.NEAR.with(() -> new PacketDistributor.TargetPoint(transformedPosVector.x, transformedPosVector.y, transformedPosVector.z, 64, level.dimension())), new ForceDebugPacket(debugData));
-
-         */
     }
 
     public void updateParticles(Ship ship) {
