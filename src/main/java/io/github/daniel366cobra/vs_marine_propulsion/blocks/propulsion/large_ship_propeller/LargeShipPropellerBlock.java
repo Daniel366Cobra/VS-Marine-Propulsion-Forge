@@ -4,8 +4,8 @@ import com.simibubi.create.content.kinetics.base.DirectionalKineticBlock;
 import com.simibubi.create.foundation.block.IBE;
 import io.github.daniel366cobra.vs_marine_propulsion.VSMarinePropulsionEntities;
 import io.github.daniel366cobra.vs_marine_propulsion.blocks.propulsion.ShipPropellerBlockEntity;
-import io.github.daniel366cobra.vs_marine_propulsion.blocks.propulsion.utility.PropulsorData;
-import io.github.daniel366cobra.vs_marine_propulsion.blocks.propulsion.utility.PropulsorForcesApplier;
+import io.github.daniel366cobra.vs_marine_propulsion.ship.VSMarinePropulsionAttachment;
+import io.github.daniel366cobra.vs_marine_propulsion.ship.data.PropulsorData;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.item.context.BlockPlaceContext;
@@ -34,7 +34,7 @@ public class LargeShipPropellerBlock extends DirectionalKineticBlock implements 
         super.onPlace(state, level, pos, oldState, isMoving);
         if (level.isClientSide()) return;
 
-        PropulsorForcesApplier shipControl = PropulsorForcesApplier.get(level, pos);
+        VSMarinePropulsionAttachment shipControl = VSMarinePropulsionAttachment.get(level, pos);
         if (shipControl != null) {
             // Create initial propulsor data
             Vector3d thrustDir = VectorConversionsMCKt.toJOMLD(state.getValue(FACING).getOpposite().getNormal());
@@ -45,11 +45,12 @@ public class LargeShipPropellerBlock extends DirectionalKineticBlock implements 
 
     @Override
     public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
+        if (!level.isClientSide()) {
+            VSMarinePropulsionAttachment shipControl = VSMarinePropulsionAttachment.get(level, pos);
+            if (shipControl != null)
+                shipControl.removePropulsor(pos);
+        }
         super.onRemove(state, level, pos, newState, isMoving);
-        if (level.isClientSide()) return;
-        PropulsorForcesApplier shipControl = PropulsorForcesApplier.get(level, pos);
-        if (shipControl != null)
-            shipControl.removePropulsor(pos);
     }
 
     @Override

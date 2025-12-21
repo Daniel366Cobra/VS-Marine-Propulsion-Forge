@@ -6,8 +6,8 @@ import com.simibubi.create.content.contraptions.ControlledContraptionEntity;
 import com.simibubi.create.content.contraptions.bearing.BearingBlock;
 import com.simibubi.create.content.contraptions.bearing.MechanicalBearingBlockEntity;
 import io.github.daniel366cobra.vs_marine_propulsion.blocks.steering.RudderContraption;
-import io.github.daniel366cobra.vs_marine_propulsion.blocks.steering.utility.ControlSurfaceData;
-import io.github.daniel366cobra.vs_marine_propulsion.blocks.steering.utility.ControlSurfaceForcesApplier;
+import io.github.daniel366cobra.vs_marine_propulsion.ship.VSMarinePropulsionAttachment;
+import io.github.daniel366cobra.vs_marine_propulsion.ship.data.ControlSurfaceData;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -41,18 +41,15 @@ public class RudderBearingBlockEntity extends MechanicalBearingBlockEntity {
     @Override
     public void remove() {
         if (!this.getLevel().isClientSide()) {
-            ControlSurfaceForcesApplier shipControl = ControlSurfaceForcesApplier.get(this.getLevel(), this.getBlockPos());
-            if (shipControl != null)
-                shipControl.removeControlSurface(this.getBlockPos());
+            cleanupForceApplier();
+            super.remove();
         }
-        super.remove();
     }
 
     private void cleanupForceApplier() {
-        ControlSurfaceForcesApplier shipControl = ControlSurfaceForcesApplier.get(this.getLevel(), this.getBlockPos());
-        if (shipControl != null) {
+        VSMarinePropulsionAttachment shipControl = VSMarinePropulsionAttachment.get(this.getLevel(), this.getBlockPos());
+        if (shipControl != null)
             shipControl.removeControlSurface(this.getBlockPos());
-        }
     }
 
     private void scuttleControlSurfaceData() {
@@ -94,10 +91,11 @@ public class RudderBearingBlockEntity extends MechanicalBearingBlockEntity {
 
         // Create FRESH control surface data for the new contraption
         this.controlSurfaceData = new ControlSurfaceData(
+                worldPosition,
                 rudderContraption.getNormalVector(),
                 rudderContraption.getRotationAxisVector(),
-                0.0f, // Start at neutral angle
-                rudderContraption.getRudderBlocks());
+                rudderContraption.getRudderBlocks()
+        );
 
         rudderContraption.removeBlocksFromWorld(level, BlockPos.ZERO);
         movedContraption = ControlledContraptionEntity.create(level, this, rudderContraption);
@@ -162,7 +160,7 @@ public class RudderBearingBlockEntity extends MechanicalBearingBlockEntity {
             this.controlSurfaceData.angle = this.angle;
 
             // Register/update with force applier
-            ControlSurfaceForcesApplier shipControl = ControlSurfaceForcesApplier.get(level, blockPos);
+            VSMarinePropulsionAttachment shipControl = VSMarinePropulsionAttachment.get(level, blockPos);
             if (shipControl != null) {
                 shipControl.addControlSurface(blockPos, this.controlSurfaceData);
             }
@@ -230,9 +228,9 @@ public class RudderBearingBlockEntity extends MechanicalBearingBlockEntity {
             // ALWAYS recreate control surface data on attach for consistency
             Direction direction = getBlockState().getValue(RudderBearingBlock.FACING);
             this.controlSurfaceData = new ControlSurfaceData(
+                    worldPosition,
                     rudderContraption.getNormalVector(),
                     rudderContraption.getRotationAxisVector(),
-                    this.angle, // Use current angle
                     rudderContraption.getRudderBlocks()
             );
 

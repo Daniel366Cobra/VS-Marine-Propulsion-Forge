@@ -1,6 +1,5 @@
 package io.github.daniel366cobra.vs_marine_propulsion.items;
-
-import io.github.daniel366cobra.vs_marine_propulsion.blocks.control.utility.HelmAttachment;
+import io.github.daniel366cobra.vs_marine_propulsion.ship.VSMarinePropulsionAttachment;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
@@ -39,13 +38,12 @@ public class HelmBlockItem extends BlockItem {
 
             if (ship != null) {
 
-
-                HelmAttachment helmAttachment = HelmAttachment.getOrCreate(ship);
+                VSMarinePropulsionAttachment shipControl = VSMarinePropulsionAttachment.getOrCreate(ship);
 
                 Direction intendedFacing = context.getHorizontalDirection();
 
                 // Check if there's already a captain
-                Direction requiredDirection = helmAttachment.getCaptainDirection();
+                Direction requiredDirection = shipControl.getCaptainDirection();
 
                 if (requiredDirection != null) {
                     // There's a captain - validate facing

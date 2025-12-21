@@ -4,8 +4,8 @@ import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import com.simibubi.create.foundation.utility.animation.LerpedFloat;
 import io.github.daniel366cobra.vs_marine_propulsion.VSMarinePropulsionPacketHandler;
-import io.github.daniel366cobra.vs_marine_propulsion.blocks.control.utility.HelmAttachment;
-import io.github.daniel366cobra.vs_marine_propulsion.blocks.control.utility.HelmData;
+import io.github.daniel366cobra.vs_marine_propulsion.ship.VSMarinePropulsionAttachment;
+import io.github.daniel366cobra.vs_marine_propulsion.ship.data.HelmData;
 import io.github.daniel366cobra.vs_marine_propulsion.network.WheelAnglePacket;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.BlockPos;
@@ -16,9 +16,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
@@ -78,18 +76,18 @@ public class HelmBlockEntity extends SmartBlockEntity {
 
         LoadedServerShip ship = VSGameUtilsKt.getShipObjectManagingPos((ServerLevel) level, worldPosition);
         if (ship != null) {
-            HelmAttachment helmAttachment = HelmAttachment.getOrCreate(ship);
-            if (helmAttachment != null) {
+            VSMarinePropulsionAttachment shipControl = VSMarinePropulsionAttachment.getOrCreate(ship);
+            if (shipControl != null) {
                 // Verify this helm is registered and get captain status
-                HelmData helmData = helmAttachment.getHelmData(worldPosition);
+                HelmData helmData = shipControl.getHelmData(worldPosition);
                 if (helmData != null) {
                     this.isCaptain = helmData.isCaptain;
                 } else {
                     // This helm isn't in the attachment - re-register it
                     Direction facing = getBlockState().getValue(HelmBlock.FACING);
-                    helmAttachment.addHelm(facing, worldPosition);
+                    shipControl.addHelm(facing, worldPosition);
                     // Get the data after registration
-                    helmData = helmAttachment.getHelmData(worldPosition);
+                    helmData = shipControl.getHelmData(worldPosition);
                     if (helmData != null) {
                         this.isCaptain = helmData.isCaptain;
                     }
@@ -175,9 +173,9 @@ public class HelmBlockEntity extends SmartBlockEntity {
     public void remove() {
         if (level != null && !level.isClientSide) {
             // Failsafe removal - keep this as backup
-            HelmAttachment helmAttachment = HelmAttachment.get(level, worldPosition);
-            if (helmAttachment != null) {
-                helmAttachment.removeHelm(worldPosition);
+            VSMarinePropulsionAttachment shipControl = VSMarinePropulsionAttachment.get(level, worldPosition);
+            if (shipControl != null) {
+                shipControl.removeHelm(worldPosition);
             }
 
             cleanupSeats();

@@ -9,12 +9,9 @@ import com.simibubi.create.foundation.utility.AngleHelper;
 import com.simibubi.create.foundation.utility.VecHelper;
 import com.simibubi.create.foundation.utility.animation.LerpedFloat;
 import io.github.daniel366cobra.vs_marine_propulsion.VSMarinePropulsionMod;
-import io.github.daniel366cobra.vs_marine_propulsion.VSMarinePropulsionPacketHandler;
-import io.github.daniel366cobra.vs_marine_propulsion.blocks.propulsion.utility.PropulsorForcesApplier;
-import io.github.daniel366cobra.vs_marine_propulsion.debug.ForceDebugPacket;
-import io.github.daniel366cobra.vs_marine_propulsion.debug.ForceVectorData;
 import io.github.daniel366cobra.vs_marine_propulsion.blocks.propulsion.utility.PropellerThrustCalculator;
-import io.github.daniel366cobra.vs_marine_propulsion.blocks.propulsion.utility.PropulsorData;
+import io.github.daniel366cobra.vs_marine_propulsion.ship.VSMarinePropulsionAttachment;
+import io.github.daniel366cobra.vs_marine_propulsion.ship.data.PropulsorData;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
@@ -25,7 +22,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.network.PacketDistributor;
 import org.joml.Vector3d;
 import org.valkyrienskies.core.api.ships.Ship;
 import org.valkyrienskies.mod.common.VSGameUtilsKt;
@@ -101,11 +97,15 @@ public class ShipPropellerBlockEntity extends KineticBlockEntity {
     @Override
     public void remove() {
         if (!this.getLevel().isClientSide()) {
-            PropulsorForcesApplier shipControl = PropulsorForcesApplier.get(this.getLevel(), this.getBlockPos());
-            if (shipControl != null)
-                shipControl.removePropulsor(this.getBlockPos());
+            cleanupForceApplier();
         }
         super.remove();
+    }
+
+    private void cleanupForceApplier() {
+        VSMarinePropulsionAttachment shipControl = VSMarinePropulsionAttachment.get(this.getLevel(), this.getBlockPos());
+        if (shipControl != null)
+            shipControl.removePropulsor(this.getBlockPos());
     }
 
     @Override
@@ -158,7 +158,7 @@ public class ShipPropellerBlockEntity extends KineticBlockEntity {
 
     public void updateThrust(Ship ship) {
         // Get the persistent data from forces applier
-        PropulsorForcesApplier shipControl = PropulsorForcesApplier.get(level, worldPosition);
+        VSMarinePropulsionAttachment shipControl = VSMarinePropulsionAttachment.get(level, worldPosition);
         if (shipControl == null) return;
 
         PropulsorData persistentData = shipControl.getPropulsorAtPos(worldPosition);
@@ -203,8 +203,6 @@ public class ShipPropellerBlockEntity extends KineticBlockEntity {
 
     public void updateParticles(Ship ship) {
 
-        //VSMarinePropulsionMod.LOGGER.info("ANGLE: " + angle + ", SPEED: " + this.getSpeed() + ", HANDEDNESS: " + propellerHandedness);
-
         Vec3 shipyardBlockCenter = this.getBlockPos().getCenter();
         Vector3d worldBlockCenter = ship.getTransform().getShipToWorld().transformPosition(new Vector3d(shipyardBlockCenter.x, shipyardBlockCenter.y, shipyardBlockCenter.z));
 
@@ -222,7 +220,6 @@ public class ShipPropellerBlockEntity extends KineticBlockEntity {
         float shipSpeed = (float) ship.getVelocity().length();
         float propellerSpeed = this.actualSpeed.getValue();
         int absSpeed = (int) Math.abs(propellerSpeed);
-
 
         //TODO: get rid of (-1) in particles speed direction?
         float particleSpeedScalar = (float) (Math.PI * propellerRadius * Math.tan(Math.toRadians(propellerPitchAngle))
@@ -264,7 +261,7 @@ public class ShipPropellerBlockEntity extends KineticBlockEntity {
     private void syncWithPropulsorData() {
         if (level == null || level.isClientSide) return;
 
-        PropulsorForcesApplier shipControl = PropulsorForcesApplier.get(level, worldPosition);
+        VSMarinePropulsionAttachment shipControl = VSMarinePropulsionAttachment.get(level, worldPosition);
         if (shipControl != null) {
             PropulsorData existingData = shipControl.getPropulsorAtPos(worldPosition);
             if (existingData != null) {
@@ -278,7 +275,6 @@ public class ShipPropellerBlockEntity extends KineticBlockEntity {
     }
 
     private static class RotationDirectionValueBox extends CenteredSideValueBoxTransform {
-
         public RotationDirectionValueBox() {
             super((state, direction) -> {
                 Direction.Axis axis = direction.getAxis();

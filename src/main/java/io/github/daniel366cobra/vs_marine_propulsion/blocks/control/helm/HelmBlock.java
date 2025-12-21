@@ -3,7 +3,7 @@ package io.github.daniel366cobra.vs_marine_propulsion.blocks.control.helm;
 import com.simibubi.create.foundation.block.IBE;
 import io.github.daniel366cobra.vs_marine_propulsion.VSMarinePropulsionEntities;
 import io.github.daniel366cobra.vs_marine_propulsion.VSMarinePropulsionShapes;
-import io.github.daniel366cobra.vs_marine_propulsion.blocks.control.utility.HelmAttachment;
+import io.github.daniel366cobra.vs_marine_propulsion.ship.VSMarinePropulsionAttachment;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
@@ -66,10 +66,10 @@ public class HelmBlock extends HorizontalDirectionalBlock implements IBE<HelmBlo
         if (VSGameUtilsKt.isBlockInShipyard(world, pos)) {
             LoadedServerShip ship = VSGameUtilsKt.getShipObjectManagingPos((ServerLevel) world, pos);
             if (ship != null) {
-                HelmAttachment helmAttachment = HelmAttachment.getOrCreate(ship);
+                VSMarinePropulsionAttachment shipControl = VSMarinePropulsionAttachment.getOrCreate(ship);
                 Direction helmFacing = state.getValue(HelmBlock.FACING);
 
-                boolean success = helmAttachment.addHelm(helmFacing, pos);
+                boolean success = shipControl.addHelm(helmFacing, pos);
 
                 if (!success) {
                     // Invalid facing for additional helm
@@ -77,11 +77,11 @@ public class HelmBlock extends HorizontalDirectionalBlock implements IBE<HelmBlo
                     if (nearbyPlayer != null) {
                         nearbyPlayer.displayClientMessage(
                                 Component.translatable("vs_marine_propulsion.helm.mismatched_facing")
-                                        .append(" " + helmAttachment.getShipForwardDirection()),
+                                        .append(" " + shipControl.getShipForwardDirection()),
                                 true
                         );
                     }
-                } else if (helmAttachment.getTotalHelms() == 1) {
+                } else if (shipControl.getTotalHelms() == 1) {
                     // First helm placed - notify player
                     Player nearbyPlayer = world.getNearestPlayer(pos.getX(), pos.getY(), pos.getZ(), 10, false);
                     if (nearbyPlayer != null) {
@@ -111,9 +111,9 @@ public class HelmBlock extends HorizontalDirectionalBlock implements IBE<HelmBlo
                 return InteractionResult.FAIL;
             }
 
-            HelmAttachment helmAttachment = ship.getAttachment(HelmAttachment.class);
-            if (helmAttachment != null && helmAttachment.hasValidOrientation()) {
-                Direction requiredFacing = helmAttachment.getShipForwardDirection();
+            VSMarinePropulsionAttachment shipControl = ship.getAttachment(VSMarinePropulsionAttachment.class);
+            if (shipControl != null && shipControl.hasValidOrientation()) {
+                Direction requiredFacing = shipControl.getShipForwardDirection();
                 Direction actualFacing = state.getValue(HelmBlock.FACING);
 
                 if (actualFacing != requiredFacing) {
@@ -156,9 +156,9 @@ public class HelmBlock extends HorizontalDirectionalBlock implements IBE<HelmBlo
             if (VSGameUtilsKt.isBlockInShipyard(world, pos)) {
                 LoadedServerShip ship = VSGameUtilsKt.getShipObjectManagingPos((ServerLevel) world, pos);
                 if (ship != null) {
-                    HelmAttachment helmAttachment = ship.getAttachment(HelmAttachment.class);
-                    if (helmAttachment != null) {
-                        helmAttachment.removeHelm(pos);
+                    VSMarinePropulsionAttachment shipControl = ship.getAttachment(VSMarinePropulsionAttachment.class);
+                    if (shipControl != null) {
+                        shipControl.removeHelm(pos);
                     }
                 }
             }

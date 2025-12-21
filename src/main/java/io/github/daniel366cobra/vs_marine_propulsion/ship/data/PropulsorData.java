@@ -1,4 +1,4 @@
-package io.github.daniel366cobra.vs_marine_propulsion.blocks.propulsion.utility;
+package io.github.daniel366cobra.vs_marine_propulsion.ship.data;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import net.minecraft.core.BlockPos;
