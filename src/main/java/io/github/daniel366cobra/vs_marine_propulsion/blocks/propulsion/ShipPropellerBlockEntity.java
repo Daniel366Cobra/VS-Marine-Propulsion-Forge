@@ -97,12 +97,12 @@ public class ShipPropellerBlockEntity extends KineticBlockEntity {
     @Override
     public void remove() {
         if (!this.getLevel().isClientSide()) {
-            cleanupForceApplier();
+            cleanupAttachment();
         }
         super.remove();
     }
 
-    private void cleanupForceApplier() {
+    private void cleanupAttachment() {
         VSMarinePropulsionAttachment shipControl = VSMarinePropulsionAttachment.get(this.getLevel(), this.getBlockPos());
         if (shipControl != null)
             shipControl.removePropulsor(this.getBlockPos());
@@ -166,14 +166,6 @@ public class ShipPropellerBlockEntity extends KineticBlockEntity {
 
         float RPM = this.actualSpeed.getValue();
         int dirMultiplier = this.getBlockState().getValue(FACING).getOpposite().getAxisDirection().getStep();
-
-        float estThrust = this.thrustCalculator.thrust(Math.abs(RPM));
-        float shipVelocity = (float)ship.getVelocity().length();
-
-        VSMarinePropulsionMod.LOGGER.info("SHIP SPEED: " + shipVelocity
-                + ", Ca/CaCrit: " + this.thrustCalculator.caNumber(Math.abs(RPM), shipVelocity, 1.0f) / this.thrustCalculator.caNumberCritKeller()
-                + ", EAR/EARmin: " + this.thrustCalculator.getPropEffectiveArea() / this.thrustCalculator.earKeller(estThrust, 1.0f)
-        );
 
         Vector3d transformedPosVector = new Vector3d(ship.getTransform().getShipToWorld()
                 .transformPosition(VectorConversionsMCKt.toJOMLD(this.getBlockPos())
@@ -243,10 +235,10 @@ public class ShipPropellerBlockEntity extends KineticBlockEntity {
     @Override
     public void initialize() {
         super.initialize();
-        syncWithPropulsorData();
+        syncWithAttachment();
     }
 
-    private void syncWithPropulsorData() {
+    private void syncWithAttachment() {
         if (level == null || level.isClientSide) return;
 
         VSMarinePropulsionAttachment shipControl = VSMarinePropulsionAttachment.get(level, worldPosition);
@@ -254,7 +246,7 @@ public class ShipPropellerBlockEntity extends KineticBlockEntity {
             PropulsorData existingData = shipControl.getPropulsorAtPos(worldPosition);
             if (existingData != null) {
                 // Sync our reference with the persistent data
-                // We need to update our local propulsorData to match the persistent one
+                // We need to update our local PropulsorData to match the persistent one
                 this.propulsorData.thrustDirection.set(existingData.thrustDirection);
                 this.propulsorData.thrust = existingData.thrust;
                 this.propulsorData.submerged = existingData.submerged;

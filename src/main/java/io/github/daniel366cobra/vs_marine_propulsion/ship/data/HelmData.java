@@ -15,11 +15,13 @@ import org.joml.Vector3dc;
 public class HelmData {
     public Vector3dc position;  // Use Vector3dc instead of BlockPos
     public Direction facing;
+    public float rudderAngle;
     public boolean isCaptain;
 
     public HelmData() {
         this.position = new Vector3d(0, 0, 0);
         this.facing = Direction.NORTH;
+        this.rudderAngle = 0.0f;
         this.isCaptain = false;
     }
 

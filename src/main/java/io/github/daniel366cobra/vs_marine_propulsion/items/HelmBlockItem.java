@@ -19,7 +19,7 @@ public class HelmBlockItem extends BlockItem {
         super(block, properties);
     }
 
-    @Override
+    /*@Override
     public InteractionResult useOn(UseOnContext context) {
         Level level = context.getLevel();
         BlockPos clickedPos = context.getClickedPos(); // The block you clicked on
@@ -62,5 +62,5 @@ public class HelmBlockItem extends BlockItem {
         }
 
         return super.useOn(context);
-    }
+    }*/
 }

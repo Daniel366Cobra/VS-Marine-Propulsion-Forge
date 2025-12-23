@@ -8,6 +8,7 @@ import com.simibubi.create.content.contraptions.bearing.MechanicalBearingBlockEn
 import io.github.daniel366cobra.vs_marine_propulsion.blocks.steering.RudderContraption;
 import io.github.daniel366cobra.vs_marine_propulsion.ship.VSMarinePropulsionAttachment;
 import io.github.daniel366cobra.vs_marine_propulsion.ship.data.ControlSurfaceData;
+import io.github.daniel366cobra.vs_marine_propulsion.ship.data.HelmData;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -22,6 +23,7 @@ import org.joml.primitives.AABBd;
 import org.valkyrienskies.core.api.ships.Ship;
 import org.valkyrienskies.mod.common.VSGameUtilsKt;
 
+//TODO sync with helm
 public class RudderBearingBlockEntity extends MechanicalBearingBlockEntity {
 
     private ControlSurfaceData controlSurfaceData;
@@ -29,8 +31,6 @@ public class RudderBearingBlockEntity extends MechanicalBearingBlockEntity {
     private int fluidSamplingCooldown = 0;
     private int fluidSamplingPoints = 10;
     private boolean isAssembled = false;
-
-    private int chatMsgCd = 0;
 
 
     public RudderBearingBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
@@ -41,21 +41,21 @@ public class RudderBearingBlockEntity extends MechanicalBearingBlockEntity {
     @Override
     public void remove() {
         if (!this.getLevel().isClientSide()) {
-            cleanupForceApplier();
+            resetAttachment();
             super.remove();
         }
     }
 
-    private void cleanupForceApplier() {
+    private void resetAttachment() {
         VSMarinePropulsionAttachment shipControl = VSMarinePropulsionAttachment.get(this.getLevel(), this.getBlockPos());
         if (shipControl != null)
             shipControl.removeControlSurface(this.getBlockPos());
     }
 
-    private void scuttleControlSurfaceData() {
+    private void resetDataAndAttachment() {
         this.controlSurfaceData = null;
         this.isAssembled = false;
-        cleanupForceApplier();
+        resetAttachment();
     }
 
     @Override
@@ -76,7 +76,7 @@ public class RudderBearingBlockEntity extends MechanicalBearingBlockEntity {
         Direction direction = getBlockState().getValue(RudderBearingBlock.FACING);
 
         // Scuttle any old data before creating new contraption
-        scuttleControlSurfaceData();
+        resetDataAndAttachment();
 
         RudderContraption rudderContraption = new RudderContraption(direction);
         try {
@@ -118,7 +118,7 @@ public class RudderBearingBlockEntity extends MechanicalBearingBlockEntity {
             return;
 
         // Scuttle control surface data - we're going back to blocks
-        scuttleControlSurfaceData();
+        resetDataAndAttachment();
 
         angle = 0; // Reset angle
         sequencedAngleLimit = -1;
@@ -144,7 +144,7 @@ public class RudderBearingBlockEntity extends MechanicalBearingBlockEntity {
         BlockPos blockPos = this.getBlockPos();
         ControlledContraptionEntity controlledContraption = this.getMovedContraption();
         if (controlledContraption == null) {
-            scuttleControlSurfaceData();
+            resetDataAndAttachment();
             return;
         }
 
@@ -162,6 +162,8 @@ public class RudderBearingBlockEntity extends MechanicalBearingBlockEntity {
 
             // Get OR create the persistent data
             ControlSurfaceData persistentData = shipControl.getControlSurfaceAtPos(blockPos);
+            HelmData captainHelmPersistentData = shipControl.getHelmAtPos(shipControl.getCaptainHelmPosition());
+
             if (persistentData == null) {
                 // First time - create and add
                 persistentData = new ControlSurfaceData(
@@ -174,7 +176,10 @@ public class RudderBearingBlockEntity extends MechanicalBearingBlockEntity {
             }
 
             // Update the persistent data (like propulsors do!)
-            persistentData.angle = this.angle;
+            if (this.speed > 0 && captainHelmPersistentData != null)
+                persistentData.angle = captainHelmPersistentData.rudderAngle;
+
+            this.angle = persistentData.angle;
 
             // Update submerged percentage
             fluidSamplingCooldown++;
@@ -238,7 +243,6 @@ public class RudderBearingBlockEntity extends MechanicalBearingBlockEntity {
             this.isAssembled = true;
 
             // ALWAYS recreate control surface data on attach for consistency
-            Direction direction = getBlockState().getValue(RudderBearingBlock.FACING);
             this.controlSurfaceData = new ControlSurfaceData(
                     worldPosition,
                     rudderContraption.getNormalVector(),

@@ -10,6 +10,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
+import org.apache.commons.lang3.tuple.Pair;
 import org.joml.Vector3d;
 import org.valkyrienskies.core.api.ships.PhysShip;
 import org.valkyrienskies.core.api.ships.ServerShip;
@@ -64,21 +65,22 @@ public class VSMarinePropulsionAttachment implements ShipForcesInducer {
     }
 
     //---------------HELMS--------------
-    public boolean addHelm(Direction helmFacing, BlockPos helmPos) {
-        Direction requiredDirection = getCaptainDirection();
+    public boolean addHelm(BlockPos helmPos, HelmData data) {
+
+        Direction helmFacing = data.getFacing();
+
+        boolean toCaptain = !hasValidOrientation();
         HelmData newHelmData;
 
-        if (requiredDirection == null) {
+        if (toCaptain) {
             // No captain yet - this helm becomes captain
-            shipForwardDirection = helmFacing;
+            setShipForwardDirection(helmFacing);
             newHelmData = new HelmData(helmPos, helmFacing, true);
         } else {
             // Additional helms must face the same direction as captain
-            if (helmFacing == requiredDirection) {
-                newHelmData = new HelmData(helmPos, helmFacing, false);
-            } else {
-                return false;
-            }
+            if (data.getFacing() != getShipForwardDirection()) return false;
+
+            newHelmData = new HelmData(helmPos, data.getFacing(), false);
         }
 
         // Set automatically handles duplicates based on position
@@ -86,22 +88,26 @@ public class VSMarinePropulsionAttachment implements ShipForcesInducer {
     }
 
     public void removeHelm(BlockPos helmPos) {
-        // Create a temporary object for removal (uses position-based equality)
         HelmData tempForRemoval = new HelmData(helmPos, Direction.NORTH, false);
         boolean removed = helms.remove(tempForRemoval);
 
         if (removed) {
-            // Check if we removed the captain and need to promote a new one
-            HelmData removedCaptain = helms.stream()
-                    .filter(HelmData::isCaptain)
-                    .findFirst()
-                    .orElse(null);
+            // Check if there's still a captain among the remaining helms
+            boolean captainRemains = helms.stream()
+                    .anyMatch(HelmData::isCaptain);
 
-            if (removedCaptain == null && !helms.isEmpty()) {
-                // No captain found - promote the first available helm
-                HelmData newCaptain = helms.iterator().next();
-                newCaptain.setCaptain(true);
-                shipForwardDirection = newCaptain.getFacing();
+            if (!captainRemains && !helms.isEmpty()) {
+                // We removed the captain - promote a new one
+                HelmData newCaptainCandidate = helms.iterator().next();
+
+                // Remove and readd as captain
+                helms.remove(newCaptainCandidate);
+                helms.add(new HelmData(
+                        newCaptainCandidate.getBlockPos(),
+                        newCaptainCandidate.getFacing(),
+                        true  // This helm is now captain
+                ));
+                shipForwardDirection = newCaptainCandidate.getFacing();
             } else if (helms.isEmpty()) {
                 shipForwardDirection = Direction.NORTH;
             }
@@ -112,12 +118,17 @@ public class VSMarinePropulsionAttachment implements ShipForcesInducer {
         return shipForwardDirection;
     }
 
+    public void setShipForwardDirection(Direction direction) {
+        this.shipForwardDirection = direction;
+    }
+
     @JsonIgnore
     public Vector3d getForwardVector() {
         return VectorConversionsMCKt.toJOMLD(shipForwardDirection.getNormal());
     }
 
     @JsonIgnore
+    @Nullable
     public BlockPos getCaptainHelmPosition() {
         return helms.stream()
                 .filter(HelmData::isCaptain)
@@ -128,15 +139,11 @@ public class VSMarinePropulsionAttachment implements ShipForcesInducer {
 
     @JsonIgnore
     public Direction getCaptainDirection() {
-        return helms.stream()
-                .filter(HelmData::isCaptain)
-                .map(HelmData::getFacing)
-                .findFirst()
-                .orElse(null);
+        return shipForwardDirection;
     }
 
     @JsonIgnore
-    public HelmData getHelmData(BlockPos pos) {
+    public HelmData getHelmAtPos(BlockPos pos) {
         // Create temporary object for lookup
         HelmData tempForLookup = new HelmData(pos, Direction.NORTH, false);
         for (HelmData helm : helms) {
@@ -154,7 +161,7 @@ public class VSMarinePropulsionAttachment implements ShipForcesInducer {
 
     @JsonIgnore
     public boolean hasValidOrientation() {
-        return !helms.isEmpty();
+        return shipForwardDirection != null && !helms.isEmpty();
     }
 
     //---------------PROPULSORS--------------
@@ -221,7 +228,7 @@ public class VSMarinePropulsionAttachment implements ShipForcesInducer {
         PhysShipImpl physShip = (PhysShipImpl) physicsShip;
 
         applyPropulsionForces(physShip);
-        applyControlForces(physShip);
+        applyStableRealisticForces(physShip);
 
 
     }
@@ -295,28 +302,129 @@ public class VSMarinePropulsionAttachment implements ShipForcesInducer {
         });
     }
 
-    private double calculateLiftForce(double angleRadians, double shipSpeed, int rudderBlocks, float submergedPercentage) {
-        // Basic hydrodynamic lift formula for control surfaces
-        double density = 1000.0; // Water density kg/m³
-        double areaPerBlock = 1.0; // m² per rudder block
-        double totalArea = areaPerBlock * rudderBlocks * submergedPercentage;
 
-        // Lift coefficient for symmetric foils at small angles
-        // Cl = 2π * sin(α) ≈ 2π * α for small angles
-        double effectiveAngle = Math.abs(angleRadians);
-        double liftCoefficient = 2 * Math.PI * Math.sin(effectiveAngle);
+    private void applyStableRealisticForces(PhysShipImpl physShip) {
+        final ShipTransform transform = physShip.getTransform();
 
-        // Stall reduction at high angles (>20°)
-        if (effectiveAngle > Math.toRadians(20)) {
-            double stallFactor = 1.0 - (effectiveAngle - Math.toRadians(20)) / Math.toRadians(20);
-            liftCoefficient *= Math.max(0.1, stallFactor);
+        // Get ship's forward direction in SHIP coordinates
+        Vector3d shipForwardShip = getForwardVector();
+
+        controlSurfaces.forEach(data -> {
+            if (data.submergedPercentage < 0.05f || Math.abs(data.angle) < 0.1f) return;
+
+            // 1. Position in ship coordinates
+            Vector3d rudderPosShip = VectorConversionsMCKt.toJOMLD(data.getBlockPos())
+                    .add(0.5, 0.5, 0.5, new Vector3d())
+                    .sub(transform.getPositionInShip());
+
+            // 2. Get ship velocity in SHIP coordinates (NO angular velocity!)
+            Vector3d shipVelocityShip = new Vector3d(physShip.getPoseVel().getVel());
+
+            // 3. Calculate water velocity (simple: opposite of ship motion)
+            Vector3d waterVelocity = new Vector3d(shipVelocityShip).negate();
+            double waterSpeed = waterVelocity.length();
+
+            // CLAMP water speed to prevent instability
+            waterSpeed = Math.min(waterSpeed, 50.0); // Max 50 m/s (~100 knots)
+            if (waterSpeed < 0.05) return;
+
+
+            // b) Rudder deflection in ship coordinates
+            double rudderAngleRad = Math.toRadians(data.angle);
+
+            // c) Effective AoA = rudder angle + leeway (but transformed properly!)
+            // When ship drifts to port (negative leeway), rudder sees more/less flow
+            // Simplified: AoA ≈ rudder angle - leeway (for starboard rudder)
+            double effectiveAoARad = rudderAngleRad; // 70% coupling
+
+            // CLAMP AoA to prevent unrealistic values
+            effectiveAoARad = Math.max(-Math.toRadians(40.0),
+                    Math.min(Math.toRadians(40.0), effectiveAoARad));
+
+            // 5. Calculate hydrodynamic forces (STABLE VERSION)
+            Pair<Double, Double> forces = calculateStableHydroForces(
+                    effectiveAoARad, waterSpeed,
+                    data.rudderBlocks * data.submergedPercentage
+            );
+
+            double liftForce = forces.getLeft();
+            double dragForce = forces.getRight();
+
+            // 6. Force directions
+
+            // Lift direction: Based on rudder geometry, not water flow (more stable)
+            Vector3d liftDir = new Vector3d(data.normalDirection);
+
+            liftDir.normalize();
+
+            // Drag direction: Opposite to ship's velocity (simplified)
+            Vector3d dragDir = new Vector3d(shipVelocityShip).negate().normalize();
+
+            // 7. Combine forces
+            Vector3d totalForceShip = new Vector3d()
+                    .add(liftDir.mul(liftForce))
+                    .add(dragDir.mul(dragForce));
+
+            // 9. LIMIT maximum force (safety)
+            double maxForce = 200000.0; // 200 kN max (big ship rudder)
+            double forceMagnitude = totalForceShip.length();
+            if (forceMagnitude > maxForce) {
+                totalForceShip.mul(maxForce / forceMagnitude);
+            }
+
+            // 10. Convert to world and apply
+            Vector3d forceWorld = transform.getShipToWorld()
+                    .transformDirection(totalForceShip, new Vector3d());
+
+            physShip.applyInvariantForceToPos(forceWorld, rudderPosShip);
+        });
+    }
+
+    private Pair<Double, Double> calculateStableHydroForces(double angleRad, double speed, double area) {
+        double absAngle = Math.abs(angleRad);
+        double sign = Math.signum(angleRad);
+
+        // REALISTIC but STABLE coefficients
+
+        // Lift coefficient - with realistic stall curve
+        double cl;
+        if (absAngle < Math.toRadians(15.0)) {
+            // Linear region: Cl = 2π * α
+            cl = 2.0 * Math.PI * angleRad;
+        } else if (absAngle < Math.toRadians(30.0)) {
+            // Near stall: reduced slope
+            double linearCl = 2.0 * Math.PI * Math.toRadians(15.0) * sign;
+            double extraAngle = absAngle - Math.toRadians(15.0);
+            cl = linearCl + 0.5 * Math.PI * Math.sin(extraAngle) * sign;
+        } else {
+            // Fully stalled: constant or decreasing
+            cl = (1.2 + 0.3 * Math.sin(absAngle - Math.toRadians(30.0))) * sign;
         }
 
-        // Lift force: F = 0.5 * ρ * v² * A * Cl
-        double force = 0.5 * density * shipSpeed * shipSpeed * totalArea * liftCoefficient;
+        // Clamp Cl to realistic range
+        cl = Math.max(-1.5, Math.min(1.5, cl));
 
-        // Apply sign based on angle direction
-        return force * Math.signum(angleRadians);
+        // Drag coefficient - realistic but bounded
+        double cd0 = 0.05; // Base drag
+        double inducedDrag = 0.1 * cl * cl; // Induced drag
+        double separationDrag = 0.05 * Math.pow(Math.sin(absAngle), 2); // Flow separation
+
+        double cd = cd0 + inducedDrag + separationDrag;
+        cd = Math.max(cd0, Math.min(2.0, cd)); // Clamp
+
+        // Force calculation with SPEED DAMPING (critical!)
+        double waterDensity = 1000.0;
+        double dynamicPressure = 0.5 * waterDensity * speed * speed;
+
+        // DAMPING FACTOR: Forces don't scale quadratically forever
+        // At high speeds, flow separates more, reducing effectiveness
+        double speedFactor = 1.0 / (1.0 + speed * 0.02); // Reduces above 50 m/s
+        double speedFactor2 = Math.min(1.0, 30.0 / speed); // Alternative
+
+        double lift = dynamicPressure * area * cl * speedFactor;
+        double drag = dynamicPressure * area * cd * speedFactor;
+
+        return Pair.of(lift, drag);
     }
 
 }
