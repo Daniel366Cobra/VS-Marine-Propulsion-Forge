@@ -24,8 +24,6 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.network.PacketDistributor;
 import org.joml.Vector3d;
 import org.joml.Vector3dc;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.valkyrienskies.core.api.ships.LoadedServerShip;
 import org.valkyrienskies.mod.api.SeatedControllingPlayer;
 import org.valkyrienskies.mod.common.VSGameUtilsKt;
@@ -37,18 +35,13 @@ import java.util.List;
 
 public class HelmBlockEntity extends SmartBlockEntity {
 
-    public static final Logger LOGGER = LoggerFactory.getLogger("base_helm_entity");
-
     private HelmData helmData;
-
     public static int wheelInterval;
     private List<ShipMountingEntity> seats = new ArrayList<>();
 
     public LerpedFloat clientWheelAngle;
     public int wheelAngle;
     public static int maxAngle;
-
-    private boolean helmDirty = true;
 
     public HelmBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState blockState) {
         super(type, pos, blockState);
@@ -71,25 +64,26 @@ public class HelmBlockEntity extends SmartBlockEntity {
      * Sync this block entity with the ship attachment data
      */
     private void syncWithAttachment() {
-        if (level == null) return;
 
-        if (!level.isClientSide()) {
-            VSMarinePropulsionAttachment shipControl = VSMarinePropulsionAttachment.get(level, worldPosition);
-            if (shipControl != null) {
-                HelmData existingData = shipControl.getHelmAtPos(worldPosition);
-                if (existingData != null) {
-                    //Pull from attachment
-                    this.helmData.isCaptain = existingData.isCaptain();
-                    this.helmData.rudderAngle = existingData.rudderAngle;
-                    this.wheelAngle = 360 + (int) (existingData.rudderAngle * 9f);
-                    this.clientWheelAngle.chase(wheelAngle, 0.2f, LerpedFloat.Chaser.EXP);
-                } else {
-                    shipControl.addHelm(worldPosition, helmData);
+        if (level == null || level.isClientSide()) return;
+
+        VSMarinePropulsionAttachment shipControl = VSMarinePropulsionAttachment.get(level, worldPosition);
+        if (shipControl != null) {
+            HelmData existingData = shipControl.getHelmAtPos(worldPosition);
+            if (existingData != null) {
+                //Pull from attachment
+                this.helmData = existingData;
+                this.wheelAngle = 360 + (int) (existingData.rudderAngle * 9f);
+                this.clientWheelAngle.chase(wheelAngle, 0.2f, LerpedFloat.Chaser.EXP);
+            } else {
+                shipControl.addHelm(worldPosition, this.helmData);
+                // Get the actual object from attachment
+                HelmData actualData = shipControl.getHelmAtPos(worldPosition);
+                if (actualData != null) {
+                    this.helmData = actualData;
                 }
             }
         }
-
-        helmDirty = false;
     }
 
 
@@ -152,7 +146,7 @@ public class HelmBlockEntity extends SmartBlockEntity {
 
         if (!VSGameUtilsKt.isBlockInShipyard(level, blockPos)) return;
 
-        if (helmDirty) syncWithAttachment();
+        //syncWithAttachment();
 
         if (!level.isClientSide && !isVirtual()) {
 
@@ -165,24 +159,26 @@ public class HelmBlockEntity extends SmartBlockEntity {
             SeatedControllingPlayer playerControl = ship.getAttachment(SeatedControllingPlayer.class);
             HelmData persistentData = shipControl.getHelmAtPos(shipControl.getCaptainHelmPosition());
 
-            if (persistentData != null) {
-                persistentData.rudderAngle = this.getRudderAngle();
-                this.helmData = persistentData;
-
-                Player nearbyPlayer = level.getNearestPlayer(blockPos.getX(), blockPos.getY(), blockPos.getZ(), 10, false);
-
-                nearbyPlayer.displayClientMessage(
-                        Component.literal("NEW ANGLE: " + persistentData.rudderAngle),
-                        true
-                );
-            }
-
             if (playerControl != null) {
                 if (playerControl.getLeftImpulse() < 0) {
                     this.rotateWheelRight(getBlockState(), (ServerLevel) level, blockPos);
                 } else if (playerControl.getLeftImpulse() > 0) {
                     this.rotateWheelLeft(getBlockState(), (ServerLevel) level, blockPos);
                 }
+            }
+
+            if (persistentData != null) {
+                persistentData.rudderAngle = this.getRudderAngle();
+                this.helmData = persistentData;
+
+                /*
+                Player nearbyPlayer = level.getNearestPlayer(blockPos.getX(), blockPos.getY(), blockPos.getZ(), 10, false);
+
+                nearbyPlayer.displayClientMessage(
+                        Component.literal("NEW ANGLE: " + persistentData.rudderAngle),
+                        true
+                );
+                */
             }
 
             notifyUpdate();
@@ -216,13 +212,6 @@ public class HelmBlockEntity extends SmartBlockEntity {
             mountingEntity.kill();
         });
         seats.clear();
-    }
-
-    public float getRenderWheelAngle(float partialTicks) {
-        if (level != null && level.isClientSide()) {
-            return clientWheelAngle.getValue(partialTicks);
-        }
-        return wheelAngle;
     }
 
     public boolean rotateWheelRight(BlockState state, ServerLevel world, BlockPos pos) {
@@ -291,6 +280,13 @@ public class HelmBlockEntity extends SmartBlockEntity {
     }
 
     public int getWheelAngle() {
+        return wheelAngle;
+    }
+
+    public float getRenderWheelAngle(float partialTicks) {
+        if (level != null && level.isClientSide()) {
+            return clientWheelAngle.getValue(partialTicks);
+        }
         return wheelAngle;
     }
 

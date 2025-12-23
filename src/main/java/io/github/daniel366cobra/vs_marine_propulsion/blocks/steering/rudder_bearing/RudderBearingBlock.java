@@ -7,6 +7,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
@@ -24,20 +25,28 @@ public class RudderBearingBlock extends BearingBlock implements IBE<RudderBearin
                         return InteractionResult.FAIL;
                 if (player.isShiftKeyDown())
                         return InteractionResult.FAIL;
-                if (player.getItemInHand(handIn)
-                        .isEmpty()) {
-                        if (worldIn.isClientSide)
-                                return InteractionResult.SUCCESS;
-                        withBlockEntityDo(worldIn, pos, be -> {
-                                if (be.isRunning()) {
-                                        be.disassemble();
-                                        return;
-                                }
-                                be.assemble();
-                        });
+                if (player.getItemInHand(handIn).isEmpty()) {
+                        if (!worldIn.isClientSide) {
+
+                                withBlockEntityDo(worldIn, pos, be -> {
+                                        if (be.running) {
+                                                be.disassemble();
+                                                return;
+                                        }
+                                        be.assembleNextTick = true;
+                                });
+                        }
                         return InteractionResult.SUCCESS;
                 }
                 return InteractionResult.PASS;
+        }
+
+        @Override
+        public InteractionResult onWrenched(BlockState state, UseOnContext context) {
+                InteractionResult resultType = super.onWrenched(state, context);
+                if (!context.getLevel().isClientSide && resultType.consumesAction())
+                        withBlockEntityDo(context.getLevel(), context.getClickedPos(), RudderBearingBlockEntity::disassemble);
+                return resultType;
         }
 
         @Override

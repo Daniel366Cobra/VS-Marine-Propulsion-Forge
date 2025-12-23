@@ -1,10 +1,13 @@
 package io.github.daniel366cobra.vs_marine_propulsion.blocks.steering.rudder_bearing;
 
 import com.simibubi.create.AllSoundEvents;
+import com.simibubi.create.content.contraptions.AbstractContraptionEntity;
 import com.simibubi.create.content.contraptions.AssemblyException;
 import com.simibubi.create.content.contraptions.ControlledContraptionEntity;
+import com.simibubi.create.content.contraptions.IDisplayAssemblyExceptions;
 import com.simibubi.create.content.contraptions.bearing.BearingBlock;
-import com.simibubi.create.content.contraptions.bearing.MechanicalBearingBlockEntity;
+import com.simibubi.create.content.contraptions.bearing.IBearingBlockEntity;
+import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
 import io.github.daniel366cobra.vs_marine_propulsion.blocks.steering.RudderContraption;
 import io.github.daniel366cobra.vs_marine_propulsion.ship.VSMarinePropulsionAttachment;
 import io.github.daniel366cobra.vs_marine_propulsion.ship.data.ControlSurfaceData;
@@ -12,9 +15,13 @@ import io.github.daniel366cobra.vs_marine_propulsion.ship.data.HelmData;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.phys.AABB;
@@ -23,53 +30,248 @@ import org.joml.primitives.AABBd;
 import org.valkyrienskies.core.api.ships.Ship;
 import org.valkyrienskies.mod.common.VSGameUtilsKt;
 
-//TODO sync with helm
-public class RudderBearingBlockEntity extends MechanicalBearingBlockEntity {
+//TODO change logic to act like clockwork bearing
+public class RudderBearingBlockEntity extends KineticBlockEntity implements IBearingBlockEntity, IDisplayAssemblyExceptions {
 
     private ControlSurfaceData controlSurfaceData;
-
     private int fluidSamplingCooldown = 0;
     private int fluidSamplingPoints = 10;
-    private boolean isAssembled = false;
 
+    protected float rudderAngle;
+    protected float clientRudderAngleDiff;
+    private float targetAngle;
+    private float prevRudderAngle;
+
+
+    protected boolean running;
+    protected boolean assembleNextTick;
+    protected AssemblyException lastException;
+    protected ControlledContraptionEntity rudderContraption;
 
     public RudderBearingBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
+        setLazyTickRate(3);
+        this.targetAngle = 0.0f;
         this.controlSurfaceData = null; // Start with no data - we're just blocks
+    }
+
+    @Override
+    public void initialize() {
+        super.initialize();
+        syncWithAttachment();
+    }
+
+    private void syncWithAttachment() {
+
+        if (level == null || level.isClientSide || this.controlSurfaceData == null) return;
+
+        VSMarinePropulsionAttachment shipControl = VSMarinePropulsionAttachment.get(level, worldPosition);
+        if (shipControl != null) {
+            ControlSurfaceData existingData = shipControl.getControlSurfaceAtPos(worldPosition);
+            if (existingData != null) {
+                // Pull from attachment
+                this.controlSurfaceData = existingData;
+            } else if (this.controlSurfaceData != null) {
+                // First time - add to attachment
+                shipControl.addControlSurface(worldPosition, this.controlSurfaceData);
+            }
+        }
+    }
+
+    @Override
+    public void tick() {
+        super.tick();
+
+        if (level.isClientSide) {
+            prevRudderAngle = rudderAngle;
+            clientRudderAngleDiff /= 2;
+        }
+
+        if (!level.isClientSide && assembleNextTick) {
+            assembleNextTick = false;
+            if (running) {
+                boolean canDisassemble = true;
+                if (speed == 0 && (canDisassemble || rudderContraption == null || rudderContraption.getContraption()
+                        .getBlocks()
+                        .isEmpty())) {
+                    if (rudderContraption != null)
+                        rudderContraption.getContraption()
+                                .stop(level);
+                    disassemble();
+                }
+                return;
+            } else
+                assemble();
+            return;
+        }
+
+        if (!running) return;
+
+        //FIXME rudder spins continuously if angle is in the 180-320 sector
+        if (!(rudderContraption != null && rudderContraption.isStalled())) {
+            float newAngle = rudderAngle + getRudderSpeed();
+            rudderAngle = physicsToBearing(newAngle);
+        }
+
+        applyRotations();
+
+        applyRudderCalculations();
+    }
+
+    private void applyRotations() {
+        BlockState blockState = getBlockState();
+        Direction.Axis rotationAxis;
+
+        if (blockState.hasProperty(BlockStateProperties.FACING)) {
+            rotationAxis = blockState.getValue(BlockStateProperties.FACING).getAxis();
+
+            if (rudderContraption != null) {
+                rudderContraption.setAngle(rudderAngle);
+                rudderContraption.setRotationAxis(rotationAxis);
+            }
+        }
+    }
+
+    @Override
+    public void lazyTick() {
+        super.lazyTick();
+        if (rudderContraption != null && !level.isClientSide)
+            sendData();
+    }
+
+    @Override
+    public AssemblyException getLastAssemblyException() {
+        return lastException;
+    }
+
+    private void applyRudderCalculations() {
+        // Only tick physics if we're properly assembled as a contraption
+        if (controlSurfaceData == null) return;
+
+        BlockPos blockPos = this.getBlockPos();
+
+        if (this.rudderContraption == null) {
+            resetDataAndAttachment();
+            return;
+        }
+
+        Ship ship = VSGameUtilsKt.getShipManagingPos(level, blockPos);
+        if (ship == null) return;
+
+        if (!level.isClientSide && !isVirtual()) {
+            VSMarinePropulsionAttachment shipControl = VSMarinePropulsionAttachment.get(level, blockPos);
+            if (shipControl == null) return;
+
+            // Get persistent data
+            ControlSurfaceData persistentData = shipControl.getControlSurfaceAtPos(blockPos);
+            if (persistentData == null) return;
+
+            // Get target from captain helm
+            HelmData captainHelmData = shipControl.getHelmAtPos(shipControl.getCaptainHelmPosition());
+
+            if (captainHelmData != null) {
+                // 1. Get helm data's rudder angle
+                float helmAngle = captainHelmData.rudderAngle;
+
+                // 2. Derive angle delta between control surface data and helm data
+                float currentAngle = persistentData.angle; // -40..+40
+                float angleDelta = helmAngle - currentAngle;
+
+                // 3. Get actual angle step per tick based on bearing input speed
+                float maxStep = getAngularSpeed(); // How fast we CAN move
+                float actualStep;
+
+                if (angleDelta < 0) {
+                    // Need to move negative
+                    actualStep = Math.max(-maxStep, angleDelta);
+                } else {
+                    // Need to move positive
+                    actualStep = Math.min(maxStep, angleDelta);
+                }
+
+                // 4. Calculate new angle
+                float newAngle = currentAngle + actualStep;
+
+                // Clamp to rudder limits
+                newAngle = Mth.clamp(newAngle, -40.0f, 40.0f);
+
+                // 5. Update persistent and local control surface data with new angle
+                persistentData.angle = newAngle;
+                this.controlSurfaceData = persistentData;
+
+                targetAngle = physicsToBearing(newAngle);
+
+                Player nearbyPlayer = level.getNearestPlayer(blockPos.getX(), blockPos.getY(), blockPos.getZ(), 10, false);
+
+                nearbyPlayer.displayClientMessage(
+                        Component.literal("helm angle: " + helmAngle
+                                + "cur angle: " + currentAngle
+                                + "new angle: " + newAngle
+                                + "tgt angle: " + targetAngle
+                                + "rud angle: " + rudderAngle),
+                        true
+                );
+
+            }
+
+            // Update submerged percentage periodically
+            fluidSamplingCooldown++;
+            if (fluidSamplingCooldown > 10) {
+                fluidSamplingCooldown = 0;
+                updateSubmergedPercentage(this.rudderContraption, ship);
+                persistentData.submergedPercentage = this.controlSurfaceData.submergedPercentage;
+            }
+        }
     }
 
     @Override
     public void remove() {
         if (!this.getLevel().isClientSide()) {
-            resetAttachment();
+            resetDataAndAttachment();
+            disassemble();
             super.remove();
         }
     }
 
-    private void resetAttachment() {
+
+    private void resetDataAndAttachment() {
+        this.controlSurfaceData = null;
         VSMarinePropulsionAttachment shipControl = VSMarinePropulsionAttachment.get(this.getLevel(), this.getBlockPos());
         if (shipControl != null)
             shipControl.removeControlSurface(this.getBlockPos());
     }
 
-    private void resetDataAndAttachment() {
-        this.controlSurfaceData = null;
-        this.isAssembled = false;
-        resetAttachment();
-    }
-
     @Override
     public void write(CompoundTag compound, boolean clientPacket) {
+        compound.putBoolean("Running", running);
+        compound.putFloat("RudderAngle", rudderAngle);
+        AssemblyException.write(compound, lastException);
         super.write(compound, clientPacket);
     }
 
     @Override
     protected void read(CompoundTag compound, boolean clientPacket) {
+        float rudderAnglePrev = rudderAngle;
+
+        running = compound.getBoolean("Running");
+        rudderAngle = compound.getFloat("RudderAngle");
+
+        lastException = AssemblyException.read(compound);
         super.read(compound, clientPacket);
+
+        if (!clientPacket)
+            return;
+
+        if (running) {
+            clientRudderAngleDiff = rudderAngle - rudderAnglePrev;
+            rudderAngle = rudderAnglePrev;
+        } else {
+            rudderContraption = null;
+        }
     }
 
-    @Override
     public void assemble() {
+
         if (!(level.getBlockState(worldPosition).getBlock() instanceof RudderBearingBlock))
             return;
 
@@ -98,97 +300,83 @@ public class RudderBearingBlockEntity extends MechanicalBearingBlockEntity {
         );
 
         rudderContraption.removeBlocksFromWorld(level, BlockPos.ZERO);
-        movedContraption = ControlledContraptionEntity.create(level, this, rudderContraption);
+        this.rudderContraption = ControlledContraptionEntity.create(level, this, rudderContraption);
         BlockPos anchor = worldPosition.relative(direction);
-        movedContraption.setPos(anchor.getX(), anchor.getY(), anchor.getZ());
-        movedContraption.setRotationAxis(direction.getAxis());
-        level.addFreshEntity(movedContraption);
+        this.rudderContraption.setPos(anchor.getX(), anchor.getY(), anchor.getZ());
+        this.rudderContraption.setRotationAxis(direction.getAxis());
+        level.addFreshEntity(this.rudderContraption);
 
         AllSoundEvents.CONTRAPTION_ASSEMBLE.playOnServer(level, worldPosition);
 
         running = true;
-        angle = 0; // Reset to neutral
-        isAssembled = true; // Now we're a proper contraption!
+        this.controlSurfaceData.angle = 0;
+        rudderAngle = 0; // Reset to neutral
+        // Now we're a proper contraption!
+
+        syncWithAttachment();
         sendData();
     }
 
-    @Override
     public void disassemble() {
-        if (!running && movedContraption == null)
+
+        if (!running && rudderContraption == null)
             return;
 
         // Scuttle control surface data - we're going back to blocks
         resetDataAndAttachment();
 
-        angle = 0; // Reset angle
-        sequencedAngleLimit = -1;
+        rudderAngle = 0; // Reset angle
 
-        if (movedContraption != null) {
-            movedContraption.disassemble();
+        applyRudderCalculations();
+
+        if (rudderContraption != null) {
+            rudderContraption.disassemble();
             AllSoundEvents.CONTRAPTION_DISASSEMBLE.playOnServer(level, worldPosition);
         }
 
-        movedContraption = null;
+        rudderContraption = null;
         running = false;
         assembleNextTick = false;
         sendData();
     }
 
-    @Override
-    public void tick() {
-        super.tick();
+    private float getRudderSpeed() {
+        // For client interpolation only
+        float speed = getAngularSpeed() / 2f;
 
-        // Only tick physics if we're properly assembled as a contraption
-        if (!isAssembled || controlSurfaceData == null) return;
+        if (speed != 0) {
+            // Convert visual rudderAngle (0-360) to physics (-40..+40)
+            float currentPhysicsAngle = bearingToPhysics(rudderAngle);
 
-        BlockPos blockPos = this.getBlockPos();
-        ControlledContraptionEntity controlledContraption = this.getMovedContraption();
-        if (controlledContraption == null) {
-            resetDataAndAttachment();
-            return;
+            float angleDiff = targetAngle - currentPhysicsAngle;
+
+            speed = Mth.clamp(angleDiff, -speed, speed);
         }
 
-        Ship ship = VSGameUtilsKt.getShipManagingPos(level, blockPos);
-        if (ship == null) return;
+        return speed + clientRudderAngleDiff / 3f;
+    }
 
-        if (!level.isClientSide && !isVirtual()) {
-            // Clamp angle
-            if (this.angle > 40) this.angle = 40;
-            else if (this.angle < -40) this.angle = -40;
-
-            // Get the attachment
-            VSMarinePropulsionAttachment shipControl = VSMarinePropulsionAttachment.get(level, blockPos);
-            if (shipControl == null) return;
-
-            // Get OR create the persistent data
-            ControlSurfaceData persistentData = shipControl.getControlSurfaceAtPos(blockPos);
-            HelmData captainHelmPersistentData = shipControl.getHelmAtPos(shipControl.getCaptainHelmPosition());
-
-            if (persistentData == null) {
-                // First time - create and add
-                persistentData = new ControlSurfaceData(
-                        blockPos,
-                        this.controlSurfaceData.normalDirection,
-                        this.controlSurfaceData.axisDirection,
-                        this.controlSurfaceData.rudderBlocks
-                );
-                shipControl.addControlSurface(blockPos, persistentData);
-            }
-
-            // Update the persistent data (like propulsors do!)
-            if (this.speed > 0 && captainHelmPersistentData != null)
-                persistentData.angle = captainHelmPersistentData.rudderAngle;
-
-            this.angle = persistentData.angle;
-
-            // Update submerged percentage
-            fluidSamplingCooldown++;
-            if (fluidSamplingCooldown > 10) {
-                fluidSamplingCooldown = 0;
-                updateSubmergedPercentage(controlledContraption, ship);
-                persistentData.submergedPercentage = this.controlSurfaceData.submergedPercentage;
-            }
+    private float getAngularSpeed() {
+        float speed = Math.abs(getSpeed() * 3 / 10f); // Scale factor
+        if (level.isClientSide) {
+            speed *= com.simibubi.create.foundation.utility.ServerSpeedProvider.get();
         }
+        return speed;
+    }
+
+    private float bearingToPhysics(float bearingAngle) {
+        // Convert bearing visual (0-360) to physics (-40..40)
+        if (bearingAngle > 180) {
+            // 320° → -40°, 330° → -30°, 359° → -1°
+            return bearingAngle - 360;
+        } else {
+            // 0° → 0°, 30° → 30°, 40° → 40°
+            return bearingAngle;
+        }
+    }
+
+    private float physicsToBearing(float physicsAngle) {
+        return (physicsAngle + 360) % 360;
     }
 
     private void updateSubmergedPercentage(ControlledContraptionEntity controlledContraption, Ship ship) {
@@ -226,6 +414,14 @@ public class RudderBearingBlockEntity extends MechanicalBearingBlockEntity {
     }
 
     @Override
+    public boolean isAttachedTo(AbstractContraptionEntity contraption) {
+        if (!(contraption.getContraption() instanceof RudderContraption))
+            return false;
+
+        return this.rudderContraption == contraption;
+    }
+
+    @Override
     public void attach(ControlledContraptionEntity contraption) {
         BlockState blockState = getBlockState();
         if (!(contraption.getContraption() instanceof RudderContraption rudderContraption))
@@ -233,14 +429,13 @@ public class RudderBearingBlockEntity extends MechanicalBearingBlockEntity {
         if (!blockState.hasProperty(BearingBlock.FACING))
             return;
 
-        this.movedContraption = contraption;
-        setChanged();
+        this.rudderContraption = contraption;
+        //setChanged();
         BlockPos anchor = worldPosition.relative(blockState.getValue(BearingBlock.FACING));
-        movedContraption.setPos(anchor.getX(), anchor.getY(), anchor.getZ());
+        this.rudderContraption.setPos(anchor.getX(), anchor.getY(), anchor.getZ());
 
         if (!level.isClientSide) {
             this.running = true;
-            this.isAssembled = true;
 
             // ALWAYS recreate control surface data on attach for consistency
             this.controlSurfaceData = new ControlSurfaceData(
@@ -250,9 +445,53 @@ public class RudderBearingBlockEntity extends MechanicalBearingBlockEntity {
                     rudderContraption.getRudderBlocks()
             );
 
+            syncWithAttachment();
             sendData();
         }
     }
 
+    @Override
+    public void onSpeedChanged(float prevSpeed) {
+        super.onSpeedChanged(prevSpeed);
+        assembleNextTick = true;
+    }
 
+    @Override
+    public void onStall() {
+        if (!level.isClientSide)
+            sendData();
+    }
+
+    @Override
+    public boolean isValid() {
+        return !isRemoved();
+    }
+
+    public boolean isRunning() {
+        return running;
+    }
+
+    @Override
+    public boolean isWoodenTop() {
+        return false;
+    }
+
+    @Override
+    public BlockPos getBlockPosition() {
+        return worldPosition;
+    }
+
+    @Override
+    public float getInterpolatedAngle(float partialTicks) {
+        if (isVirtual())
+            return Mth.lerp(partialTicks, prevRudderAngle, rudderAngle);
+        if (rudderContraption == null || rudderContraption.isStalled())
+            partialTicks = 0;
+        return Mth.lerp(partialTicks, rudderAngle, rudderAngle + getRudderSpeed());
+    }
+
+    @Override
+    public void setAngle(float forcedAngle) {
+        rudderAngle = forcedAngle;
+    }
 }
