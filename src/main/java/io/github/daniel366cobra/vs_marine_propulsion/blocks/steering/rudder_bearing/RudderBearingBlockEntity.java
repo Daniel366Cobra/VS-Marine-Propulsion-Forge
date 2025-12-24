@@ -8,6 +8,7 @@ import com.simibubi.create.content.contraptions.IDisplayAssemblyExceptions;
 import com.simibubi.create.content.contraptions.bearing.BearingBlock;
 import com.simibubi.create.content.contraptions.bearing.IBearingBlockEntity;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
+import com.simibubi.create.foundation.utility.AngleHelper;
 import io.github.daniel366cobra.vs_marine_propulsion.blocks.steering.RudderContraption;
 import io.github.daniel366cobra.vs_marine_propulsion.ship.VSMarinePropulsionAttachment;
 import io.github.daniel366cobra.vs_marine_propulsion.ship.data.ControlSurfaceData;
@@ -30,7 +31,6 @@ import org.joml.primitives.AABBd;
 import org.valkyrienskies.core.api.ships.Ship;
 import org.valkyrienskies.mod.common.VSGameUtilsKt;
 
-//TODO change logic to act like clockwork bearing
 public class RudderBearingBlockEntity extends KineticBlockEntity implements IBearingBlockEntity, IDisplayAssemblyExceptions {
 
     private ControlSurfaceData controlSurfaceData;
@@ -90,8 +90,7 @@ public class RudderBearingBlockEntity extends KineticBlockEntity implements IBea
         if (!level.isClientSide && assembleNextTick) {
             assembleNextTick = false;
             if (running) {
-                boolean canDisassemble = true;
-                if (speed == 0 && (canDisassemble || rudderContraption == null || rudderContraption.getContraption()
+                if (speed == 0 && (rudderContraption == null || rudderContraption.getContraption()
                         .getBlocks()
                         .isEmpty())) {
                     if (rudderContraption != null)
@@ -107,10 +106,9 @@ public class RudderBearingBlockEntity extends KineticBlockEntity implements IBea
 
         if (!running) return;
 
-        //FIXME rudder spins continuously if angle is in the 180-320 sector
         if (!(rudderContraption != null && rudderContraption.isStalled())) {
             float newAngle = rudderAngle + getRudderSpeed();
-            rudderAngle = physicsToBearing(newAngle);
+            rudderAngle = rudderToBearing(newAngle);
         }
 
         applyRotations();
@@ -130,18 +128,6 @@ public class RudderBearingBlockEntity extends KineticBlockEntity implements IBea
                 rudderContraption.setRotationAxis(rotationAxis);
             }
         }
-    }
-
-    @Override
-    public void lazyTick() {
-        super.lazyTick();
-        if (rudderContraption != null && !level.isClientSide)
-            sendData();
-    }
-
-    @Override
-    public AssemblyException getLastAssemblyException() {
-        return lastException;
     }
 
     private void applyRudderCalculations() {
@@ -167,6 +153,7 @@ public class RudderBearingBlockEntity extends KineticBlockEntity implements IBea
             if (persistentData == null) return;
 
             // Get target from captain helm
+            //FIXME breaking the helm gets crash due to null pos
             HelmData captainHelmData = shipControl.getHelmAtPos(shipControl.getCaptainHelmPosition());
 
             if (captainHelmData != null) {
@@ -199,10 +186,12 @@ public class RudderBearingBlockEntity extends KineticBlockEntity implements IBea
                 persistentData.angle = newAngle;
                 this.controlSurfaceData = persistentData;
 
-                targetAngle = physicsToBearing(newAngle);
+                targetAngle = rudderToBearing(newAngle);
 
+                /*
                 Player nearbyPlayer = level.getNearestPlayer(blockPos.getX(), blockPos.getY(), blockPos.getZ(), 10, false);
 
+                if (nearbyPlayer != null)
                 nearbyPlayer.displayClientMessage(
                         Component.literal("helm angle: " + helmAngle
                                 + "cur angle: " + currentAngle
@@ -211,6 +200,8 @@ public class RudderBearingBlockEntity extends KineticBlockEntity implements IBea
                                 + "rud angle: " + rudderAngle),
                         true
                 );
+
+                 */
 
             }
 
@@ -222,6 +213,18 @@ public class RudderBearingBlockEntity extends KineticBlockEntity implements IBea
                 persistentData.submergedPercentage = this.controlSurfaceData.submergedPercentage;
             }
         }
+    }
+
+    @Override
+    public void lazyTick() {
+        super.lazyTick();
+        if (rudderContraption != null && !level.isClientSide)
+            sendData();
+    }
+
+    @Override
+    public AssemblyException getLastAssemblyException() {
+        return lastException;
     }
 
     @Override
@@ -245,6 +248,7 @@ public class RudderBearingBlockEntity extends KineticBlockEntity implements IBea
     public void write(CompoundTag compound, boolean clientPacket) {
         compound.putBoolean("Running", running);
         compound.putFloat("RudderAngle", rudderAngle);
+        compound.putFloat("TargetAngle", targetAngle);
         AssemblyException.write(compound, lastException);
         super.write(compound, clientPacket);
     }
@@ -255,6 +259,7 @@ public class RudderBearingBlockEntity extends KineticBlockEntity implements IBea
 
         running = compound.getBoolean("Running");
         rudderAngle = compound.getFloat("RudderAngle");
+        targetAngle = compound.getFloat("TargetAngle");
 
         lastException = AssemblyException.read(compound);
         super.read(compound, clientPacket);
@@ -344,13 +349,13 @@ public class RudderBearingBlockEntity extends KineticBlockEntity implements IBea
         // For client interpolation only
         float speed = getAngularSpeed() / 2f;
 
-        if (speed != 0) {
-            // Convert visual rudderAngle (0-360) to physics (-40..+40)
-            float currentPhysicsAngle = bearingToPhysics(rudderAngle);
+        if (speed != 0 && rudderAngle != targetAngle) {
 
-            float angleDiff = targetAngle - currentPhysicsAngle;
+            float angleDiff = AngleHelper.getShortestAngleDiff(rudderAngle, targetAngle);
 
             speed = Mth.clamp(angleDiff, -speed, speed);
+        } else {
+            speed = 0;
         }
 
         return speed + clientRudderAngleDiff / 3f;
@@ -364,19 +369,13 @@ public class RudderBearingBlockEntity extends KineticBlockEntity implements IBea
         return speed;
     }
 
-    private float bearingToPhysics(float bearingAngle) {
-        // Convert bearing visual (0-360) to physics (-40..40)
-        if (bearingAngle > 180) {
-            // 320° → -40°, 330° → -30°, 359° → -1°
-            return bearingAngle - 360;
-        } else {
-            // 0° → 0°, 30° → 30°, 40° → 40°
-            return bearingAngle;
-        }
+    private float bearingToRudder(float bearingAngle) {
+        return bearingAngle > 180 ? bearingAngle - 360 : bearingAngle;
     }
 
-    private float physicsToBearing(float physicsAngle) {
-        return (physicsAngle + 360) % 360;
+    private float rudderToBearing(float rudderAngle) {
+        rudderAngle %= 360;
+        return (rudderAngle < 0) ? 360 + rudderAngle : rudderAngle;
     }
 
     private void updateSubmergedPercentage(ControlledContraptionEntity controlledContraption, Ship ship) {
