@@ -16,9 +16,7 @@ import io.github.daniel366cobra.vs_marine_propulsion.ship.data.HelmData;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
@@ -130,6 +128,7 @@ public class RudderBearingBlockEntity extends KineticBlockEntity implements IBea
         }
     }
 
+    //TODO unify speed calculations for attachment and angle; maybe set rudder angle by force without damping
     private void applyRudderCalculations() {
         // Only tick physics if we're properly assembled as a contraption
         if (controlSurfaceData == null) return;

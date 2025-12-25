@@ -29,6 +29,10 @@
   "block.vs_marine_propulsion.helm.tooltip.summary": "Controls attached _Rudder Bearings_.",
   "block.vs_marine_propulsion.helm.tooltip.condition1": "When in hand:",
   "block.vs_marine_propulsion.helm.tooltip.behaviour1": "R-Click on a Rudder Bearing block to place it under control,",
-  "block.vs_marine_propulsion.helm.tooltip.condition1": "When placed:",
-  "block.vs_marine_propulsion.helm.tooltip.behaviour1": "R-Click to man the helm, then use A/D to steer."
+  "block.vs_marine_propulsion.helm.tooltip.condition2": "When placed:",
+  "block.vs_marine_propulsion.helm.tooltip.behaviour2": "R-Click to man the helm, then use A/D to steer.",
+
+  "block.vs_marine_propulsion.seacock.tooltip.summary": "A vital marine valve for taking on seawater. §8§oGrow §8§oup.",
+  "block.vs_marine_propulsion.seacock.tooltip.condition1": "When on a ship and immersed in water:",
+  "block.vs_marine_propulsion.seacock.tooltip.behaviour1": "Fills with water."
 }

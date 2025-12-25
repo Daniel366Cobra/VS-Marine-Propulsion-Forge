@@ -4,6 +4,7 @@ import com.simibubi.create.content.kinetics.transmission.SplitShaftInstance;
 import com.simibubi.create.content.kinetics.transmission.SplitShaftRenderer;
 import com.simibubi.create.foundation.data.CreateRegistrate;
 import com.tterrag.registrate.util.entry.BlockEntityEntry;
+import io.github.daniel366cobra.vs_marine_propulsion.blocks.auxiliary.SeacockBlockEntity;
 import io.github.daniel366cobra.vs_marine_propulsion.blocks.control.engine_order_telegraph.EngineOrderTelegraphBlockEntity;
 import io.github.daniel366cobra.vs_marine_propulsion.blocks.control.engine_order_telegraph.EngineOrderTelegraphBlockEntityRenderer;
 import io.github.daniel366cobra.vs_marine_propulsion.blocks.control.engine_order_telegraph.EngineOrderTelegraphInstance;
@@ -67,8 +68,13 @@ public class VSMarinePropulsionEntities {
     public static final BlockEntityEntry<HelmBlockEntity> HELM_BLOCK_ENTITY = REGISTRATE
             .blockEntity("helm_entity", HelmBlockEntity::new)
             .instance(() -> HelmInstance::new, false)
-            .validBlocks(VSMarinePropulsionBlocks.HELM_BLOCK)
+            .validBlocks(VSMarinePropulsionBlocks.HELM)
             .renderer(() -> HelmBlockEntityRenderer::new)
+            .register();
+
+    public static final BlockEntityEntry<SeacockBlockEntity> SEACOCK_BLOCK_ENTITY = REGISTRATE
+            .blockEntity("seacock_entity", SeacockBlockEntity::new)
+            .validBlocks(VSMarinePropulsionBlocks.SEACOCK)
             .register();
 
 

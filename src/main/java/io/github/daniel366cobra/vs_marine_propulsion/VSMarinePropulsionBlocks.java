@@ -6,6 +6,7 @@ import com.simibubi.create.foundation.data.CreateRegistrate;
 import com.simibubi.create.foundation.data.SharedProperties;
 import com.simibubi.create.foundation.item.ItemDescription;
 import com.tterrag.registrate.util.entry.BlockEntry;
+import io.github.daniel366cobra.vs_marine_propulsion.blocks.auxiliary.SeacockBlock;
 import io.github.daniel366cobra.vs_marine_propulsion.blocks.control.engine_order_telegraph.EngineOrderTelegraphBlock;
 import io.github.daniel366cobra.vs_marine_propulsion.blocks.control.helm.HelmBlock;
 import io.github.daniel366cobra.vs_marine_propulsion.blocks.drivetrain.variator.VariatorBlock;
@@ -110,7 +111,7 @@ public class VSMarinePropulsionBlocks {
             .simpleItem()
             .register();
 
-    public static final BlockEntry<HelmBlock> HELM_BLOCK = REGISTRATE
+    public static final BlockEntry<HelmBlock> HELM = REGISTRATE
             .block("helm", HelmBlock::new)
             .initialProperties(SharedProperties::wooden)
             .properties(p -> p
@@ -124,6 +125,16 @@ public class VSMarinePropulsionBlocks {
             .item(HelmBlockItem::new)
             .model((ctx, prov) -> prov.withExistingParent(ctx.getName(), prov.modLoc("block/" + ctx.getName() + "/item")))
             .build()
+            .register();
+
+    public static final BlockEntry<SeacockBlock> SEACOCK = REGISTRATE
+            .block("seacock", SeacockBlock::new)
+            .initialProperties(SharedProperties::softMetal)
+            .transform(pickaxeOnly())
+            .blockstate(BlockStateGen.directionalBlockProvider(false))
+            .lang("Seacock")
+            .onRegisterAfter(Registries.ITEM, v -> ItemDescription.useKey(v, "block." + VSMarinePropulsionMod.MOD_ID + ".seacock"))
+            .simpleItem()
             .register();
 
     public static void register() {
