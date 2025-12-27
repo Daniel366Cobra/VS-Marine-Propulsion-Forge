@@ -11,16 +11,14 @@ import io.github.daniel366cobra.vs_marine_propulsion.blocks.control.engine_order
 import io.github.daniel366cobra.vs_marine_propulsion.blocks.control.helm.HelmBlock;
 import io.github.daniel366cobra.vs_marine_propulsion.blocks.drivetrain.variator.VariatorBlock;
 import io.github.daniel366cobra.vs_marine_propulsion.blocks.propulsion.large_ship_propeller.LargeShipPropellerBlock;
-import io.github.daniel366cobra.vs_marine_propulsion.blocks.steering.rudder_bearing.RudderBearingBlock;
 import io.github.daniel366cobra.vs_marine_propulsion.blocks.steering.rudder.RudderBlock;
+import io.github.daniel366cobra.vs_marine_propulsion.blocks.steering.rudder_bearing.RudderBearingBlock;
 import io.github.daniel366cobra.vs_marine_propulsion.items.EngineOrderTelegraphBlockItem;
-import io.github.daniel366cobra.vs_marine_propulsion.items.HelmBlockItem;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.material.MapColor;
 
 import static com.simibubi.create.foundation.data.AssetLookup.partialBaseModel;
-import static com.simibubi.create.foundation.data.ModelGen.customItemModel;
 import static com.simibubi.create.foundation.data.TagGen.axeOrPickaxe;
 import static com.simibubi.create.foundation.data.TagGen.pickaxeOnly;
 import static io.github.daniel366cobra.vs_marine_propulsion.blocks.drivetrain.variator.VariatorBlock.LINKED;
@@ -118,11 +116,10 @@ public class VSMarinePropulsionBlocks {
                     .noOcclusion()
                     .mapColor(MapColor.WOOD))
             .transform(axeOrPickaxe())
-            //.blockstate(BlockStateGen.horizontalBlockProvider(false))
             .blockstate((ctx, prov ) -> prov.horizontalBlock(ctx.get(), partialBaseModel(ctx, prov)))
             .lang("Helm")
-            .onRegisterAfter(Registries.ITEM, v -> ItemDescription.useKey(v, "block." + VSMarinePropulsionMod.MOD_ID + ".helm_block"))
-            .item(HelmBlockItem::new)
+            .onRegisterAfter(Registries.ITEM, v -> ItemDescription.useKey(v, "block." + VSMarinePropulsionMod.MOD_ID + ".helm"))
+            .item()
             .model((ctx, prov) -> prov.withExistingParent(ctx.getName(), prov.modLoc("block/" + ctx.getName() + "/item")))
             .build()
             .register();

@@ -220,7 +220,7 @@ public class HelmBlockEntity extends SmartBlockEntity {
             wheelAngle -= wheelInterval;
             playWheelSounds(world, pos);
             success = true;
-            clientWheelAngle.chase(wheelAngle, 0.2f, LerpedFloat.Chaser.EXP);
+            //clientWheelAngle.chase(wheelAngle, 0.2f, LerpedFloat.Chaser.EXP);
         }
 
         VSMarinePropulsionPacketHandler.CHANNEL.send(
@@ -238,7 +238,7 @@ public class HelmBlockEntity extends SmartBlockEntity {
             wheelAngle += wheelInterval;
             playWheelSounds(world, pos);
             success = true;
-            clientWheelAngle.chase(wheelAngle, 0.2f, LerpedFloat.Chaser.EXP);
+            //clientWheelAngle.chase(wheelAngle, 0.2f, LerpedFloat.Chaser.EXP);
         }
 
         VSMarinePropulsionPacketHandler.CHANNEL.send(
@@ -256,13 +256,17 @@ public class HelmBlockEntity extends SmartBlockEntity {
 
     private void playWheelSounds(Level world, BlockPos pos) {
         if ((double) wheelAngle / maxAngle == 0.5) {
+            //Helm dead center
             world.playSound(null, pos.below(), SoundEvents.BAMBOO_WOOD_BUTTON_CLICK_ON,
                     SoundSource.BLOCKS, 1.5f, world.getRandom().nextFloat() * 0.1F + 0.9F);
-            world.playSound(null, pos.below(), SoundEvents.ARMOR_EQUIP_CHAIN,
-                    SoundSource.BLOCKS, 0.6f, world.getRandom().nextFloat() * 0.1F + 0.9F);
         } else if (wheelAngle == maxAngle || wheelAngle == 0) {
-            world.playSound(null, pos.below(), SoundEvents.BAMBOO_WOOD_BUTTON_CLICK_ON,
+            //Helm angle limit
+            world.playSound(null, pos.below(), SoundEvents.WOODEN_TRAPDOOR_CLOSE,
                     SoundSource.BLOCKS, 1.5f, world.getRandom().nextFloat() * 0.1F + 0.9F);
+        }
+        if (wheelAngle % 20 == 0) {
+            world.playSound(null, pos.below(), SoundEvents.WOODEN_BUTTON_CLICK_ON,
+                    SoundSource.BLOCKS, 0.5f, world.getRandom().nextFloat() * 0.2F + 0.8F);//Helm step click
         }
     }
 

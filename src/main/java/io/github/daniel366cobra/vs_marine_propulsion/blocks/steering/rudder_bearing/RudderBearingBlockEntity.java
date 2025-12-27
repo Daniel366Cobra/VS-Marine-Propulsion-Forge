@@ -8,7 +8,7 @@ import com.simibubi.create.content.contraptions.IDisplayAssemblyExceptions;
 import com.simibubi.create.content.contraptions.bearing.BearingBlock;
 import com.simibubi.create.content.contraptions.bearing.IBearingBlockEntity;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
-import com.simibubi.create.foundation.utility.AngleHelper;
+import com.simibubi.create.foundation.utility.animation.LerpedFloat;
 import io.github.daniel366cobra.vs_marine_propulsion.blocks.steering.RudderContraption;
 import io.github.daniel366cobra.vs_marine_propulsion.ship.VSMarinePropulsionAttachment;
 import io.github.daniel366cobra.vs_marine_propulsion.ship.data.ControlSurfaceData;
@@ -29,28 +29,28 @@ import org.joml.primitives.AABBd;
 import org.valkyrienskies.core.api.ships.Ship;
 import org.valkyrienskies.mod.common.VSGameUtilsKt;
 
+//TODO verify angle calculations for all orientations of bearing, fix physics (control authority decay for some angles)
 public class RudderBearingBlockEntity extends KineticBlockEntity implements IBearingBlockEntity, IDisplayAssemblyExceptions {
 
+    protected boolean running = false;
+    protected boolean assembleNextTick = false;
+
+    private ControlledContraptionEntity rudderContraption = null;
+    private AssemblyException lastException = null;
+
+    private final LerpedFloat rudderAngle = LerpedFloat.linear();
+
+    private float targetAngle = 0.0f;
+
     private ControlSurfaceData controlSurfaceData;
+
     private int fluidSamplingCooldown = 0;
-    private int fluidSamplingPoints = 10;
 
-    protected float rudderAngle;
-    protected float clientRudderAngleDiff;
-    private float targetAngle;
-    private float prevRudderAngle;
-
-
-    protected boolean running;
-    protected boolean assembleNextTick;
-    protected AssemblyException lastException;
-    protected ControlledContraptionEntity rudderContraption;
 
     public RudderBearingBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
-        setLazyTickRate(3);
-        this.targetAngle = 0.0f;
-        this.controlSurfaceData = null; // Start with no data - we're just blocks
+        this.setLazyTickRate(3);
+        this.controlSurfaceData = null; // Start with no data
     }
 
     @Override
@@ -61,17 +61,18 @@ public class RudderBearingBlockEntity extends KineticBlockEntity implements IBea
 
     private void syncWithAttachment() {
 
-        if (level == null || level.isClientSide || this.controlSurfaceData == null) return;
+        if (this.level == null || this.level.isClientSide || this.controlSurfaceData == null) return;
 
-        VSMarinePropulsionAttachment shipControl = VSMarinePropulsionAttachment.get(level, worldPosition);
+        VSMarinePropulsionAttachment shipControl = VSMarinePropulsionAttachment.get(this.level, this.worldPosition);
+
         if (shipControl != null) {
-            ControlSurfaceData existingData = shipControl.getControlSurfaceAtPos(worldPosition);
+            ControlSurfaceData existingData = shipControl.getControlSurfaceAtPos(this.worldPosition);
             if (existingData != null) {
                 // Pull from attachment
                 this.controlSurfaceData = existingData;
             } else if (this.controlSurfaceData != null) {
                 // First time - add to attachment
-                shipControl.addControlSurface(worldPosition, this.controlSurfaceData);
+                shipControl.addControlSurface(this.worldPosition, this.controlSurfaceData);
             }
         }
     }
@@ -80,136 +81,95 @@ public class RudderBearingBlockEntity extends KineticBlockEntity implements IBea
     public void tick() {
         super.tick();
 
-        if (level.isClientSide) {
-            prevRudderAngle = rudderAngle;
-            clientRudderAngleDiff /= 2;
+        this.rudderAngle.tickChaser();
+        if (this.running) {
+            applyRotations();
         }
 
-        if (!level.isClientSide && assembleNextTick) {
-            assembleNextTick = false;
-            if (running) {
-                if (speed == 0 && (rudderContraption == null || rudderContraption.getContraption()
-                        .getBlocks()
-                        .isEmpty())) {
-                    if (rudderContraption != null)
-                        rudderContraption.getContraption()
-                                .stop(level);
-                    disassemble();
-                }
-                return;
-            } else
-                assemble();
+        if (this.level == null || this.level.isClientSide) {
             return;
         }
 
-        if (!running) return;
-
-        if (!(rudderContraption != null && rudderContraption.isStalled())) {
-            float newAngle = rudderAngle + getRudderSpeed();
-            rudderAngle = rudderToBearing(newAngle);
+        if (this.rudderContraption != null) {
+            this.rudderContraption.tick();
         }
 
-        applyRotations();
+        if (this.assembleNextTick) {
+            this.assembleNextTick = false;
+            assemble();
+        }
+
+        float lastAngle = this.targetAngle;
 
         applyRudderCalculations();
+
+        this.rudderAngle.chase(this.targetAngle, getAngularSpeed(), LerpedFloat.Chaser.LINEAR);
+
+        if (lastAngle != this.targetAngle) {
+            sendData();
+        }
     }
 
     private void applyRotations() {
-        BlockState blockState = getBlockState();
+        BlockState blockState = this.getBlockState();
         Direction.Axis rotationAxis;
 
         if (blockState.hasProperty(BlockStateProperties.FACING)) {
             rotationAxis = blockState.getValue(BlockStateProperties.FACING).getAxis();
 
-            if (rudderContraption != null) {
-                rudderContraption.setAngle(rudderAngle);
-                rudderContraption.setRotationAxis(rotationAxis);
+            if (this.rudderContraption != null) {
+                this.rudderContraption.setAngle(this.rudderAngle.getValue());
+                this.rudderContraption.setRotationAxis(rotationAxis);
             }
         }
     }
 
-    //TODO unify speed calculations for attachment and angle; maybe set rudder angle by force without damping
     private void applyRudderCalculations() {
-        // Only tick physics if we're properly assembled as a contraption
-        if (controlSurfaceData == null) return;
 
-        BlockPos blockPos = this.getBlockPos();
+        // Only tick physics if assembled as a contraption and have attachment data
+        if (this.controlSurfaceData == null) return;
 
         if (this.rudderContraption == null) {
             resetDataAndAttachment();
             return;
         }
 
-        Ship ship = VSGameUtilsKt.getShipManagingPos(level, blockPos);
+        Ship ship = VSGameUtilsKt.getShipManagingPos(this.level, this.worldPosition);
         if (ship == null) return;
 
-        if (!level.isClientSide && !isVirtual()) {
-            VSMarinePropulsionAttachment shipControl = VSMarinePropulsionAttachment.get(level, blockPos);
+        if (!this.level.isClientSide && !isVirtual()) {
+
+            VSMarinePropulsionAttachment shipControl = VSMarinePropulsionAttachment.get(this.level, this.worldPosition);
             if (shipControl == null) return;
 
-            // Get persistent data
-            ControlSurfaceData persistentData = shipControl.getControlSurfaceAtPos(blockPos);
+            ControlSurfaceData persistentData = shipControl.getControlSurfaceAtPos(this.worldPosition);
             if (persistentData == null) return;
 
-            // Get target from captain helm
             //FIXME breaking the helm gets crash due to null pos
             HelmData captainHelmData = shipControl.getHelmAtPos(shipControl.getCaptainHelmPosition());
 
             if (captainHelmData != null) {
-                // 1. Get helm data's rudder angle
-                float helmAngle = captainHelmData.rudderAngle;
 
-                // 2. Derive angle delta between control surface data and helm data
+                float helmAngle = captainHelmData.rudderAngle; //-40..+40
                 float currentAngle = persistentData.angle; // -40..+40
                 float angleDelta = helmAngle - currentAngle;
+                float inputSpeed = getAngularSpeed();
+                float newAngle = currentAngle + Mth.clamp(angleDelta, -inputSpeed, inputSpeed);
 
-                // 3. Get actual angle step per tick based on bearing input speed
-                float maxStep = getAngularSpeed(); // How fast we CAN move
-                float actualStep;
+                newAngle = Mth.clamp(newAngle,-40.0f, 40.0f);
 
-                if (angleDelta < 0) {
-                    // Need to move negative
-                    actualStep = Math.max(-maxStep, angleDelta);
-                } else {
-                    // Need to move positive
-                    actualStep = Math.min(maxStep, angleDelta);
-                }
-
-                // 4. Calculate new angle
-                float newAngle = currentAngle + actualStep;
-
-                // Clamp to rudder limits
-                newAngle = Mth.clamp(newAngle, -40.0f, 40.0f);
-
-                // 5. Update persistent and local control surface data with new angle
                 persistentData.angle = newAngle;
                 this.controlSurfaceData = persistentData;
 
-                targetAngle = rudderToBearing(newAngle);
+                this.targetAngle = newAngle;
 
-                /*
-                Player nearbyPlayer = level.getNearestPlayer(blockPos.getX(), blockPos.getY(), blockPos.getZ(), 10, false);
+                this.fluidSamplingCooldown++;
 
-                if (nearbyPlayer != null)
-                nearbyPlayer.displayClientMessage(
-                        Component.literal("helm angle: " + helmAngle
-                                + "cur angle: " + currentAngle
-                                + "new angle: " + newAngle
-                                + "tgt angle: " + targetAngle
-                                + "rud angle: " + rudderAngle),
-                        true
-                );
-
-                 */
-
-            }
-
-            // Update submerged percentage periodically
-            fluidSamplingCooldown++;
-            if (fluidSamplingCooldown > 10) {
-                fluidSamplingCooldown = 0;
-                updateSubmergedPercentage(this.rudderContraption, ship);
-                persistentData.submergedPercentage = this.controlSurfaceData.submergedPercentage;
+                if (this.fluidSamplingCooldown > 10) {
+                    this.fluidSamplingCooldown = 0;
+                    updateSubmergedPercentage(this.rudderContraption, ship);
+                    persistentData.submergedPercentage = this.controlSurfaceData.submergedPercentage;
+                }
             }
         }
     }
@@ -217,105 +177,96 @@ public class RudderBearingBlockEntity extends KineticBlockEntity implements IBea
     @Override
     public void lazyTick() {
         super.lazyTick();
-        if (rudderContraption != null && !level.isClientSide)
+        if (this.level != null && this.rudderContraption != null && !this.level.isClientSide)
             sendData();
     }
 
     @Override
     public AssemblyException getLastAssemblyException() {
-        return lastException;
+        return this.lastException;
     }
 
     @Override
     public void remove() {
-        if (!this.getLevel().isClientSide()) {
+        if (this.level != null && !this.level.isClientSide) {
             resetDataAndAttachment();
             disassemble();
             super.remove();
         }
     }
 
-
     private void resetDataAndAttachment() {
         this.controlSurfaceData = null;
-        VSMarinePropulsionAttachment shipControl = VSMarinePropulsionAttachment.get(this.getLevel(), this.getBlockPos());
+        VSMarinePropulsionAttachment shipControl = VSMarinePropulsionAttachment.get(this.level, this.worldPosition);
         if (shipControl != null)
-            shipControl.removeControlSurface(this.getBlockPos());
+            shipControl.removeControlSurface(this.worldPosition);
     }
 
     @Override
     public void write(CompoundTag compound, boolean clientPacket) {
-        compound.putBoolean("Running", running);
-        compound.putFloat("RudderAngle", rudderAngle);
-        compound.putFloat("TargetAngle", targetAngle);
-        AssemblyException.write(compound, lastException);
         super.write(compound, clientPacket);
+
+        compound.putFloat("RudderAngle", this.rudderAngle.getValue());
+        compound.putFloat("TargetAngle", this.targetAngle);
+        compound.putBoolean("IsRunning", this.running);
+        compound.putFloat("AngularSpeed", getAngularSpeed());
+
+        AssemblyException.write(compound, getLastAssemblyException());
     }
 
     @Override
     protected void read(CompoundTag compound, boolean clientPacket) {
-        float rudderAnglePrev = rudderAngle;
-
-        running = compound.getBoolean("Running");
-        rudderAngle = compound.getFloat("RudderAngle");
-        targetAngle = compound.getFloat("TargetAngle");
-
-        lastException = AssemblyException.read(compound);
         super.read(compound, clientPacket);
 
-        if (!clientPacket)
-            return;
+        this.rudderAngle.setValue(compound.getFloat("RudderAngle"));
 
-        if (running) {
-            clientRudderAngleDiff = rudderAngle - rudderAnglePrev;
-            rudderAngle = rudderAnglePrev;
-        } else {
-            rudderContraption = null;
-        }
+        float targetAngle = compound.getFloat("TargetAngle");
+        float angularSpeed = compound.getFloat("AngularSpeed");
+        this.rudderAngle.chase(targetAngle, angularSpeed, LerpedFloat.Chaser.LINEAR);
+
+        this.running = compound.getBoolean("IsRunning");
+
+        this.lastException = AssemblyException.read(compound);
     }
 
     public void assemble() {
 
-        if (!(level.getBlockState(worldPosition).getBlock() instanceof RudderBearingBlock))
+        if (this.level == null || !(this.level.getBlockState(worldPosition).getBlock() instanceof RudderBearingBlock))
             return;
 
-        Direction direction = getBlockState().getValue(RudderBearingBlock.FACING);
+        Direction direction = this.getBlockState().getValue(RudderBearingBlock.FACING);
 
-        // Scuttle any old data before creating new contraption
         resetDataAndAttachment();
 
-        RudderContraption rudderContraption = new RudderContraption(direction);
+        RudderContraption rudder = new RudderContraption(direction);
         try {
-            if (!rudderContraption.assemble(level, worldPosition))
+            if (!rudder.assemble(this.level, this.worldPosition))
                 return;
-            lastException = null;
+            this.lastException = null;
         } catch (AssemblyException e) {
-            lastException = e;
+            this.lastException = e;
             sendData();
             return;
         }
 
-        // Create FRESH control surface data for the new contraption
         this.controlSurfaceData = new ControlSurfaceData(
-                worldPosition,
-                rudderContraption.getNormalVector(),
-                rudderContraption.getRotationAxisVector(),
-                rudderContraption.getRudderBlocks()
+                this.worldPosition,
+                rudder.getNormalVector(),
+                rudder.getRotationAxisVector(),
+                rudder.getRudderBlocks()
         );
 
-        rudderContraption.removeBlocksFromWorld(level, BlockPos.ZERO);
-        this.rudderContraption = ControlledContraptionEntity.create(level, this, rudderContraption);
-        BlockPos anchor = worldPosition.relative(direction);
+        rudder.removeBlocksFromWorld(this.level, BlockPos.ZERO);
+        this.rudderContraption = ControlledContraptionEntity.create(this.level, this, rudder);
+        BlockPos anchor = this.worldPosition.relative(direction);
         this.rudderContraption.setPos(anchor.getX(), anchor.getY(), anchor.getZ());
         this.rudderContraption.setRotationAxis(direction.getAxis());
-        level.addFreshEntity(this.rudderContraption);
+        this.level.addFreshEntity(this.rudderContraption);
 
-        AllSoundEvents.CONTRAPTION_ASSEMBLE.playOnServer(level, worldPosition);
+        AllSoundEvents.CONTRAPTION_ASSEMBLE.playOnServer(this.level, this.worldPosition);
 
-        running = true;
-        this.controlSurfaceData.angle = 0;
-        rudderAngle = 0; // Reset to neutral
-        // Now we're a proper contraption!
+        this.running = true;
+        this.rudderAngle.setValue(0.0f);
 
         syncWithAttachment();
         sendData();
@@ -323,58 +274,33 @@ public class RudderBearingBlockEntity extends KineticBlockEntity implements IBea
 
     public void disassemble() {
 
-        if (!running && rudderContraption == null)
+        if (!this.running && this.rudderContraption == null)
             return;
 
-        // Scuttle control surface data - we're going back to blocks
         resetDataAndAttachment();
 
-        rudderAngle = 0; // Reset angle
+        this.rudderAngle.setValue(0.0f);
 
         applyRudderCalculations();
+        applyRotations();
 
-        if (rudderContraption != null) {
-            rudderContraption.disassemble();
-            AllSoundEvents.CONTRAPTION_DISASSEMBLE.playOnServer(level, worldPosition);
+        if (this.rudderContraption != null) {
+            this.rudderContraption.disassemble();
+            AllSoundEvents.CONTRAPTION_DISASSEMBLE.playOnServer(this.level, this.worldPosition);
         }
 
-        rudderContraption = null;
-        running = false;
-        assembleNextTick = false;
+        this.rudderContraption = null;
+        this.running = false;
+        this.assembleNextTick = false;
         sendData();
     }
 
-    private float getRudderSpeed() {
-        // For client interpolation only
-        float speed = getAngularSpeed() / 2f;
-
-        if (speed != 0 && rudderAngle != targetAngle) {
-
-            float angleDiff = AngleHelper.getShortestAngleDiff(rudderAngle, targetAngle);
-
-            speed = Mth.clamp(angleDiff, -speed, speed);
-        } else {
-            speed = 0;
-        }
-
-        return speed + clientRudderAngleDiff / 3f;
-    }
-
     private float getAngularSpeed() {
-        float speed = Math.abs(getSpeed() * 3 / 10f); // Scale factor
-        if (level.isClientSide) {
+        float speed = Math.abs(getSpeed() * 0.3f);
+        if (this.level != null && this.level.isClientSide) {
             speed *= com.simibubi.create.foundation.utility.ServerSpeedProvider.get();
         }
         return speed;
-    }
-
-    private float bearingToRudder(float bearingAngle) {
-        return bearingAngle > 180 ? bearingAngle - 360 : bearingAngle;
-    }
-
-    private float rudderToBearing(float rudderAngle) {
-        rudderAngle %= 360;
-        return (rudderAngle < 0) ? 360 + rudderAngle : rudderAngle;
     }
 
     private void updateSubmergedPercentage(ControlledContraptionEntity controlledContraption, Ship ship) {
@@ -386,10 +312,12 @@ public class RudderBearingBlockEntity extends KineticBlockEntity implements IBea
         ship.getTransform().getShipToWorld().transformAab(shipyardRudderAabbMin, shipyardRudderAabbMax, worldRudderAabbMin, worldRudderAabbMax);
         AABBd worldRudderAabb = new AABBd(worldRudderAabbMin, worldRudderAabbMax);
 
-        this.controlSurfaceData.submergedPercentage = getSubmergedRatio(worldRudderAabb, level, fluidSamplingPoints);
+        int fluidSamplingPoints = 10;
+
+        this.controlSurfaceData.submergedPercentage = getSubmergedRatio(worldRudderAabb, this.level, fluidSamplingPoints);
     }
 
-    public static float getSubmergedRatio(AABBd worldAabb, Level world, int samplingPoints) {
+    public static float getSubmergedRatio(AABBd worldAabb, Level level, int samplingPoints) {
         double minY = worldAabb.minY;
         double maxY = worldAabb.maxY;
         double height = maxY - minY;
@@ -403,7 +331,7 @@ public class RudderBearingBlockEntity extends KineticBlockEntity implements IBea
         for (int i = 0; i < samplingPoints; i++) {
             double currentY = minY + (i * height / samplingPoints);
             BlockPos pos = BlockPos.containing(centerX, currentY, centerZ);
-            FluidState fluidState = world.getFluidState(pos);
+            FluidState fluidState = level.getFluidState(pos);
 
             if (fluidState.is(Fluids.WATER)) submergedPoints++;
 
@@ -421,26 +349,28 @@ public class RudderBearingBlockEntity extends KineticBlockEntity implements IBea
 
     @Override
     public void attach(ControlledContraptionEntity contraption) {
-        BlockState blockState = getBlockState();
-        if (!(contraption.getContraption() instanceof RudderContraption rudderContraption))
+
+        BlockState blockState = this.getBlockState();
+
+        if (!(contraption.getContraption() instanceof RudderContraption rudder))
             return;
         if (!blockState.hasProperty(BearingBlock.FACING))
             return;
 
         this.rudderContraption = contraption;
-        //setChanged();
-        BlockPos anchor = worldPosition.relative(blockState.getValue(BearingBlock.FACING));
+        setChanged();
+
+        BlockPos anchor = this.worldPosition.relative(blockState.getValue(BearingBlock.FACING));
         this.rudderContraption.setPos(anchor.getX(), anchor.getY(), anchor.getZ());
 
-        if (!level.isClientSide) {
+        if (this.level != null && !this.level.isClientSide) {
             this.running = true;
 
-            // ALWAYS recreate control surface data on attach for consistency
             this.controlSurfaceData = new ControlSurfaceData(
-                    worldPosition,
-                    rudderContraption.getNormalVector(),
-                    rudderContraption.getRotationAxisVector(),
-                    rudderContraption.getRudderBlocks()
+                    this.worldPosition,
+                    rudder.getNormalVector(),
+                    rudder.getRotationAxisVector(),
+                    rudder.getRudderBlocks()
             );
 
             syncWithAttachment();
@@ -451,22 +381,19 @@ public class RudderBearingBlockEntity extends KineticBlockEntity implements IBea
     @Override
     public void onSpeedChanged(float prevSpeed) {
         super.onSpeedChanged(prevSpeed);
-        assembleNextTick = true;
+        if (!this.running)
+            this.assembleNextTick = true;
     }
 
     @Override
     public void onStall() {
-        if (!level.isClientSide)
+        if (this.level != null && !this.level.isClientSide)
             sendData();
     }
 
     @Override
     public boolean isValid() {
-        return !isRemoved();
-    }
-
-    public boolean isRunning() {
-        return running;
+        return !this.isRemoved();
     }
 
     @Override
@@ -476,20 +403,17 @@ public class RudderBearingBlockEntity extends KineticBlockEntity implements IBea
 
     @Override
     public BlockPos getBlockPosition() {
-        return worldPosition;
+        return this.worldPosition;
     }
 
     @Override
     public float getInterpolatedAngle(float partialTicks) {
-        if (isVirtual())
-            return Mth.lerp(partialTicks, prevRudderAngle, rudderAngle);
-        if (rudderContraption == null || rudderContraption.isStalled())
-            partialTicks = 0;
-        return Mth.lerp(partialTicks, rudderAngle, rudderAngle + getRudderSpeed());
+        return this.rudderAngle.getValue(partialTicks);
     }
 
     @Override
     public void setAngle(float forcedAngle) {
-        rudderAngle = forcedAngle;
+        this.rudderAngle.setValue(forcedAngle);
+        this.rudderAngle.updateChaseSpeed(forcedAngle);
     }
 }
