@@ -12,6 +12,7 @@ import com.simibubi.create.foundation.utility.AngleHelper;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
+import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.Map;
@@ -41,7 +42,7 @@ public class ShipPropellerBlockEntityRenderer extends KineticBlockEntityRenderer
         float speed = be.actualSpeed.getValue(partialTicks) * 3 / 10f;
         float angle = be.angle + speed * partialTicks;
 
-        VertexConsumer vb = buffer.getBuffer(RenderType.solid());
+        VertexConsumer vb = buffer.getBuffer(RenderType.cutout());
 
         SuperByteBuffer propeller = getPropellerModel(be, blockState);
         kineticRotationTransform(propeller, be, getRotationAxisOf(be), AngleHelper.rad(angle), light);
@@ -51,16 +52,12 @@ public class ShipPropellerBlockEntityRenderer extends KineticBlockEntityRenderer
     @Override
     protected SuperByteBuffer getRotatedModel(ShipPropellerBlockEntity blockEntity, BlockState state) {
         return CachedBufferer.partialFacing(AllPartialModels.SHAFT_HALF, state, state
-                .getValue(FACING));
+                .getValue(FACING).getOpposite());
     }
 
+    //FIXME redo the propeller model to remove the CCW shift
     private SuperByteBuffer getPropellerModel(ShipPropellerBlockEntity blockEntity, BlockState state) {
-        return CachedBufferer.partialFacing(propellerModelsMap.get(blockEntity.propellerHandedness), state);
-    }
-
-    @Override
-    protected BlockState getRenderedBlockState(ShipPropellerBlockEntity be) {
-        return shaft(getRotationAxisOf(be));
+        return CachedBufferer.partialFacing(propellerModelsMap.get(blockEntity.propellerHandedness), state, state.getValue(FACING).getCounterClockWise(Direction.Axis.X));
     }
 
 }

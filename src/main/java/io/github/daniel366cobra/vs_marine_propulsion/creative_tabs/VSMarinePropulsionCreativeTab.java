@@ -4,6 +4,7 @@ import com.simibubi.create.AllCreativeModeTabs;
 import com.tterrag.registrate.util.entry.ItemProviderEntry;
 import io.github.daniel366cobra.vs_marine_propulsion.VSMarinePropulsionBlocks;
 import io.github.daniel366cobra.vs_marine_propulsion.VSMarinePropulsionMod;
+import io.github.daniel366cobra.vs_marine_propulsion.VSMarinePropulsionShapes;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.CreativeModeTab;
@@ -25,6 +26,7 @@ public class VSMarinePropulsionCreativeTab {
             VSMarinePropulsionBlocks.RUDDER_BEARING,
             VSMarinePropulsionBlocks.RUDDER,
             VSMarinePropulsionBlocks.HELM,
+            VSMarinePropulsionBlocks.DIVING_PLANE_STATION,
             VSMarinePropulsionBlocks.SEACOCK
     );
 

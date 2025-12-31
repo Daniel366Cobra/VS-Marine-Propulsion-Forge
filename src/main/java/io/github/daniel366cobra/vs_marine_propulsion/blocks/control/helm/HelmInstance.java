@@ -15,17 +15,12 @@ import net.minecraft.core.Direction;
 public class HelmInstance extends BlockEntityInstance<HelmBlockEntity> implements DynamicInstance {
 
     protected final ModelData wheel;
-    final Direction facing;
-    final float baseRotationY;
 
     public HelmInstance(MaterialManager materialManager, HelmBlockEntity blockEntity) {
         super(materialManager, blockEntity);
 
         Material<ModelData> mat = getTransformMaterial();
         wheel = mat.getModel(VSMarinePropulsionPartialModels.HELM_WHEEL, blockState).createInstance();
-
-        facing = blockState.getValue(HelmBlock.FACING);
-        baseRotationY = AngleHelper.horizontalAngle(facing);
 
         animateWheel();
     }
@@ -37,11 +32,18 @@ public class HelmInstance extends BlockEntityInstance<HelmBlockEntity> implement
 
     protected void animateWheel() {
         // USE THE LERPEDFLOAT VALUE FOR SMOOTH ANIMATION
-        float renderAngle = blockEntity.getRenderWheelAngle(AnimationTickHolder.getPartialTicks());
-        float angleRadians = (float) Math.toRadians(renderAngle);
 
-        transform(wheel.loadIdentity())
-                .rotateCentered(Direction.NORTH, angleRadians);
+        float wheelAngle = blockEntity.getRenderWheelAngle(AnimationTickHolder.getPartialTicks());
+        float angleRadians = (float) Math.toRadians(wheelAngle);
+
+        float rotationY = AngleHelper.horizontalAngle(blockState.getValue(HelmBlock.FACING).getOpposite());
+
+        wheel.loadIdentity()
+                .translate(getInstancePosition())
+                .translate(0.5f, 0.8125f, 0.5f)
+                .rotate(Direction.UP, (float) Math.toRadians(rotationY))
+                .rotate(Direction.SOUTH, angleRadians)
+                .translate(-0.5f, -0.8125f, -0.5f);
     }
 
     @Override
@@ -52,13 +54,5 @@ public class HelmInstance extends BlockEntityInstance<HelmBlockEntity> implement
     @Override
     public void updateLight() {
         relight(pos, wheel);
-    }
-
-    private <T extends Translate<T> & Rotate<T>> T transform(T msr) {
-        return msr.translate(getInstancePosition())
-                .centre()
-                .translate(0.0f, 0.3125f, 0.0f)
-                .rotate(Direction.UP, (float) Math.toRadians(baseRotationY))
-                .unCentre();
     }
 }

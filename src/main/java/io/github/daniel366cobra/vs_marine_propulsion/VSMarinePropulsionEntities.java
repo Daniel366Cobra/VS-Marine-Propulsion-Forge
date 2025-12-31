@@ -5,6 +5,9 @@ import com.simibubi.create.content.kinetics.transmission.SplitShaftRenderer;
 import com.simibubi.create.foundation.data.CreateRegistrate;
 import com.tterrag.registrate.util.entry.BlockEntityEntry;
 import io.github.daniel366cobra.vs_marine_propulsion.blocks.auxiliary.SeacockBlockEntity;
+import io.github.daniel366cobra.vs_marine_propulsion.blocks.control.diving_plane_station.DivingPlaneStationBlockEntity;
+import io.github.daniel366cobra.vs_marine_propulsion.blocks.control.diving_plane_station.DivingPlaneStationBlockEntityRenderer;
+import io.github.daniel366cobra.vs_marine_propulsion.blocks.control.diving_plane_station.DivingPlaneStationInstance;
 import io.github.daniel366cobra.vs_marine_propulsion.blocks.control.engine_order_telegraph.EngineOrderTelegraphBlockEntity;
 import io.github.daniel366cobra.vs_marine_propulsion.blocks.control.engine_order_telegraph.EngineOrderTelegraphBlockEntityRenderer;
 import io.github.daniel366cobra.vs_marine_propulsion.blocks.control.engine_order_telegraph.EngineOrderTelegraphInstance;
@@ -70,6 +73,13 @@ public class VSMarinePropulsionEntities {
             .instance(() -> HelmInstance::new, false)
             .validBlocks(VSMarinePropulsionBlocks.HELM)
             .renderer(() -> HelmBlockEntityRenderer::new)
+            .register();
+
+    public static final BlockEntityEntry<DivingPlaneStationBlockEntity> DIVING_PLANE_STATION_BLOCK_ENTITY = REGISTRATE
+            .blockEntity("diving_plane_station_entity", DivingPlaneStationBlockEntity::new)
+            .instance(() -> DivingPlaneStationInstance::new, false)
+            .validBlocks(VSMarinePropulsionBlocks.DIVING_PLANE_STATION)
+            .renderer(() -> DivingPlaneStationBlockEntityRenderer::new)
             .register();
 
     public static final BlockEntityEntry<SeacockBlockEntity> SEACOCK_BLOCK_ENTITY = REGISTRATE

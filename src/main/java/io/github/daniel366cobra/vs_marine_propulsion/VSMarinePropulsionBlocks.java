@@ -7,6 +7,7 @@ import com.simibubi.create.foundation.data.SharedProperties;
 import com.simibubi.create.foundation.item.ItemDescription;
 import com.tterrag.registrate.util.entry.BlockEntry;
 import io.github.daniel366cobra.vs_marine_propulsion.blocks.auxiliary.SeacockBlock;
+import io.github.daniel366cobra.vs_marine_propulsion.blocks.control.diving_plane_station.DivingPlaneStationBlock;
 import io.github.daniel366cobra.vs_marine_propulsion.blocks.control.engine_order_telegraph.EngineOrderTelegraphBlock;
 import io.github.daniel366cobra.vs_marine_propulsion.blocks.control.helm.HelmBlock;
 import io.github.daniel366cobra.vs_marine_propulsion.blocks.drivetrain.variator.VariatorBlock;
@@ -119,6 +120,21 @@ public class VSMarinePropulsionBlocks {
             .blockstate((ctx, prov ) -> prov.horizontalBlock(ctx.get(), partialBaseModel(ctx, prov)))
             .lang("Helm")
             .onRegisterAfter(Registries.ITEM, v -> ItemDescription.useKey(v, "block." + VSMarinePropulsionMod.MOD_ID + ".helm"))
+            .item()
+            .model((ctx, prov) -> prov.withExistingParent(ctx.getName(), prov.modLoc("block/" + ctx.getName() + "/item")))
+            .build()
+            .register();
+
+    public static final BlockEntry<DivingPlaneStationBlock> DIVING_PLANE_STATION = REGISTRATE
+            .block("diving_plane_station", DivingPlaneStationBlock::new)
+            .initialProperties(SharedProperties::softMetal)
+            .properties(p -> p
+                    .noOcclusion()
+                    .mapColor(MapColor.COLOR_GRAY))
+            .transform(pickaxeOnly())
+            .blockstate((ctx, prov) -> prov.horizontalBlock(ctx.get(), partialBaseModel(ctx, prov)))
+            .lang("Diving Plane Station")
+            .onRegisterAfter(Registries.ITEM, v -> ItemDescription.useKey(v, "block." + VSMarinePropulsionMod.MOD_ID + ".diving_plane_station"))
             .item()
             .model((ctx, prov) -> prov.withExistingParent(ctx.getName(), prov.modLoc("block/" + ctx.getName() + "/item")))
             .build()

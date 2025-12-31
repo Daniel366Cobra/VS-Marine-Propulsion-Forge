@@ -303,6 +303,7 @@ public class VSMarinePropulsionAttachment implements ShipForcesInducer {
     }
 
 
+    //FIXME wrong direction of rudder force when reversing the ship or when rudder on the bow
     private void applyStableRealisticForces(PhysShipImpl physShip) {
         final ShipTransform transform = physShip.getTransform();
 
@@ -330,7 +331,7 @@ public class VSMarinePropulsionAttachment implements ShipForcesInducer {
 
 
             // b) Rudder deflection in ship coordinates
-            double rudderAngleRad = Math.toRadians(data.angle);
+            double rudderAngleRad = Math.toRadians(-data.angle);
 
             // c) Effective AoA = rudder angle + leeway (but transformed properly!)
             // When ship drifts to port (negative leeway), rudder sees more/less flow

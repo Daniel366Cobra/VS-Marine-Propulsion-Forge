@@ -161,9 +161,9 @@ public class HelmBlockEntity extends SmartBlockEntity {
 
             if (playerControl != null) {
                 if (playerControl.getLeftImpulse() < 0) {
-                    this.rotateWheelRight(getBlockState(), (ServerLevel) level, blockPos);
+                    this.rotateWheelRight((ServerLevel) level, blockPos);
                 } else if (playerControl.getLeftImpulse() > 0) {
-                    this.rotateWheelLeft(getBlockState(), (ServerLevel) level, blockPos);
+                    this.rotateWheelLeft((ServerLevel) level, blockPos);
                 }
             }
 
@@ -214,44 +214,32 @@ public class HelmBlockEntity extends SmartBlockEntity {
         seats.clear();
     }
 
-    public boolean rotateWheelRight(BlockState state, ServerLevel world, BlockPos pos) {
-        boolean success = false;
+    public void rotateWheelRight(ServerLevel world, BlockPos pos) {
         if (wheelAngle - wheelInterval >= 0) {
             wheelAngle -= wheelInterval;
             playWheelSounds(world, pos);
-            success = true;
-            //clientWheelAngle.chase(wheelAngle, 0.2f, LerpedFloat.Chaser.EXP);
         }
 
         VSMarinePropulsionPacketHandler.CHANNEL.send(
                 PacketDistributor.TRACKING_CHUNK.with(() -> level.getChunkAt(pos)),
                 new WheelAnglePacket(wheelAngle, pos)
         );
-
-        //notifyUpdate();
-        return success;
     }
 
-    public boolean rotateWheelLeft(BlockState state, ServerLevel world, BlockPos pos) {
-        boolean success = false;
+    public void rotateWheelLeft(ServerLevel world, BlockPos pos) {
         if (wheelAngle + wheelInterval <= 720) {
             wheelAngle += wheelInterval;
             playWheelSounds(world, pos);
-            success = true;
-            //clientWheelAngle.chase(wheelAngle, 0.2f, LerpedFloat.Chaser.EXP);
         }
 
         VSMarinePropulsionPacketHandler.CHANNEL.send(
                 PacketDistributor.TRACKING_CHUNK.with(() -> level.getChunkAt(pos)),
                 new WheelAnglePacket(wheelAngle, pos)
         );
-
-        //notifyUpdate();
-        return success;
     }
 
     public float getRudderAngle() {
-        return (wheelAngle - 360f) / 9f;
+        return (360f - wheelAngle) / 9f;
     }
 
     private void playWheelSounds(Level world, BlockPos pos) {

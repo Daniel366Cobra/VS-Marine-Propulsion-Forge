@@ -25,8 +25,13 @@ public class VSMarinePropulsionShapes {
     public static final VoxelShaper RUDDER = shape(0, 6, 0, 16, 10, 16)
             .forDirectional();
 
+    //FIXME do the proper shape
     public static final VoxelShaper HELM = shape(5,0,2,11,16,11)
             .add(0, 5, 0, 16, 21, 2)
+            .forHorizontal(SOUTH);
+
+    public static final VoxelShaper DIVING_PLANE_STATION = shape(0, 0, 0, 16, 1, 16)
+            .add(4, 1, 8,12, 17, 14)
             .forHorizontal(SOUTH);
 
     private static VSMarinePropulsionShapes.Builder shape(VoxelShape shape) {

@@ -41,6 +41,7 @@ public class HelmBlock extends HorizontalDirectionalBlock implements IBE<HelmBlo
         return VSMarinePropulsionShapes.HELM.get(direction);
     }
 
+    @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         super.createBlockStateDefinition(builder.add(FACING));
     }
