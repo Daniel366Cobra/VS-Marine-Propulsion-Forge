@@ -12,11 +12,13 @@ import io.github.daniel366cobra.vs_marine_propulsion.blocks.control.engine_order
 import io.github.daniel366cobra.vs_marine_propulsion.blocks.control.helm.HelmBlock;
 import io.github.daniel366cobra.vs_marine_propulsion.blocks.drivetrain.variator.VariatorBlock;
 import io.github.daniel366cobra.vs_marine_propulsion.blocks.propulsion.large_ship_propeller.LargeShipPropellerBlock;
+import io.github.daniel366cobra.vs_marine_propulsion.blocks.steering.ballast_tank.BallastTankBlock;
 import io.github.daniel366cobra.vs_marine_propulsion.blocks.steering.rudder.RudderBlock;
 import io.github.daniel366cobra.vs_marine_propulsion.blocks.steering.rudder_bearing.RudderBearingBlock;
 import io.github.daniel366cobra.vs_marine_propulsion.items.EngineOrderTelegraphBlockItem;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.material.MapColor;
 
 import static com.simibubi.create.foundation.data.AssetLookup.partialBaseModel;
@@ -147,6 +149,15 @@ public class VSMarinePropulsionBlocks {
             .blockstate(BlockStateGen.directionalBlockProvider(false))
             .lang("Seacock")
             .onRegisterAfter(Registries.ITEM, v -> ItemDescription.useKey(v, "block." + VSMarinePropulsionMod.MOD_ID + ".seacock"))
+            .simpleItem()
+            .register();
+
+    public static final BlockEntry<BallastTankBlock> BALLAST_TANK = REGISTRATE
+            .block("ballast_tank", BallastTankBlock::new)
+            .initialProperties(SharedProperties::softMetal)
+            .transform(pickaxeOnly())
+            .blockstate((ctx, prov ) -> prov.simpleBlock(ctx.get(), partialBaseModel(ctx, prov)))
+            .lang("Ballast Tank")
             .simpleItem()
             .register();
 

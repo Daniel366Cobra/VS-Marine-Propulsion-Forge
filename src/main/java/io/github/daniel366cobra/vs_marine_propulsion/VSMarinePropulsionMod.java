@@ -52,6 +52,7 @@ public class VSMarinePropulsionMod {
 
         VSMarinePropulsionConfig.register(ModLoadingContext.get());
         VSMarinePropulsionCreativeTab.register(eventBus);
+        VSMarinePropulsionWeights.register();
         VSMarinePropulsionBlocks.register();
         VSMarinePropulsionEntities.register();
         VSMarinePropulsionSounds.register(eventBus);

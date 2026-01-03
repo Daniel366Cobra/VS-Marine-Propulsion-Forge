@@ -20,6 +20,7 @@ import io.github.daniel366cobra.vs_marine_propulsion.blocks.propulsion.ShipPrope
 import io.github.daniel366cobra.vs_marine_propulsion.blocks.propulsion.ShipPropellerBlockEntityRendererFactory;
 import io.github.daniel366cobra.vs_marine_propulsion.blocks.propulsion.ShipPropellerInstanceFactory;
 import io.github.daniel366cobra.vs_marine_propulsion.blocks.propulsion.utility.PropellerThrustCalculator;
+import io.github.daniel366cobra.vs_marine_propulsion.blocks.steering.ballast_tank.BallastTankBlockEntity;
 import io.github.daniel366cobra.vs_marine_propulsion.blocks.steering.rudder_bearing.RudderBearingBlockEntity;
 import io.github.daniel366cobra.vs_marine_propulsion.blocks.steering.rudder_bearing.RudderBearingBlockEntityRenderer;
 import io.github.daniel366cobra.vs_marine_propulsion.blocks.steering.rudder_bearing.RudderBearingInstance;
@@ -85,6 +86,11 @@ public class VSMarinePropulsionEntities {
     public static final BlockEntityEntry<SeacockBlockEntity> SEACOCK_BLOCK_ENTITY = REGISTRATE
             .blockEntity("seacock_entity", SeacockBlockEntity::new)
             .validBlocks(VSMarinePropulsionBlocks.SEACOCK)
+            .register();
+
+    public static final BlockEntityEntry<BallastTankBlockEntity> BALLAST_TANK_BLOCK_ENTITY = REGISTRATE
+            .blockEntity("ballast_tank_entity", BallastTankBlockEntity::new)
+            .validBlocks(VSMarinePropulsionBlocks.BALLAST_TANK)
             .register();
 
 

@@ -27,7 +27,8 @@ public class VSMarinePropulsionCreativeTab {
             VSMarinePropulsionBlocks.RUDDER,
             VSMarinePropulsionBlocks.HELM,
             VSMarinePropulsionBlocks.DIVING_PLANE_STATION,
-            VSMarinePropulsionBlocks.SEACOCK
+            VSMarinePropulsionBlocks.SEACOCK,
+            VSMarinePropulsionBlocks.BALLAST_TANK
     );
 
     public static final RegistryObject<CreativeModeTab> MAIN = CREATIVE_MODE_TABS.register("main",
