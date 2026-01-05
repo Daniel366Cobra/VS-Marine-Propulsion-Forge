@@ -1,4 +1,5 @@
 {
+  "block.vs_marine_propulsion.ballast_tank": "Ballast Tank",
   "block.vs_marine_propulsion.diving_plane_station": "Diving Plane Station",
   "block.vs_marine_propulsion.diving_plane_station.tooltip.behaviour1": "R-Click on a Rudder Bearing block to place it under control,",
   "block.vs_marine_propulsion.diving_plane_station.tooltip.behaviour2": "R-Click to man the station, then use A/D to steer.",

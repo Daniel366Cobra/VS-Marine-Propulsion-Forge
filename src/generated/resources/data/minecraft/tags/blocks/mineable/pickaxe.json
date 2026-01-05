@@ -7,6 +7,7 @@
     "vs_marine_propulsion:rudder",
     "vs_marine_propulsion:helm",
     "vs_marine_propulsion:diving_plane_station",
-    "vs_marine_propulsion:seacock"
+    "vs_marine_propulsion:seacock",
+    "vs_marine_propulsion:ballast_tank"
   ]
 }

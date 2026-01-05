@@ -1,6 +1,7 @@
 package io.github.daniel366cobra.vs_marine_propulsion;
 
 import com.simibubi.create.content.kinetics.BlockStressDefaults;
+import com.simibubi.create.foundation.data.AssetLookup;
 import com.simibubi.create.foundation.data.BlockStateGen;
 import com.simibubi.create.foundation.data.CreateRegistrate;
 import com.simibubi.create.foundation.data.SharedProperties;
@@ -13,12 +14,14 @@ import io.github.daniel366cobra.vs_marine_propulsion.blocks.control.helm.HelmBlo
 import io.github.daniel366cobra.vs_marine_propulsion.blocks.drivetrain.variator.VariatorBlock;
 import io.github.daniel366cobra.vs_marine_propulsion.blocks.propulsion.large_ship_propeller.LargeShipPropellerBlock;
 import io.github.daniel366cobra.vs_marine_propulsion.blocks.steering.ballast_tank.BallastTankBlock;
+import io.github.daniel366cobra.vs_marine_propulsion.blocks.steering.ballast_tank.BallastTankGenerator;
+import io.github.daniel366cobra.vs_marine_propulsion.blocks.steering.ballast_tank.BallastTankItem;
+import io.github.daniel366cobra.vs_marine_propulsion.blocks.steering.ballast_tank.BallastTankModel;
 import io.github.daniel366cobra.vs_marine_propulsion.blocks.steering.rudder.RudderBlock;
 import io.github.daniel366cobra.vs_marine_propulsion.blocks.steering.rudder_bearing.RudderBearingBlock;
 import io.github.daniel366cobra.vs_marine_propulsion.items.EngineOrderTelegraphBlockItem;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.material.MapColor;
 
 import static com.simibubi.create.foundation.data.AssetLookup.partialBaseModel;
@@ -152,13 +155,17 @@ public class VSMarinePropulsionBlocks {
             .simpleItem()
             .register();
 
-    public static final BlockEntry<BallastTankBlock> BALLAST_TANK = REGISTRATE
-            .block("ballast_tank", BallastTankBlock::new)
+    public static final BlockEntry<BallastTankBlock> BALLAST_TANK = REGISTRATE.block("ballast_tank", BallastTankBlock::new)
             .initialProperties(SharedProperties::softMetal)
+            .properties(p -> p.noOcclusion().isRedstoneConductor((p1, p2, p3) -> true))
             .transform(pickaxeOnly())
-            .blockstate((ctx, prov ) -> prov.simpleBlock(ctx.get(), partialBaseModel(ctx, prov)))
+            .blockstate(new BallastTankGenerator()::generate)
             .lang("Ballast Tank")
-            .simpleItem()
+            .onRegister(CreateRegistrate.blockModel(() -> BallastTankModel::standard))
+            .addLayer(() -> RenderType::cutoutMipped)
+            .item(BallastTankItem::new)
+            .model(AssetLookup.customBlockItemModel("_", "block_single"))
+            .build()
             .register();
 
     public static void register() {
