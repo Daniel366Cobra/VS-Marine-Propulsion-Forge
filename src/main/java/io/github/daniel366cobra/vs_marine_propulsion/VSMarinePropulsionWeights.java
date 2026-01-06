@@ -66,7 +66,7 @@ public class VSMarinePropulsionWeights implements BlockStateInfoProvider {
 
         BlockEntity be = ctx.level.getBlockEntity(ctx.pos);
         if (be instanceof BallastTankBlockEntity tank) {
-            return EMPTY_TANK_MASS + tank.calculateCurrentWaterMass();
+            return EMPTY_TANK_MASS + tank.getDistributedWaterMass();
         }
 
         return EMPTY_TANK_MASS;
@@ -77,13 +77,51 @@ public class VSMarinePropulsionWeights implements BlockStateInfoProvider {
         return null;
     }
 
+    private static double getCurrentMass(Level level, BlockPos pos, BlockState state) {
+        CURRENT_CONTEXT.set(new TankContext(level, pos));
+        try {
+            Double mass = INSTANCE.getBlockStateMass(state);
+            return mass != null ? mass : EMPTY_TANK_MASS;
+        } finally {
+            CURRENT_CONTEXT.remove();
+        }
+    }
+
+    /**
+     * Notify VS2 when BlockEntity loads NBT data.
+     * At load time, VS2 queried mass before NBT was loaded (empty tank mass).
+     * Load actual mass.
+     */
+    public static void onBallastTankBEDataLoaded(Level level, BlockPos pos, BlockState state) {
+        double newMass = getCurrentMass(level, pos, state);
+        updateBlockMass(level, pos, state, EMPTY_TANK_MASS, newMass);
+    }
+
     /**
      * Set block mass changed
      * Called from Ballast Tank BE when fluid inside changes
      */
-    public static void setMassChanged(Level level, BlockPos pos, BlockState state,
-                                      double oldMass, double newMass) {
-        if (level.isClientSide) return;
+    public static void setMassChanged(Level level, BlockPos pos, BlockState state, double oldMass) {
+        double newMass = getCurrentMass(level, pos, state);
+        updateBlockMass(level, pos, state, oldMass, newMass);
+    }
+
+    /**
+     *
+     * Remove ballast tank
+     * Called from Ballast Tank block on removal
+     * Removes EXTRA (water) mass, VS handles removal of empty block mass
+     */
+    public static void removeBallastTank(Level level, BlockPos pos, BlockState state) {
+        double oldMass = getCurrentMass(level, pos, state);
+        updateBlockMass(level, pos, state, oldMass, EMPTY_TANK_MASS);
+    }
+
+    /**
+     * Actually updates block mass, setting it from old to new.
+     */
+    private static void updateBlockMass(Level level, BlockPos pos, BlockState state, double oldMass, double newMass) {
+        if (level.isClientSide || !(level.getBlockEntity(pos) instanceof BallastTankBlockEntity)) return;
 
         Pair<Double, BlockType> blockInfo = BlockStateInfo.INSTANCE.get(state);
         if (blockInfo == null) return;

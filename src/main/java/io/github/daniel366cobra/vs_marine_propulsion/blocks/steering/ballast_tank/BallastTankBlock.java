@@ -27,9 +27,6 @@ import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraftforge.common.util.ForgeSoundType;
 
-import static io.github.daniel366cobra.vs_marine_propulsion.blocks.steering.ballast_tank.BallastTankBlockEntity.EMPTY_TANK_MASS;
-
-//TODO: Check splitting multiblock tank mass!
 /**
  *  Credit for the Fluid Tank block code goes to the Create team.
  */
@@ -64,7 +61,6 @@ public class BallastTankBlock extends Block implements IWrenchable, IBE<BallastT
         return 0;
     }
 
-    //TODO add rotation
     @Override
     public InteractionResult onWrenched(BlockState state, UseOnContext context) {
         return InteractionResult.SUCCESS;
@@ -91,15 +87,10 @@ public class BallastTankBlock extends Block implements IWrenchable, IBE<BallastT
             if (!(level.getBlockEntity(pos) instanceof BallastTankBlockEntity tankBE))
                 return;
 
-
-            if (!level.isClientSide) {
-                double oldMass = tankBE.lastCalculatedMass;
-                ConnectivityHandler.splitMulti(tankBE);
-                VSMarinePropulsionWeights.setMassChanged(level, pos, state, oldMass, EMPTY_TANK_MASS);
-            }
+            VSMarinePropulsionWeights.removeBallastTank(level, pos, state);
 
             level.removeBlockEntity(pos);
-
+            ConnectivityHandler.splitMulti(tankBE);
         }
     }
 

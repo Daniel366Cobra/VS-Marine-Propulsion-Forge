@@ -4,6 +4,7 @@ import com.simibubi.create.api.connectivity.ConnectivityHandler;
 import com.simibubi.create.content.fluids.tank.FluidTankCTBehaviour;
 import com.simibubi.create.foundation.block.connected.CTModel;
 import com.simibubi.create.foundation.block.connected.CTSpriteShiftEntry;
+import com.simibubi.create.foundation.block.connected.HorizontalCTBehaviour;
 import com.simibubi.create.foundation.utility.Iterate;
 import io.github.daniel366cobra.vs_marine_propulsion.VSMarinePropulsionSpriteShifts;
 import net.minecraft.client.renderer.RenderType;
@@ -32,8 +33,7 @@ public class BallastTankModel extends CTModel {
                 VSMarinePropulsionSpriteShifts.BALLAST_TANK_INNER);
     }
 
-    private BallastTankModel(BakedModel originalModel, CTSpriteShiftEntry side, CTSpriteShiftEntry top,
-                             CTSpriteShiftEntry inner) {
+    private BallastTankModel(BakedModel originalModel, CTSpriteShiftEntry side, CTSpriteShiftEntry top, CTSpriteShiftEntry inner) {
         super(originalModel, new FluidTankCTBehaviour(side, top, inner));
     }
 
@@ -85,5 +85,4 @@ public class BallastTankModel extends CTModel {
             return culledFaces[face.get2DDataValue()];
         }
     }
-
 }

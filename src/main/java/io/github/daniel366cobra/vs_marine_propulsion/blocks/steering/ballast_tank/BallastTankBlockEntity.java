@@ -8,7 +8,6 @@ import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import com.simibubi.create.foundation.fluid.SmartFluidTank;
 import com.simibubi.create.infrastructure.config.AllConfigs;
-import io.github.daniel366cobra.vs_marine_propulsion.VSMarinePropulsionMod;
 import io.github.daniel366cobra.vs_marine_propulsion.VSMarinePropulsionWeights;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -116,6 +115,12 @@ public class BallastTankBlockEntity extends SmartBlockEntity implements IHaveGog
         }
         if (updateConnectivity)
             updateConnectivity();
+
+        //Non-controller blocks periodically update own mass
+        if (!level.isClientSide && level.getGameTime() % 5 == 0) {
+            updateMass();
+            setChanged();
+        }
     }
 
     @Override
@@ -146,19 +151,45 @@ public class BallastTankBlockEntity extends SmartBlockEntity implements IHaveGog
         if (!hasLevel() || level.isClientSide)
             return;
 
-        double newMass = EMPTY_TANK_MASS + calculateCurrentWaterMass();
-
-        if (Math.abs(newMass - lastCalculatedMass) > 1.0) {
-            VSMarinePropulsionMod.LOGGER.info("Setting new mass to: " + newMass);
-            VSMarinePropulsionWeights.setMassChanged(
-                    level, worldPosition, getBlockState(),
-                    lastCalculatedMass, newMass
-            );
-            lastCalculatedMass = newMass;
+        //Controller updates own mass instantly upon receiving fluid
+        if (isController()) {
+            updateMass();
         }
 
         setChanged();
         sendData();
+    }
+
+    private void updateMass() {
+        double newMass = EMPTY_TANK_MASS + getDistributedWaterMass();
+
+        if (Math.abs(newMass - lastCalculatedMass) > 0.001) {
+            VSMarinePropulsionWeights.setMassChanged(
+                    level, worldPosition, getBlockState(),
+                    lastCalculatedMass
+            );
+            lastCalculatedMass = newMass;
+        }
+    }
+
+    public double getDistributedWaterMass() {
+        double distributedMass;
+
+        //Controller calculates for itself
+        if (isController()) {
+            distributedMass =  calculateCurrentWaterMass() / getTotalTankSize();
+            return distributedMass;
+        }
+
+        //Non-controllers get from controller
+        BallastTankBlockEntity controller = getControllerBE();
+        if (controller != null) {
+            distributedMass = controller.calculateCurrentWaterMass() / controller.getTotalTankSize();
+            return distributedMass;
+        }
+
+        // Fallback for broken multi-blocks
+        return calculateCurrentWaterMass();
     }
 
     public double calculateCurrentWaterMass() {
@@ -259,6 +290,9 @@ public class BallastTankBlockEntity extends SmartBlockEntity implements IHaveGog
         super.read(compound, clientPacket);
 
         lastCalculatedMass = compound.getDouble("LastMass");
+
+        if (this.level != null && !this.level.isClientSide)
+            VSMarinePropulsionWeights.onBallastTankBEDataLoaded(this.level, this.getBlockPos(), this.getBlockState());
 
         BlockPos controllerBefore = controller;
         int prevSize = width;
