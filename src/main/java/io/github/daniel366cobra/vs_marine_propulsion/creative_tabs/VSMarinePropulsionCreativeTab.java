@@ -28,7 +28,8 @@ public class VSMarinePropulsionCreativeTab {
             VSMarinePropulsionBlocks.HELM,
             VSMarinePropulsionBlocks.DIVING_PLANE_STATION,
             VSMarinePropulsionBlocks.SEACOCK,
-            VSMarinePropulsionBlocks.BALLAST_TANK
+            VSMarinePropulsionBlocks.BALLAST_TANK_VERTICAL,
+            VSMarinePropulsionBlocks.BALLAST_TANK_HORIZONTAL
     );
 
     public static final RegistryObject<CreativeModeTab> MAIN = CREATIVE_MODE_TABS.register("main",

@@ -1,6 +1,7 @@
 package io.github.daniel366cobra.vs_marine_propulsion.blocks.steering.ballast_tank;
 
 import com.simibubi.create.api.connectivity.ConnectivityHandler;
+import com.simibubi.create.foundation.utility.VecHelper;
 import io.github.daniel366cobra.vs_marine_propulsion.VSMarinePropulsionEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -13,16 +14,27 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.fluids.FluidStack;
 
-/**
- *  Credit for the Fluid Tank block item code goes to the Create team.
- */
+import static io.github.daniel366cobra.vs_marine_propulsion.blocks.steering.ballast_tank.BallastTankHorizontalBlock.AXIS;
+
 public class BallastTankItem extends BlockItem {
 
-    public BallastTankItem(Block block, Properties properties) {
+    boolean horizontal;
+
+    public static BallastTankItem horizontal(Block block, Properties properties) {
+        return new BallastTankItem(block, properties, true);
+    }
+
+    public static BallastTankItem vertical(Block block, Properties properties) {
+        return new BallastTankItem(block, properties, false);
+    }
+
+    private BallastTankItem(Block block, Properties properties, boolean horizontal) {
         super(block, properties);
+        this.horizontal = horizontal;
     }
 
     @Override
@@ -36,7 +48,7 @@ public class BallastTankItem extends BlockItem {
 
     @Override
     protected boolean updateCustomBlockEntityTag(BlockPos blockPos, Level level, Player player,
-                                                 ItemStack stack, BlockState state) {
+                                                 ItemStack stack, BlockState blockState) {
         MinecraftServer minecraftserver = level.getServer();
         if (minecraftserver == null)
             return false;
@@ -54,76 +66,156 @@ public class BallastTankItem extends BlockItem {
                 }
             }
         }
-        return super.updateCustomBlockEntityTag(blockPos, level, player, stack, state);
+        return super.updateCustomBlockEntityTag(blockPos, level, player, stack, blockState);
     }
 
     private void tryMultiPlace(BlockPlaceContext ctx) {
         Player player = ctx.getPlayer();
-        if (player == null)
+        if (player == null || player.isShiftKeyDown())
             return;
-        if (player.isShiftKeyDown())
-            return;
+
         Direction face = ctx.getClickedFace();
-        if (!face.getAxis()
-                .isVertical())
-            return;
+
+        // Validate face direction based on orientation
+        if (horizontal) {
+            if (!face.getAxis().isHorizontal()) return;
+        } else {
+            if (!face.getAxis().isVertical()) return;
+        }
+
         ItemStack stack = ctx.getItemInHand();
         Level world = ctx.getLevel();
         BlockPos pos = ctx.getClickedPos();
         BlockPos placedOnPos = pos.relative(face.getOpposite());
         BlockState placedOnState = world.getBlockState(placedOnPos);
 
-        if (!BallastTankBlock.isTank(placedOnState))
+        // Check if placed on a ballast tank
+        if (!BallastTankBlockBase.isTank(placedOnState))
             return;
 
-        BallastTankBlockEntity tankAt = ConnectivityHandler.partAt(VSMarinePropulsionEntities.BALLAST_TANK_BLOCK_ENTITY.get(), world, placedOnPos);
+        BlockEntityType<?> beType = horizontal
+                ? VSMarinePropulsionEntities.BALLAST_TANK_HORIZONTAL_BLOCK_ENTITY.get()
+                : VSMarinePropulsionEntities.BALLAST_TANK_VERTICAL_BLOCK_ENTITY.get();
+
+        BallastTankBlockEntity tankAt = ConnectivityHandler.partAt(beType, world, placedOnPos);
+
         if (tankAt == null)
             return;
+
         BallastTankBlockEntity controllerBE = tankAt.getControllerBE();
         if (controllerBE == null)
             return;
 
-        int width = controllerBE.width;
+        int width = controllerBE.getWidth();
         if (width == 1)
             return;
 
-        int tanksToPlace = 0;
-        BlockPos startPos = face == Direction.DOWN ? controllerBE.getBlockPos()
-                .below()
-                : controllerBE.getBlockPos()
-                .above(controllerBE.height);
-
-        if (startPos.getY() != pos.getY())
+        // Calculate start position for multi-placement
+        BlockPos startPos = calculateStartPos(controllerBE, face, placedOnState);
+        if (startPos == null)
             return;
 
-        for (int xOffset = 0; xOffset < width; xOffset++) {
-            for (int zOffset = 0; zOffset < width; zOffset++) {
-                BlockPos offsetPos = startPos.offset(xOffset, 0, zOffset);
-                BlockState blockState = world.getBlockState(offsetPos);
-                if (BallastTankBlock.isTank(blockState))
-                    continue;
-                if (!blockState.canBeReplaced())
-                    return;
-                tanksToPlace++;
-            }
-        }
+        // Validate start position matches clicked position
+        if (!isPositionValid(startPos, pos, face, placedOnState))
+            return;
+
+        // Count how many tanks need to be placed
+        int tanksToPlace = countTanksToPlace(world, startPos, width, placedOnState, face);
+        if (tanksToPlace == 0)
+            return;
 
         if (!player.isCreative() && stack.getCount() < tanksToPlace)
             return;
 
-        for (int xOffset = 0; xOffset < width; xOffset++) {
-            for (int zOffset = 0; zOffset < width; zOffset++) {
-                BlockPos offsetPos = startPos.offset(xOffset, 0, zOffset);
+        // Place all tanks
+        placeTanks(ctx, player, world, startPos, width, face, placedOnState);
+    }
+
+    private BlockPos calculateStartPos(BallastTankBlockEntity controllerBE, Direction face, BlockState placedOnState) {
+        if (horizontal) {
+            Direction.Axis axis = placedOnState.getOptionalValue(AXIS).orElse(null);
+            if (axis == null || face.getAxis() != axis)
+                return null;
+
+            Direction positiveFacing = Direction.fromAxisAndDirection(axis, Direction.AxisDirection.POSITIVE);
+            return face == positiveFacing.getOpposite()
+                    ? controllerBE.getBlockPos().relative(positiveFacing.getOpposite())
+                    : controllerBE.getBlockPos().relative(positiveFacing, controllerBE.getHeight());
+        } else {
+            return face == Direction.DOWN
+                    ? controllerBE.getBlockPos().below()
+                    : controllerBE.getBlockPos().above(controllerBE.getHeight());
+        }
+    }
+
+    private boolean isPositionValid(BlockPos startPos, BlockPos clickedPos, Direction face, BlockState placedOnState) {
+        if (horizontal) {
+            Direction.Axis axis = placedOnState.getOptionalValue(AXIS).orElse(null);
+            if (axis == null) return false;
+            return VecHelper.getCoordinate(startPos, axis) == VecHelper.getCoordinate(clickedPos, axis);
+        } else {
+            // For vertical, Y coordinate must match
+            return startPos.getY() == clickedPos.getY();
+        }
+    }
+
+    private int countTanksToPlace(Level world, BlockPos startPos, int width, BlockState placedOnState, Direction face) {
+        int tanksToPlace = 0;
+
+        for (int i = 0; i < width; i++) {
+            for (int j = 0; j < width; j++) {
+                BlockPos offsetPos = calculateOffsetPos(startPos, i, j, placedOnState, face);
+                if (offsetPos == null) continue;
+
                 BlockState blockState = world.getBlockState(offsetPos);
-                if (BallastTankBlock.isTank(blockState))
+
+                if (BallastTankBlockBase.isTank(blockState))
                     continue;
+                if (!blockState.canBeReplaced())
+                    return 0; // Can't place here at all
+
+                tanksToPlace++;
+            }
+        }
+
+        return tanksToPlace;
+    }
+
+    private BlockPos calculateOffsetPos(BlockPos startPos, int i, int j, BlockState placedOnState, Direction face) {
+        if (horizontal) {
+            Direction.Axis axis = placedOnState.getOptionalValue(AXIS).orElse(Direction.Axis.X);
+            if (axis == Direction.Axis.X) {
+                // X axis: expand in Y and Z directions
+                return startPos.offset(0, i, j);
+            } else {
+                // Z axis: expand in X and Y directions
+                return startPos.offset(i, j, 0);
+            }
+        } else {
+            // Vertical: expand in X and Z directions
+            return startPos.offset(i, 0, j);
+        }
+    }
+
+    private void placeTanks(BlockPlaceContext ctx, Player player, Level world,
+                            BlockPos startPos, int width, Direction face, BlockState placedOnState) {
+
+        for (int i = 0; i < width; i++) {
+            for (int j = 0; j < width; j++) {
+                BlockPos offsetPos = calculateOffsetPos(startPos, i, j, placedOnState, face);
+                if (offsetPos == null) continue;
+
+                BlockState blockState = world.getBlockState(offsetPos);
+
+                if (BallastTankBlockBase.isTank(blockState))
+                    continue;
+
                 BlockPlaceContext context = BlockPlaceContext.at(ctx, offsetPos, face);
-                player.getPersistentData()
-                        .putBoolean("SilenceTankSound", true);
+                player.getPersistentData().putBoolean("SilenceTankSound", true);
                 super.place(context);
-                player.getPersistentData()
-                        .remove("SilenceTankSound");
+                player.getPersistentData().remove("SilenceTankSound");
             }
         }
     }
+
 }

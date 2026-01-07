@@ -2,7 +2,6 @@ package io.github.daniel366cobra.vs_marine_propulsion.blocks.steering.ballast_ta
 
 import com.simibubi.create.api.connectivity.ConnectivityHandler;
 import com.simibubi.create.content.equipment.goggles.IHaveGoggleInformation;
-import com.simibubi.create.foundation.advancement.AllAdvancements;
 import com.simibubi.create.foundation.blockEntity.IMultiBlockEntityContainer;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
@@ -31,10 +30,13 @@ import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Objects;
 
-/**
- *  Credit for the Fluid Tank BE code goes to the Create team.
- */
+import static io.github.daniel366cobra.vs_marine_propulsion.blocks.steering.ballast_tank.BallastTankHorizontalBlock.*;
+import static io.github.daniel366cobra.vs_marine_propulsion.blocks.steering.ballast_tank.BallastTankVerticalBlock.BOTTOM;
+import static io.github.daniel366cobra.vs_marine_propulsion.blocks.steering.ballast_tank.BallastTankVerticalBlock.TOP;
+
 public class BallastTankBlockEntity extends SmartBlockEntity implements IHaveGoggleInformation, IMultiBlockEntityContainer.Fluid {
+
+    private final boolean horizontal;
 
     private static final int MAX_SIZE = 3;
 
@@ -57,8 +59,19 @@ public class BallastTankBlockEntity extends SmartBlockEntity implements IHaveGog
     public static final double WATER_DENSITY = 1000.0;
     public static final double EMPTY_TANK_MASS = 500.0;
 
-    public BallastTankBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
+    public static BallastTankBlockEntity horizontal(BlockEntityType<?> type, BlockPos pos, BlockState state) {
+        return new BallastTankBlockEntity(type, pos, state, true);
+    }
+
+    public static BallastTankBlockEntity vertical(BlockEntityType<?> type, BlockPos pos, BlockState state) {
+        return new BallastTankBlockEntity(type, pos, state, false);
+    }
+
+    public BallastTankBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state, boolean horizontal) {
         super(type, pos, state);
+
+        this.horizontal = horizontal;
+
         tankInventory = createInventory();
         fluidCapability = LazyOptional.of(() -> tankInventory);
         updateConnectivity = false;
@@ -80,16 +93,6 @@ public class BallastTankBlockEntity extends SmartBlockEntity implements IHaveGog
         if (!isController())
             return;
         ConnectivityHandler.formMulti(this);
-    }
-
-    @Override
-    public BallastTankBlockEntity getControllerBE() {
-        if (isController() || !hasLevel())
-            return this;
-        BlockEntity blockEntity = level.getBlockEntity(controller);
-        if (blockEntity instanceof BallastTankBlockEntity)
-            return (BallastTankBlockEntity) blockEntity;
-        return null;
     }
 
     @Override
@@ -128,10 +131,72 @@ public class BallastTankBlockEntity extends SmartBlockEntity implements IHaveGog
         return lastKnownPos;
     }
 
+    public Direction.Axis getAxis() {
+        if (horizontal) return getBlockState().getValue(AXIS);
+        else return Direction.Axis.Y;
+    }
+
     @Override
     public boolean isController() {
         return controller == null || worldPosition.getX() == controller.getX()
                 && worldPosition.getY() == controller.getY() && worldPosition.getZ() == controller.getZ();
+    }
+
+    @Override
+    public BallastTankBlockEntity getControllerBE() {
+        if (isController() || !hasLevel())
+            return this;
+        BlockEntity blockEntity = level.getBlockEntity(controller);
+        if (blockEntity instanceof BallastTankBlockEntity)
+            return (BallastTankBlockEntity) blockEntity;
+        return null;
+    }
+
+    @Override
+    public BlockPos getController() {
+        return isController() ? worldPosition : controller;
+    }
+
+    @Override
+    public void setController(BlockPos controller) {
+        if (level.isClientSide && !isVirtual())
+            return;
+        if (controller.equals(this.controller))
+            return;
+        this.controller = controller;
+        refreshCapability();
+        setChanged();
+        sendData();
+    }
+
+    public void removeController(boolean keepFluids) {
+        if (level.isClientSide)
+            return;
+        updateConnectivity = true;
+        if (!keepFluids)
+            applyFluidTankSize(1);
+        controller = null;
+        width = 1;
+        height = 1;
+
+        onFluidStackChanged(tankInventory.getFluid());
+
+        BlockState state = getBlockState();
+        if (BallastTankBlockBase.isTank(state)) {
+            if (horizontal) {
+                state = state.setValue(POSITIVE, true);
+                state = state.setValue(NEGATIVE, true);
+                getLevel().setBlock(worldPosition, state, 22);
+            } else {
+                state = state.setValue(BOTTOM, true);
+                state = state.setValue(TOP, true);
+                getLevel().setBlock(worldPosition, state, 22);
+            }
+        }
+
+        refreshCapability();
+        setChanged();
+        sendData();
     }
 
     @Override
@@ -160,72 +225,11 @@ public class BallastTankBlockEntity extends SmartBlockEntity implements IHaveGog
         sendData();
     }
 
-    private void updateMass() {
-        double newMass = EMPTY_TANK_MASS + getDistributedWaterMass();
-
-        if (Math.abs(newMass - lastCalculatedMass) > 0.001) {
-            VSMarinePropulsionWeights.setMassChanged(
-                    level, worldPosition, getBlockState(),
-                    lastCalculatedMass
-            );
-            lastCalculatedMass = newMass;
-        }
-    }
-
-    public double getDistributedWaterMass() {
-        double distributedMass;
-
-        //Controller calculates for itself
-        if (isController()) {
-            distributedMass =  calculateCurrentWaterMass() / getTotalTankSize();
-            return distributedMass;
-        }
-
-        //Non-controllers get from controller
-        BallastTankBlockEntity controller = getControllerBE();
-        if (controller != null) {
-            distributedMass = controller.calculateCurrentWaterMass() / controller.getTotalTankSize();
-            return distributedMass;
-        }
-
-        // Fallback for broken multi-blocks
-        return calculateCurrentWaterMass();
-    }
-
-    public double calculateCurrentWaterMass() {
-        double fluidAmount = tankInventory.getFluid().getAmount() / 1000.0; // mB -> buckets (= cu. m.)
-        return fluidAmount * WATER_DENSITY;
-    }
-
     public void applyFluidTankSize(int blocks) {
         tankInventory.setCapacity(blocks * getCapacityMultiplier());
         int overflow = tankInventory.getFluidAmount() - tankInventory.getCapacity();
         if (overflow > 0)
             tankInventory.drain(overflow, IFluidHandler.FluidAction.EXECUTE);
-    }
-
-    public void removeController(boolean keepFluids) {
-        if (level.isClientSide)
-            return;
-        updateConnectivity = true;
-        if (!keepFluids)
-            applyFluidTankSize(1);
-        controller = null;
-        width = 1;
-        height = 1;
-
-        onFluidStackChanged(tankInventory.getFluid());
-
-        BlockState state = getBlockState();
-        if (BallastTankBlock.isTank(state)) {
-            state = state.setValue(BallastTankBlock.BOTTOM, true);
-            state = state.setValue(BallastTankBlock.TOP, true);
-            getLevel().setBlock(worldPosition, state, 22);
-        }
-
-        refreshCapability();
-        setChanged();
-        sendData();
     }
 
     @Override
@@ -237,18 +241,6 @@ public class BallastTankBlockEntity extends SmartBlockEntity implements IHaveGog
         super.sendData();
         queuedSync = false;
         syncCooldown = SYNC_RATE;
-    }
-
-    @Override
-    public void setController(BlockPos controller) {
-        if (level.isClientSide && !isVirtual())
-            return;
-        if (controller.equals(this.controller))
-            return;
-        this.controller = controller;
-        refreshCapability();
-        setChanged();
-        sendData();
     }
 
     private void refreshCapability() {
@@ -263,14 +255,17 @@ public class BallastTankBlockEntity extends SmartBlockEntity implements IHaveGog
     }
 
     @Override
-    public BlockPos getController() {
-        return isController() ? worldPosition : controller;
-    }
-
-    @Override
     protected AABB createRenderBoundingBox() {
         if (isController())
-            return super.createRenderBoundingBox().expandTowards(width - 1, height - 1, width - 1);
+            if (horizontal) {
+                Direction.Axis axis = getAxis();
+                return super.createRenderBoundingBox().expandTowards(
+                        axis == Direction.Axis.X ? (height - 1) : (width - 1),
+                        width - 1,
+                        axis == Direction.Axis.Z ? (height - 1) : (width - 1));
+            } else {
+                return super.createRenderBoundingBox().expandTowards(width - 1, height - 1, width - 1);
+            }
         else
             return super.createRenderBoundingBox();
     }
@@ -368,11 +363,7 @@ public class BallastTankBlockEntity extends SmartBlockEntity implements IHaveGog
 
     @Override
     public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
-        registerAwardables(behaviours, AllAdvancements.STEAM_ENGINE_MAXED, AllAdvancements.PIPE_ORGAN);
-    }
 
-    public IFluidTank getTankInventory() {
-        return tankInventory;
     }
 
     public int getTotalTankSize() {
@@ -391,7 +382,6 @@ public class BallastTankBlockEntity extends SmartBlockEntity implements IHaveGog
         return AllConfigs.server().fluids.fluidTankMaxHeight.get();
     }
 
-
     @Override
     public void preventConnectivityUpdate() {
         updateConnectivity = false;
@@ -400,10 +390,21 @@ public class BallastTankBlockEntity extends SmartBlockEntity implements IHaveGog
     @Override
     public void notifyMultiUpdated() {
         BlockState state = this.getBlockState();
-        if (BallastTankBlock.isTank(state)) { // safety
-            state = state.setValue(BallastTankBlock.BOTTOM, getController().getY() == getBlockPos().getY());
-            state = state.setValue(BallastTankBlock.TOP, getController().getY() + height - 1 == getBlockPos().getY());
-            level.setBlock(getBlockPos(), state, 6);
+        if (BallastTankBlockBase.isTank(state)) { // safety
+            if (horizontal) {
+                Direction.Axis axis = getAxis();
+                state = state.setValue(NEGATIVE, axis == Direction.Axis.X
+                        ? getController().getX() == getBlockPos().getX()
+                        : getController().getZ() == getBlockPos().getZ());
+                state = state.setValue(POSITIVE, axis == Direction.Axis.X
+                        ? getController().getX() + height - 1 == getBlockPos().getX()
+                        : getController().getZ() + height - 1 == getBlockPos().getZ());
+                level.setBlock(getBlockPos(), state, 6);
+            } else {
+                state = state.setValue(BOTTOM, getController().getY() == getBlockPos().getY());
+                state = state.setValue(TOP, getController().getY() + height - 1 == getBlockPos().getY());
+                level.setBlock(getBlockPos(), state, 6);
+            }
         }
         onFluidStackChanged(tankInventory.getFluid());
         setChanged();
@@ -411,14 +412,21 @@ public class BallastTankBlockEntity extends SmartBlockEntity implements IHaveGog
 
     @Override
     public Direction.Axis getMainConnectionAxis() {
-        return Direction.Axis.Y;
+        if (horizontal) return getAxis();
+        else return Direction.Axis.Y;
     }
 
     @Override
     public int getMaxLength(Direction.Axis longAxis, int width) {
-        if (longAxis == Direction.Axis.Y)
-            return getMaxHeight();
-        return getMaxWidth();
+        if (longAxis == Direction.Axis.Y) {
+            if (horizontal) {
+                return getMaxHeight();
+            } else return getMaxWidth();
+        } else {
+            if (horizontal) {
+                return getMaxWidth();
+            } else return getMaxHeight();
+        }
     }
 
     @Override
@@ -468,8 +476,7 @@ public class BallastTankBlockEntity extends SmartBlockEntity implements IHaveGog
 
     @Override
     public FluidStack getFluid(int tank) {
-        return tankInventory.getFluid()
-                .copy();
+        return tankInventory.getFluid().copy();
     }
 
     public double getFillPercentage() {
@@ -479,4 +486,40 @@ public class BallastTankBlockEntity extends SmartBlockEntity implements IHaveGog
         return capacity > 0 ? Math.min(1.0, (double) amount / capacity) : 0.0;
     }
 
+    private void updateMass() {
+        double newMass = EMPTY_TANK_MASS + getDistributedWaterMass();
+
+        if (Math.abs(newMass - lastCalculatedMass) > 0.001) {
+            VSMarinePropulsionWeights.setMassChanged(
+                    level, worldPosition, getBlockState(),
+                    lastCalculatedMass
+            );
+            lastCalculatedMass = newMass;
+        }
+    }
+
+    public double getDistributedWaterMass() {
+        double distributedMass;
+
+        //Controller calculates for itself
+        if (isController()) {
+            distributedMass =  calculateCurrentWaterMass() / getTotalTankSize();
+            return distributedMass;
+        }
+
+        //Non-controllers get from controller
+        BallastTankBlockEntity controller = getControllerBE();
+        if (controller != null) {
+            distributedMass = controller.calculateCurrentWaterMass() / controller.getTotalTankSize();
+            return distributedMass;
+        }
+
+        // Fallback for broken multi-blocks
+        return calculateCurrentWaterMass();
+    }
+
+    public double calculateCurrentWaterMass() {
+        double fluidAmount = tankInventory.getFluid().getAmount() / 1000.0; // mB -> buckets (= cu. m.)
+        return fluidAmount * WATER_DENSITY;
+    }
 }

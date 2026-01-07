@@ -11,11 +11,11 @@
       "entries": [
         {
           "type": "minecraft:item",
-          "name": "vs_marine_propulsion:ballast_tank"
+          "name": "vs_marine_propulsion:ballast_tank_horizontal"
         }
       ],
       "rolls": 1.0
     }
   ],
-  "random_sequence": "vs_marine_propulsion:blocks/ballast_tank"
+  "random_sequence": "vs_marine_propulsion:blocks/ballast_tank_horizontal"
 }

@@ -55,7 +55,8 @@ public class VSMarinePropulsionWeights implements BlockStateInfoProvider {
     @Override
     public Double getBlockStateMass(BlockState blockState) {
 
-        if (blockState.getBlock() != VSMarinePropulsionBlocks.BALLAST_TANK.get()) {
+        if (!blockState.is(VSMarinePropulsionBlocks.BALLAST_TANK_VERTICAL.get())
+        && !blockState.is(VSMarinePropulsionBlocks.BALLAST_TANK_HORIZONTAL.get())) {
             return null;
         }
 
@@ -65,8 +66,8 @@ public class VSMarinePropulsionWeights implements BlockStateInfoProvider {
         }
 
         BlockEntity be = ctx.level.getBlockEntity(ctx.pos);
-        if (be instanceof BallastTankBlockEntity tank) {
-            return EMPTY_TANK_MASS + tank.getDistributedWaterMass();
+        if (be instanceof BallastTankBlockEntity tankBE) {
+            return EMPTY_TANK_MASS + tankBE.getDistributedWaterMass();
         }
 
         return EMPTY_TANK_MASS;

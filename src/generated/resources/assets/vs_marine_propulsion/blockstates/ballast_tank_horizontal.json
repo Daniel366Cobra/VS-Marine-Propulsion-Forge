@@ -1,0 +1,28 @@
+{
+  "variants": {
+    "axis=x,negative=false,positive=false": {
+      "model": "vs_marine_propulsion:block/ballast_tank_horizontal/block_x_middle"
+    },
+    "axis=x,negative=false,positive=true": {
+      "model": "vs_marine_propulsion:block/ballast_tank_horizontal/block_x_positive"
+    },
+    "axis=x,negative=true,positive=false": {
+      "model": "vs_marine_propulsion:block/ballast_tank_horizontal/block_x_negative"
+    },
+    "axis=x,negative=true,positive=true": {
+      "model": "vs_marine_propulsion:block/ballast_tank_horizontal/block_x_single"
+    },
+    "axis=z,negative=false,positive=false": {
+      "model": "vs_marine_propulsion:block/ballast_tank_horizontal/block_z_middle"
+    },
+    "axis=z,negative=false,positive=true": {
+      "model": "vs_marine_propulsion:block/ballast_tank_horizontal/block_z_positive"
+    },
+    "axis=z,negative=true,positive=false": {
+      "model": "vs_marine_propulsion:block/ballast_tank_horizontal/block_z_negative"
+    },
+    "axis=z,negative=true,positive=true": {
+      "model": "vs_marine_propulsion:block/ballast_tank_horizontal/block_z_single"
+    }
+  }
+}

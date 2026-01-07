@@ -1,0 +1,75 @@
+{
+	"format_version": "1.21.11",
+	"credit": "Made with Blockbench",
+	"parent": "block/block",
+	"textures": {
+		"0": "vs_marine_propulsion:block/ballast_tank/block_top",
+		"1": "vs_marine_propulsion:block/ballast_tank/block",
+		"4": "vs_marine_propulsion:block/ballast_tank/block_inner",
+		"particle": "vs_marine_propulsion:block/ballast_tank/block"
+	},
+	"elements": [
+		{
+			"name": "Lid",
+			"from": [0, 0, 0],
+			"to": [16, 16, 4],
+			"rotation": {"angle": 0, "axis": "y", "origin": [8, 8, 8]},
+			"faces": {
+				"north": {"uv": [0, 0, 16, 16], "texture": "#0", "cullface": "north"},
+				"east": {"uv": [0, 16, 16, 12], "rotation": 90, "texture": "#1", "cullface": "east"},
+				"south": {"uv": [0, 0, 16, 16], "texture": "#4"},
+				"west": {"uv": [0, 12, 16, 16], "rotation": 90, "texture": "#1", "cullface": "west"},
+				"up": {"uv": [0, 16, 16, 12], "texture": "#1", "cullface": "up"},
+				"down": {"uv": [0, 12, 16, 16], "texture": "#1", "cullface": "down"}
+			}
+		},
+		{
+			"name": "Side1",
+			"from": [0, 15, 4],
+			"to": [16, 16, 16],
+			"rotation": {"angle": 0, "axis": "y", "origin": [8, 8, 8]},
+			"faces": {
+				"up": {"uv": [0, 12, 16, 0], "texture": "#1", "cullface": "up"},
+				"down": {"uv": [0, 0, 16, 12], "texture": "#1", "cullface": "up"}
+			}
+		},
+		{
+			"name": "Side2",
+			"from": [15, 0, 4],
+			"to": [16, 16, 16],
+			"rotation": {"angle": 0, "axis": "y", "origin": [8, 8, 8]},
+			"faces": {
+				"east": {"uv": [0, 12, 16, 0], "rotation": 90, "texture": "#1", "cullface": "east"},
+				"west": {"uv": [0, 0, 16, 12], "rotation": 90, "texture": "#1", "cullface": "east"}
+			}
+		},
+		{
+			"name": "Side3",
+			"from": [0, 0, 4],
+			"to": [16, 1, 16],
+			"rotation": {"angle": 0, "axis": "y", "origin": [8, 8, 8]},
+			"faces": {
+				"up": {"uv": [0, 12, 16, 0], "texture": "#1", "cullface": "down"},
+				"down": {"uv": [0, 0, 16, 12], "texture": "#1", "cullface": "down"}
+			}
+		},
+		{
+			"name": "Side4",
+			"from": [0, 0, 4],
+			"to": [1, 16, 16],
+			"rotation": {"angle": 0, "axis": "y", "origin": [8, 8, 8]},
+			"faces": {
+				"east": {"uv": [0, 12, 16, 0], "rotation": 90, "texture": "#1", "cullface": "west"},
+				"west": {"uv": [0, 0, 16, 12], "rotation": 90, "texture": "#1", "cullface": "west"}
+			}
+		}
+	],
+	"groups": [
+		{
+			"name": "tank",
+			"origin": [8, 8, -23],
+			"color": 0,
+			"children": [0, 1, 2, 3, 4]
+		}
+	]
+}

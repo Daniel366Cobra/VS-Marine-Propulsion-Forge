@@ -88,9 +88,14 @@ public class VSMarinePropulsionEntities {
             .validBlocks(VSMarinePropulsionBlocks.SEACOCK)
             .register();
 
-    public static final BlockEntityEntry<BallastTankBlockEntity> BALLAST_TANK_BLOCK_ENTITY = REGISTRATE
-            .blockEntity("ballast_tank_entity", BallastTankBlockEntity::new)
-            .validBlocks(VSMarinePropulsionBlocks.BALLAST_TANK)
+    public static final BlockEntityEntry<BallastTankBlockEntity> BALLAST_TANK_VERTICAL_BLOCK_ENTITY = REGISTRATE
+            .blockEntity("ballast_tank_vertical_entity", BallastTankBlockEntity::vertical)
+            .validBlocks(VSMarinePropulsionBlocks.BALLAST_TANK_VERTICAL)
+            .register();
+
+    public static final BlockEntityEntry<BallastTankBlockEntity> BALLAST_TANK_HORIZONTAL_BLOCK_ENTITY = REGISTRATE
+            .blockEntity("ballast_tank_horizontal_entity", BallastTankBlockEntity::horizontal)
+            .validBlocks(VSMarinePropulsionBlocks.BALLAST_TANK_HORIZONTAL)
             .register();
 
 

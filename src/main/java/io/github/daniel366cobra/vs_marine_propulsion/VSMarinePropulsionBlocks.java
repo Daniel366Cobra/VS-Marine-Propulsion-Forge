@@ -13,15 +13,13 @@ import io.github.daniel366cobra.vs_marine_propulsion.blocks.control.engine_order
 import io.github.daniel366cobra.vs_marine_propulsion.blocks.control.helm.HelmBlock;
 import io.github.daniel366cobra.vs_marine_propulsion.blocks.drivetrain.variator.VariatorBlock;
 import io.github.daniel366cobra.vs_marine_propulsion.blocks.propulsion.large_ship_propeller.LargeShipPropellerBlock;
-import io.github.daniel366cobra.vs_marine_propulsion.blocks.steering.ballast_tank.BallastTankBlock;
-import io.github.daniel366cobra.vs_marine_propulsion.blocks.steering.ballast_tank.BallastTankGenerator;
-import io.github.daniel366cobra.vs_marine_propulsion.blocks.steering.ballast_tank.BallastTankItem;
-import io.github.daniel366cobra.vs_marine_propulsion.blocks.steering.ballast_tank.BallastTankModel;
+import io.github.daniel366cobra.vs_marine_propulsion.blocks.steering.ballast_tank.*;
 import io.github.daniel366cobra.vs_marine_propulsion.blocks.steering.rudder.RudderBlock;
 import io.github.daniel366cobra.vs_marine_propulsion.blocks.steering.rudder_bearing.RudderBearingBlock;
 import io.github.daniel366cobra.vs_marine_propulsion.items.EngineOrderTelegraphBlockItem;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.MapColor;
 
 import static com.simibubi.create.foundation.data.AssetLookup.partialBaseModel;
@@ -155,16 +153,31 @@ public class VSMarinePropulsionBlocks {
             .simpleItem()
             .register();
 
-    public static final BlockEntry<BallastTankBlock> BALLAST_TANK = REGISTRATE.block("ballast_tank", BallastTankBlock::new)
+    public static final BlockEntry<BallastTankVerticalBlock> BALLAST_TANK_VERTICAL = REGISTRATE.block("ballast_tank_vertical", BallastTankVerticalBlock::new)
             .initialProperties(SharedProperties::softMetal)
-            .properties(p -> p.noOcclusion().isRedstoneConductor((p1, p2, p3) -> true))
+            .properties(BlockBehaviour.Properties::noOcclusion)
             .transform(pickaxeOnly())
-            .blockstate(new BallastTankGenerator()::generate)
-            .lang("Ballast Tank")
-            .onRegister(CreateRegistrate.blockModel(() -> BallastTankModel::standard))
+            .blockstate(BallastTankGenerator.vertical()::generate)
+            .lang("Vertical Ballast Tank")
+            .onRegister(CreateRegistrate.blockModel(() -> BallastTankModel::vertical))
             .addLayer(() -> RenderType::cutoutMipped)
-            .item(BallastTankItem::new)
+            .onRegisterAfter(Registries.ITEM, v -> ItemDescription.useKey(v, "block." + VSMarinePropulsionMod.MOD_ID + ".ballast_tank"))
+            .item(BallastTankItem::vertical)
             .model(AssetLookup.customBlockItemModel("_", "block_single"))
+            .build()
+            .register();
+
+    public static final BlockEntry<BallastTankHorizontalBlock> BALLAST_TANK_HORIZONTAL = REGISTRATE.block("ballast_tank_horizontal", BallastTankHorizontalBlock::new)
+            .initialProperties(SharedProperties::softMetal)
+            .properties(BlockBehaviour.Properties::noOcclusion)
+            .transform(pickaxeOnly())
+            .blockstate(BallastTankGenerator.horizontal()::generate)
+            .lang("Horizontal Ballast Tank")
+            .onRegister(CreateRegistrate.blockModel(() -> BallastTankModel::horizontal))
+            .addLayer(() -> RenderType::cutoutMipped)
+            .onRegisterAfter(Registries.ITEM, v -> ItemDescription.useKey(v, "block." + VSMarinePropulsionMod.MOD_ID + ".ballast_tank"))
+            .item(BallastTankItem::horizontal)
+            .model(AssetLookup.customBlockItemModel("_", "block_x_single"))
             .build()
             .register();
 
