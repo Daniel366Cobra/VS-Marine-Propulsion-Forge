@@ -2,17 +2,15 @@ package io.github.daniel366cobra.vs_marine_propulsion.debug;
 
 import org.joml.Vector3d;
 
+import java.util.UUID;
+
 public record ForceVectorData(
-        Vector3d worldPos,
-        Vector3d force,
-        int tickDuration // Optional: auto-expire old data
+        long shipID,
+        Vector3d worldStart,
+        Vector3d worldEnd,
+        int color,
+        String label,
+        int tickDuration
 ) {
-    // Helper method to return a new instance with decremented duration
-    public ForceVectorData withDecrementedDuration() {
-        return new ForceVectorData(
-                this.worldPos,
-                this.force,
-                this.tickDuration - 1
-        );
-    }
+
 }

@@ -1,24 +1,13 @@
 package io.github.daniel366cobra.vs_marine_propulsion.client;
 
-import io.github.daniel366cobra.vs_marine_propulsion.debug.ForceVectorData;
-import io.github.daniel366cobra.vs_marine_propulsion.debug.LineRenderer;
 import io.github.daniel366cobra.vs_marine_propulsion.items.EngineOrderTelegraphBlockItem;
-import net.minecraft.client.Minecraft;
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.RenderLevelStageEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
-import java.awt.*;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
-
 @Mod.EventBusSubscriber(Dist.CLIENT)
 public class VSMarinePropulsionModClientEvents {
-
-
 
     @SubscribeEvent
     public static void onTick(TickEvent.ClientTickEvent event) {

@@ -3,13 +3,20 @@ package io.github.daniel366cobra.vs_marine_propulsion.ship;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import io.github.daniel366cobra.vs_marine_propulsion.VSMarinePropulsionPacketHandler;
+import io.github.daniel366cobra.vs_marine_propulsion.debug.ForceDebugPacket;
+import io.github.daniel366cobra.vs_marine_propulsion.debug.ForceVectorData;
 import io.github.daniel366cobra.vs_marine_propulsion.ship.data.ControlSurfaceData;
 import io.github.daniel366cobra.vs_marine_propulsion.ship.data.HelmData;
 import io.github.daniel366cobra.vs_marine_propulsion.ship.data.PropulsorData;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.network.PacketDistributor;
 import org.apache.commons.lang3.tuple.Pair;
 import org.joml.Vector3d;
 import org.valkyrienskies.core.api.ships.PhysShip;
@@ -18,6 +25,7 @@ import org.valkyrienskies.core.api.ships.ShipForcesInducer;
 import org.valkyrienskies.core.api.ships.properties.ShipTransform;
 import org.valkyrienskies.core.impl.game.ships.PhysShipImpl;
 import org.valkyrienskies.mod.common.VSGameUtilsKt;
+import org.valkyrienskies.mod.common.ValkyrienSkiesMod;
 import org.valkyrienskies.mod.common.util.VectorConversionsMCKt;
 
 import javax.annotation.Nullable;
@@ -222,6 +230,40 @@ public class VSMarinePropulsionAttachment implements ShipForcesInducer {
         return null;
     }
 
+    //----------------DEBUG---------------
+
+    private void sendDebugForce(PhysShipImpl physShip, Vector3d worldStart,
+                                Vector3d worldEnd, int color, String label) {
+        // Get the Minecraft server
+        MinecraftServer server = ValkyrienSkiesMod.getCurrentServer();
+        if (server == null) return;
+
+        // Get ship position for distance check
+        Vector3d shipPos = new Vector3d(physShip.getTransform().getPositionInShip());
+
+        // Create a consistent ship ID for rendering
+        long shipId = physShip.getId();
+
+        // Create the force data
+        ForceVectorData forceData = new ForceVectorData(
+                shipId, worldStart, worldEnd, color, label, 2 // 2 tick duration
+        );
+
+        // Send to all nearby players in ALL dimensions
+        // Client will check F3+B itself
+        for (ServerLevel level : server.getAllLevels()) {
+            for (ServerPlayer player : level.players()) {
+                double distanceSq = player.distanceToSqr(shipPos.x, shipPos.y, shipPos.z);
+                if (distanceSq < 256 * 256) { // 256 block radius
+                    VSMarinePropulsionPacketHandler.CHANNEL.send(
+                            PacketDistributor.PLAYER.with(() -> player),
+                            new ForceDebugPacket(forceData)
+                    );
+                }
+            }
+        }
+    }
+
     //---------------PHYSICS--------------
     @Override
     public void applyForces(PhysShip physicsShip) {
@@ -229,7 +271,6 @@ public class VSMarinePropulsionAttachment implements ShipForcesInducer {
 
         applyPropulsionForces(physShip);
         applyStableRealisticForces(physShip);
-
 
     }
 
@@ -254,56 +295,25 @@ public class VSMarinePropulsionAttachment implements ShipForcesInducer {
             thrustForce.normalize().mul(thrust);
 
             physShip.applyInvariantForceToPos(thrustForce, thrustPos);
-        });
-    }
 
-    //TODO WORKS BUT NEEDS ACC PHYSICS
-    private void applyControlForces(PhysShipImpl physShip) {
+            // ===== DEBUG VISUALIZATION =====
 
-        final ShipTransform transform = physShip.getTransform();
+            Vec3 shipyardBlockCenter = data.getBlockPos().getCenter();
+            Vector3d worldBlockCenter = transform.getShipToWorld().transformPosition(new Vector3d(shipyardBlockCenter.x, shipyardBlockCenter.y, shipyardBlockCenter.z));
 
-        controlSurfaces.forEach(data -> {
+            Vector3d worldThrustEnd = new Vector3d(worldBlockCenter).add(new Vector3d(thrustForce).mul(0.001));
 
-            // Skip if not submerged
-            if (data.submergedPercentage < 0.05f) {
-                return;
-            }
-            // Skip if no angle
-            if (Math.abs(data.angle) < 0.1f) {
-                return;
-            }
+            int color = data.submerged ? 0xFF0000FF : 0xFF808080; // Blue if submerged, gray if not
 
-            // 2. Simple force calculation
-            double baseForce = 5000.0; // Newtons - make this LARGE to see effect
-            double forceMagnitude = baseForce *
-                    data.angle / 40.0 * // Scale by angle (±40° max)
-                    data.submergedPercentage * // Scale by submersion
-                    data.rudderBlocks; // Scale by size
-
-
-            Vector3d forceDirection = new Vector3d(data.normalDirection);
-
-            forceDirection.normalize();
-
-            // 4. Apply force
-            Vector3d forceVector = forceDirection.mul(forceMagnitude);
-
-            // 5. Convert to world coordinates and apply
-            Vector3d forceWorld = transform.getShipToWorld().transformDirection(forceVector, new Vector3d());
-            Vector3d rudderPos = VectorConversionsMCKt.toJOMLD(data.getBlockPos())
-                    .add(0.5, 0.5, 0.5, new Vector3d())
-                    .sub(transform.getPositionInShip());
-
-
-            // DEBUG
-            System.out.println("Rudder update: angle=" + data.angle);
-
-            physShip.applyInvariantForceToPos(forceWorld, rudderPos);
+            sendDebugForce(physShip, worldBlockCenter, worldThrustEnd,
+                    color,
+                    String.format("Thrust: %.1fN", data.thrust));
         });
     }
 
 
-    //FIXME wrong direction of rudder force when reversing the ship or when rudder on the bow
+    //FIXME wrong direction of rudder force when reversing the ship or when rudder on the bow; wrong drag?; Control authority decay
+    //TODO Separate drag and lift visualization
     private void applyStableRealisticForces(PhysShipImpl physShip) {
         final ShipTransform transform = physShip.getTransform();
 
@@ -378,6 +388,19 @@ public class VSMarinePropulsionAttachment implements ShipForcesInducer {
                     .transformDirection(totalForceShip, new Vector3d());
 
             physShip.applyInvariantForceToPos(forceWorld, rudderPosShip);
+
+            // ===== DEBUG VISUALIZATION =====
+
+            Vec3 shipyardBlockCenter = data.getBlockPos().getCenter();
+            Vector3d worldBlockCenter = transform.getShipToWorld().transformPosition(new Vector3d(shipyardBlockCenter.x, shipyardBlockCenter.y, shipyardBlockCenter.z));
+
+            Vector3d worldForceEnd = new Vector3d(worldBlockCenter).add(new Vector3d(forceWorld).mul(0.001));
+
+            int color = data.angle > 0 ? 0xFF00FF00 : 0xFFFF0000; // Green for starboard, red for port
+
+            sendDebugForce(physShip, worldBlockCenter, worldForceEnd,
+                    color,
+                    String.format("Rudder: %.1f° (%.1fN)", data.angle, totalForceShip.length()));
         });
     }
 

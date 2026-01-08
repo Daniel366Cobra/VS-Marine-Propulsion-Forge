@@ -4,7 +4,6 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.network.NetworkEvent;
 import org.joml.Vector3d;
 import org.joml.Vector3f;
-import org.joml.Vector3fc;
 
 import java.util.function.Supplier;
 
@@ -16,16 +15,23 @@ public class ForceDebugPacket {
     }
 
     public void encode(FriendlyByteBuf buf) {
-        buf.writeVector3f(new Vector3f((float) data.worldPos().x, (float) data.worldPos().y, (float) data.worldPos().z));
-        buf.writeVector3f(new Vector3f((float) data.force().x, (float) data.force().y, (float) data.force().z));
+        buf.writeLong(data.shipID());
+        buf.writeVector3f(new Vector3f((float) data.worldStart().x, (float) data.worldStart().y, (float) data.worldStart().z));
+        buf.writeVector3f(new Vector3f((float) data.worldEnd().x, (float) data.worldEnd().y, (float) data.worldEnd().z));
+        buf.writeInt(data.color());
+        buf.writeUtf(data.label());
+        buf.writeInt(data.tickDuration());
     }
 
     public static ForceDebugPacket decode(FriendlyByteBuf buf) {
         return new ForceDebugPacket(
                 new ForceVectorData(
+                        buf.readLong(),
                         new Vector3d(buf.readVector3f()),
                         new Vector3d(buf.readVector3f()),
-                        2 // Default duration
+                        buf.readInt(),
+                        buf.readUtf(),
+                        buf.readInt()
                 )
         );
     }

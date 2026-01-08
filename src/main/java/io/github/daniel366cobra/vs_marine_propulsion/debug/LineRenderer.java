@@ -1,72 +1,159 @@
 package io.github.daniel366cobra.vs_marine_propulsion.debug;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.GameRenderer;
-import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.client.event.RenderLevelStageEvent;
+import org.joml.Matrix4f;
 import org.joml.Vector3d;
 
-import java.awt.*;
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.Map;
-import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class LineRenderer {
+    // Map from shipId (long) to force data
+    private static final Map<Long, ArrayList<CachedForceData>> forceCache = new ConcurrentHashMap<>();
 
-    private static final Map<UUID, ForceVectorData> lineCache = new HashMap<>();
+    private static class CachedForceData {
+        final Vector3d worldStart;
+        final Vector3d worldEnd;
+        final int color;
+        final String label;
+        int remainingTicks;
+
+        CachedForceData(ForceVectorData data) {
+            this.worldStart = data.worldStart();
+            this.worldEnd = data.worldEnd();
+            this.color = data.color();
+            this.label = data.label();
+            this.remainingTicks = data.tickDuration();
+        }
+    }
 
     public static void cacheForceData(ForceVectorData data) {
-        lineCache.put(
-                UUID.randomUUID(), // Or use entity ID if available
-                data
-        );
+        forceCache.computeIfAbsent(data.shipID(), k -> new ArrayList<>())
+                .add(new CachedForceData(data));
     }
 
-    private static void renderLine(Vector3d origin, Vector3d vector, Color color, PoseStack poseStack) {
+    public static void render(PoseStack poseStack, MultiBufferSource bufferSource,
+                              double camX, double camY, double camZ) {
+        // Only render if F3+B is enabled
+        if (!Minecraft.getInstance().getEntityRenderDispatcher().shouldRenderHitBoxes()) {
+            // Don't clear cache immediately, just don't render
+            // This allows vectors to persist if F3+B is toggled quickly
+            return;
+        }
 
-        //Convert world positions to camera-relative coordinates
-        Vec3 cameraPos = Minecraft.getInstance().gameRenderer.getMainCamera().getPosition();
-        Vector3d fromRelative = new Vector3d(origin.sub(cameraPos.x, cameraPos.y, cameraPos.z));
-        Vector3d toRelative = new Vector3d(fromRelative).add(vector.sub(cameraPos.x, cameraPos.y, cameraPos.z)).mul(10);
+        poseStack.pushPose();
+        poseStack.translate(-camX, -camY, -camZ);
 
-        //Set up rendering
-        MultiBufferSource.BufferSource buffer = Minecraft.getInstance().renderBuffers().bufferSource();
-        VertexConsumer lineConsumer = buffer.getBuffer(RenderType.lines());
+        Matrix4f matrix = poseStack.last().pose();
 
-        //Render line with color
-        RenderSystem.setShader(GameRenderer::getRendertypeLinesShader);
-        RenderSystem.lineWidth(2.0f);
-        LevelRenderer.renderLineBox(
-                poseStack, lineConsumer,
-                fromRelative.x, fromRelative.y, fromRelative.z,
-                toRelative.x, toRelative.y, toRelative.z,
-                color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha()
-        );
-        //Draw
-        buffer.endBatch(RenderType.lines());
-    }
+        // Update and render all forces
 
-    public static void renderLines(RenderLevelStageEvent event) {
-        // Temporary map for updated entries
-        Map<UUID, ForceVectorData> updatedCache = new HashMap<>();
+        if (bufferSource instanceof MultiBufferSource.BufferSource bufferSourceInstance) {
 
-        lineCache.forEach((id, data) -> {
+            Iterator<Map.Entry<Long, ArrayList<CachedForceData>>> shipIterator = forceCache.entrySet().iterator();
 
-            renderLine(data.worldPos(), data.force(), Color.GREEN, event.getPoseStack());
+            while (shipIterator.hasNext()) {
 
-            // Only keep if duration remains
-            if (data.tickDuration() > 1) {
-                updatedCache.put(id, data.withDecrementedDuration());
+                Map.Entry<Long, ArrayList<CachedForceData>> entry = shipIterator.next();
+                ArrayList<CachedForceData> forces = entry.getValue();
+
+                Iterator<CachedForceData> forceIterator = forces.iterator();
+
+                while (forceIterator.hasNext()) {
+                    CachedForceData force = forceIterator.next();
+                    force.remainingTicks--;
+
+                    if (force.remainingTicks <= 0) {
+                        forceIterator.remove();
+                        continue;
+                    }
+
+                    VertexConsumer vertexConsumer = bufferSourceInstance.getBuffer(RenderType.debugQuads());
+                    // Render this force
+                    renderForce(matrix, vertexConsumer, force);
+
+                    bufferSourceInstance.endBatch();
+                }
+
+                if (forces.isEmpty()) {
+                    shipIterator.remove();
+                }
             }
-        });
+        }
 
-        lineCache.clear();
-        lineCache.putAll(updatedCache);
+        poseStack.popPose();
     }
+
+    private static void renderForce(Matrix4f matrix, VertexConsumer consumer,
+                                    CachedForceData force) {
+        float alpha = Math.max(0.7f, 1.0f - (force.remainingTicks / (float) 10));
+        float r = ((force.color >> 16) & 0xFF) / 255.0f;
+        float g = ((force.color >> 8) & 0xFF) / 255.0f;
+        float b = (force.color & 0xFF) / 255.0f;
+
+        Vector3d start = force.worldStart;
+        Vector3d end = force.worldEnd;
+        Vector3d direction = new Vector3d(end).sub(start);
+
+        if (direction.lengthSquared() < 0.001) return;
+
+        direction.normalize();
+
+        // Find a perpendicular vector for triangle base
+
+        Vector3d perp = new Vector3d().orthogonalize(direction);
+
+        float baseWidth = 0.3f; // Width of triangle base
+
+        Vector3d tip = end;
+
+        Vector3d base1 = new Vector3d(start).add(perp.mul(baseWidth));
+        Vector3d base2 = new Vector3d(start).sub(perp.mul(baseWidth));
+
+        vertex(consumer, matrix, tip, r, g, b, alpha);
+        vertex(consumer, matrix, base1, r, g, b, alpha);
+        vertex(consumer, matrix, base2, r, g, b, alpha);
+
+        vertex(consumer, matrix, tip, r, g, b, alpha);
+        vertex(consumer, matrix, base2, r, g, b, alpha);
+        vertex(consumer, matrix, base1, r, g, b, alpha);
+    }
+
+    private static Vector3d findPerpendicular(Vector3d v) {
+        if (Math.abs(v.x) > Math.abs(v.y)) {
+            return new Vector3d(-v.z, 0, v.x).normalize();
+        } else {
+            return new Vector3d(0, v.z, -v.y).normalize();
+        }
+    }
+
+    private static void vertex(VertexConsumer consumer, Matrix4f matrix,
+                               Vector3d pos, float r, float g, float b, float a) {
+        consumer.vertex(matrix, (float)pos.x, (float)pos.y, (float)pos.z)
+                .color(r, g, b, a)
+                .endVertex();
+    }
+
+    public static void clearCache() {
+        forceCache.clear();
+    }
+
+    // Clear cache for a specific ship
+    public static void clearForShip(long shipId) {
+        forceCache.remove(shipId);
+    }
+
+    // Optional: Get count of active forces (for debugging)
+    public static int getActiveForceCount() {
+        return forceCache.values().stream()
+                .mapToInt(ArrayList::size)
+                .sum();
+    }
+
 }
