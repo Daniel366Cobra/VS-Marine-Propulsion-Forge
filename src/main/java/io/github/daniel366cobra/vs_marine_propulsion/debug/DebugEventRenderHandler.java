@@ -11,7 +11,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
 @Mod.EventBusSubscriber(Dist.CLIENT)
-public class ClientEventHandler {
+public class DebugEventRenderHandler {
 
     @SubscribeEvent
     public static void onRenderWorld(RenderLevelStageEvent event) {
@@ -25,7 +25,7 @@ public class ClientEventHandler {
             MultiBufferSource.BufferSource bufferSource = mc.renderBuffers().bufferSource();
 
             Vec3 cameraPos = mc.gameRenderer.getMainCamera().getPosition();
-            LineRenderer.render(poseStack, bufferSource,
+            DebugVectorRenderer.render(poseStack, bufferSource,
                     cameraPos.x, cameraPos.y, cameraPos.z);
         }
     }
@@ -33,7 +33,6 @@ public class ClientEventHandler {
     // Clear cache when leaving world
     @SubscribeEvent
     public static void onClientDisconnect(ClientPlayerNetworkEvent.LoggingOut event) {
-        LineRenderer.clearCache();
+        DebugVectorRenderer.clearCache();
     }
-
 }

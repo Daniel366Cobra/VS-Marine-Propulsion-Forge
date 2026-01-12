@@ -14,15 +14,4 @@ public class VSMarinePropulsionModClientEvents {
         EngineOrderTelegraphBlockItem.clientTick();
     }
 
-    /*
-    @SubscribeEvent
-    public static void onRenderLevelStage(RenderLevelStageEvent event) {
-        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_ENTITIES) return;
-        if (!Minecraft.getInstance().options.renderDebug) return; // Only if F3 debug is on
-
-        LineRenderer.renderLines(event);
-
-    }
-
-     */
 }

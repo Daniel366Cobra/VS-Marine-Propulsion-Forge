@@ -13,7 +13,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class LineRenderer {
+public class DebugVectorRenderer {
     // Map from shipId (long) to force data
     private static final Map<Long, ArrayList<CachedForceData>> forceCache = new ConcurrentHashMap<>();
 
@@ -24,7 +24,7 @@ public class LineRenderer {
         final String label;
         int remainingTicks;
 
-        CachedForceData(ForceVectorData data) {
+        CachedForceData(DebugVectorData data) {
             this.worldStart = data.worldStart();
             this.worldEnd = data.worldEnd();
             this.color = data.color();
@@ -33,7 +33,7 @@ public class LineRenderer {
         }
     }
 
-    public static void cacheForceData(ForceVectorData data) {
+    public static void cacheForceData(DebugVectorData data) {
         forceCache.computeIfAbsent(data.shipID(), k -> new ArrayList<>())
                 .add(new CachedForceData(data));
     }

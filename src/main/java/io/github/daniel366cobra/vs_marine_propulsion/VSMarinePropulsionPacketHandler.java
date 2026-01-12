@@ -1,6 +1,6 @@
 package io.github.daniel366cobra.vs_marine_propulsion;
 
-import io.github.daniel366cobra.vs_marine_propulsion.debug.ForceDebugPacket;
+import io.github.daniel366cobra.vs_marine_propulsion.debug.DebugVectorPacket;
 import io.github.daniel366cobra.vs_marine_propulsion.network.WheelAnglePacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.network.NetworkRegistry;
@@ -22,10 +22,10 @@ public class VSMarinePropulsionPacketHandler {
 
     public static void register() {
         CHANNEL.registerMessage(0,
-                ForceDebugPacket.class,
-                ForceDebugPacket::encode,
-                ForceDebugPacket::decode,
-                ForceDebugPacket::handle
+                DebugVectorPacket.class,
+                DebugVectorPacket::encode,
+                DebugVectorPacket::decode,
+                DebugVectorPacket::handle
         );
         CHANNEL.registerMessage(1,
                 WheelAnglePacket.class,

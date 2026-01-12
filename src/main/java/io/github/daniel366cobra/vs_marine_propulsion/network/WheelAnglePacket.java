@@ -2,7 +2,6 @@ package io.github.daniel366cobra.vs_marine_propulsion.network;
 
 import com.simibubi.create.foundation.utility.animation.LerpedFloat;
 import io.github.daniel366cobra.vs_marine_propulsion.blocks.control.helm.HelmBlockEntity;
-import io.github.daniel366cobra.vs_marine_propulsion.debug.ForceDebugPacket;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;

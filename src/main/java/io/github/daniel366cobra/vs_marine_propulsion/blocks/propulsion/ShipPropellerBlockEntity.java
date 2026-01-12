@@ -181,6 +181,7 @@ public class ShipPropellerBlockEntity extends KineticBlockEntity {
 
     }
 
+    //FIXME particles out of water
     public void updateParticles(Ship ship) {
 
         Vec3 shipyardBlockCenter = this.getBlockPos().getCenter();

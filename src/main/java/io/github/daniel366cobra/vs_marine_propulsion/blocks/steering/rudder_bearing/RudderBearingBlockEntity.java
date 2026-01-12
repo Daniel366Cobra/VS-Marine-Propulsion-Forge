@@ -7,8 +7,12 @@ import com.simibubi.create.content.contraptions.ControlledContraptionEntity;
 import com.simibubi.create.content.contraptions.IDisplayAssemblyExceptions;
 import com.simibubi.create.content.contraptions.bearing.BearingBlock;
 import com.simibubi.create.content.contraptions.bearing.IBearingBlockEntity;
+import com.simibubi.create.content.contraptions.bearing.WindmillBearingBlockEntity;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
+import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
+import com.simibubi.create.foundation.blockEntity.behaviour.scrollValue.ScrollOptionBehaviour;
 import com.simibubi.create.foundation.utility.animation.LerpedFloat;
+import io.github.daniel366cobra.vs_marine_propulsion.VSMarinePropulsionMod;
 import io.github.daniel366cobra.vs_marine_propulsion.blocks.steering.RudderContraption;
 import io.github.daniel366cobra.vs_marine_propulsion.ship.VSMarinePropulsionAttachment;
 import io.github.daniel366cobra.vs_marine_propulsion.ship.data.ControlSurfaceData;
@@ -16,6 +20,7 @@ import io.github.daniel366cobra.vs_marine_propulsion.ship.data.HelmData;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -29,8 +34,11 @@ import org.joml.primitives.AABBd;
 import org.valkyrienskies.core.api.ships.Ship;
 import org.valkyrienskies.mod.common.VSGameUtilsKt;
 
-//TODO verify angle calculations for all orientations of bearing, fix physics (control authority decay for some angles)
+import java.util.List;
+
 public class RudderBearingBlockEntity extends KineticBlockEntity implements IBearingBlockEntity, IDisplayAssemblyExceptions {
+
+    protected ScrollOptionBehaviour<WindmillBearingBlockEntity.RotationDirection> movementDirection;
 
     protected boolean running = false;
     protected boolean assembleNextTick = false;
@@ -41,6 +49,7 @@ public class RudderBearingBlockEntity extends KineticBlockEntity implements IBea
     private final LerpedFloat rudderAngle = LerpedFloat.linear();
 
     private float targetAngle = 0.0f;
+    private int directionModifier = 1;
 
     private ControlSurfaceData controlSurfaceData;
 
@@ -51,6 +60,22 @@ public class RudderBearingBlockEntity extends KineticBlockEntity implements IBea
         super(type, pos, state);
         this.setLazyTickRate(3);
         this.controlSurfaceData = null; // Start with no data
+    }
+
+    @Override
+    public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
+        super.addBehaviours(behaviours);
+
+        movementDirection = new ScrollOptionBehaviour<>(WindmillBearingBlockEntity.RotationDirection.class,
+                Component.translatable(VSMarinePropulsionMod.MOD_ID + ".rudder.rotation_direction"), this, getMovementModeSlot());
+        movementDirection.withCallback(cb -> onRotationDirectionChanged());
+
+        behaviours.add(movementDirection);
+    }
+
+    private void onRotationDirectionChanged() {
+        this.directionModifier = movementDirection.get() == WindmillBearingBlockEntity.RotationDirection.CLOCKWISE ? 1 : -1;
+        notifyUpdate();
     }
 
     @Override
@@ -145,31 +170,48 @@ public class RudderBearingBlockEntity extends KineticBlockEntity implements IBea
             ControlSurfaceData persistentData = shipControl.getControlSurfaceAtPos(this.worldPosition);
             if (persistentData == null) return;
 
-            //FIXME breaking the helm gets crash due to null pos
-            HelmData captainHelmData = shipControl.getHelmAtPos(shipControl.getCaptainHelmPosition());
+            BlockPos captainPos = shipControl.getCaptainHelmPosition();
+            HelmData captainHelmData = null;
 
-            if (captainHelmData != null) {
+            if (captainPos != null) {
+                captainHelmData = shipControl.getHelmAtPos(captainPos);
+            }
 
-                float helmAngle = captainHelmData.rudderAngle; //-40..+40
-                float currentAngle = persistentData.angle; // -40..+40
-                float angleDelta = helmAngle - currentAngle;
-                float inputSpeed = getAngularSpeed();
-                float newAngle = currentAngle + Mth.clamp(angleDelta, -inputSpeed, inputSpeed);
+            float currentAngle = persistentData.angle; // -40..+40
+            float rudderSpeed = getAngularSpeed();
+            float newAngle;
 
-                newAngle = Mth.clamp(newAngle,-40.0f, 40.0f);
+                if (captainHelmData != null) {
 
-                persistentData.angle = newAngle;
-                this.controlSurfaceData = persistentData;
+                    float helmAngle = captainHelmData.rudderAngle; //-40..+40
+                    float correctedHelmAngle = helmAngle * directionModifier;
+                    float angleDelta = correctedHelmAngle - currentAngle;
+                    newAngle = currentAngle + Mth.clamp(angleDelta, -rudderSpeed, rudderSpeed);
 
-                this.targetAngle = newAngle;
+                } else {
+                    // No helm or helm broken: slowly return to center
+                    float returnSpeed = rudderSpeed * 0.5f; // Slower return speed
 
-                this.fluidSamplingCooldown++;
-
-                if (this.fluidSamplingCooldown > 10) {
-                    this.fluidSamplingCooldown = 0;
-                    updateSubmergedPercentage(this.rudderContraption, ship);
-                    persistentData.submergedPercentage = this.controlSurfaceData.submergedPercentage;
+                    if (Math.abs(currentAngle) < returnSpeed) {
+                        newAngle = 0.0f; // Snap to center when close
+                    } else {
+                        // Move toward center
+                        newAngle = currentAngle - Math.signum(currentAngle) * returnSpeed;
+                    }
                 }
+
+            newAngle = Mth.clamp(newAngle, -40.0f, 40.0f);
+            persistentData.angle = newAngle;
+            this.targetAngle = newAngle;
+
+            this.controlSurfaceData = persistentData;
+
+            this.fluidSamplingCooldown++;
+
+            if (this.fluidSamplingCooldown > 10) {
+                this.fluidSamplingCooldown = 0;
+                updateSubmergedPercentage(this.rudderContraption, ship);
+                persistentData.submergedPercentage = this.controlSurfaceData.submergedPercentage;
             }
         }
     }
@@ -207,6 +249,7 @@ public class RudderBearingBlockEntity extends KineticBlockEntity implements IBea
         super.write(compound, clientPacket);
 
         compound.putFloat("RudderAngle", this.rudderAngle.getValue());
+        compound.putInt("DirectionModifier", this.directionModifier);
         compound.putFloat("TargetAngle", this.targetAngle);
         compound.putBoolean("IsRunning", this.running);
         compound.putFloat("AngularSpeed", getAngularSpeed());
@@ -219,6 +262,11 @@ public class RudderBearingBlockEntity extends KineticBlockEntity implements IBea
         super.read(compound, clientPacket);
 
         this.rudderAngle.setValue(compound.getFloat("RudderAngle"));
+
+        if (compound.contains("DirectionModifier"))
+            this.directionModifier = compound.getInt("DirectionModifier");
+        else
+            this.directionModifier = 1;
 
         float targetAngle = compound.getFloat("TargetAngle");
         float angularSpeed = compound.getFloat("AngularSpeed");

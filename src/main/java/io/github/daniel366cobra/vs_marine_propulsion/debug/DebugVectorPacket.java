@@ -7,10 +7,10 @@ import org.joml.Vector3f;
 
 import java.util.function.Supplier;
 
-public class ForceDebugPacket {
-    private final ForceVectorData data;
+public class DebugVectorPacket {
+    private final DebugVectorData data;
 
-    public ForceDebugPacket(ForceVectorData data) {
+    public DebugVectorPacket(DebugVectorData data) {
         this.data = data;
     }
 
@@ -23,9 +23,9 @@ public class ForceDebugPacket {
         buf.writeInt(data.tickDuration());
     }
 
-    public static ForceDebugPacket decode(FriendlyByteBuf buf) {
-        return new ForceDebugPacket(
-                new ForceVectorData(
+    public static DebugVectorPacket decode(FriendlyByteBuf buf) {
+        return new DebugVectorPacket(
+                new DebugVectorData(
                         buf.readLong(),
                         new Vector3d(buf.readVector3f()),
                         new Vector3d(buf.readVector3f()),
@@ -36,9 +36,9 @@ public class ForceDebugPacket {
         );
     }
 
-    public static void handle(ForceDebugPacket msg, Supplier<NetworkEvent.Context> ctx) {
+    public static void handle(DebugVectorPacket msg, Supplier<NetworkEvent.Context> ctx) {
         ctx.get().enqueueWork(() -> {
-            LineRenderer.cacheForceData(msg.data);
+            DebugVectorRenderer.cacheForceData(msg.data);
         });
         ctx.get().setPacketHandled(true);
     }
