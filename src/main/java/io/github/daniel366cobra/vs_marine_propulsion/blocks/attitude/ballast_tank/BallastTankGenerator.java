@@ -1,4 +1,4 @@
-package io.github.daniel366cobra.vs_marine_propulsion.blocks.steering.ballast_tank;
+package io.github.daniel366cobra.vs_marine_propulsion.blocks.attitude.ballast_tank;
 
 import com.simibubi.create.foundation.data.AssetLookup;
 import com.simibubi.create.foundation.data.SpecialBlockStateGen;
@@ -9,9 +9,9 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.client.model.generators.ModelFile;
 
-import static io.github.daniel366cobra.vs_marine_propulsion.blocks.steering.ballast_tank.BallastTankHorizontalBlock.*;
-import static io.github.daniel366cobra.vs_marine_propulsion.blocks.steering.ballast_tank.BallastTankVerticalBlock.BOTTOM;
-import static io.github.daniel366cobra.vs_marine_propulsion.blocks.steering.ballast_tank.BallastTankVerticalBlock.TOP;
+import static io.github.daniel366cobra.vs_marine_propulsion.blocks.attitude.ballast_tank.BallastTankHorizontalBlock.*;
+import static io.github.daniel366cobra.vs_marine_propulsion.blocks.attitude.ballast_tank.BallastTankVerticalBlock.BOTTOM;
+import static io.github.daniel366cobra.vs_marine_propulsion.blocks.attitude.ballast_tank.BallastTankVerticalBlock.TOP;
 
 public class BallastTankGenerator extends SpecialBlockStateGen {
 

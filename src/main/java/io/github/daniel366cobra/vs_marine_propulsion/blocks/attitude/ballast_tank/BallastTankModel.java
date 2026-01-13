@@ -1,4 +1,4 @@
-package io.github.daniel366cobra.vs_marine_propulsion.blocks.steering.ballast_tank;
+package io.github.daniel366cobra.vs_marine_propulsion.blocks.attitude.ballast_tank;
 
 import com.simibubi.create.api.connectivity.ConnectivityHandler;
 import com.simibubi.create.content.fluids.tank.FluidTankCTBehaviour;
@@ -23,7 +23,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static io.github.daniel366cobra.vs_marine_propulsion.blocks.steering.ballast_tank.BallastTankHorizontalBlock.AXIS;
+import static io.github.daniel366cobra.vs_marine_propulsion.blocks.attitude.ballast_tank.BallastTankHorizontalBlock.AXIS;
 
 public class BallastTankModel extends CTModel {
 

@@ -13,9 +13,9 @@ import io.github.daniel366cobra.vs_marine_propulsion.blocks.control.engine_order
 import io.github.daniel366cobra.vs_marine_propulsion.blocks.control.helm.HelmBlock;
 import io.github.daniel366cobra.vs_marine_propulsion.blocks.drivetrain.variator.VariatorBlock;
 import io.github.daniel366cobra.vs_marine_propulsion.blocks.propulsion.large_ship_propeller.LargeShipPropellerBlock;
-import io.github.daniel366cobra.vs_marine_propulsion.blocks.steering.ballast_tank.*;
-import io.github.daniel366cobra.vs_marine_propulsion.blocks.steering.rudder.RudderBlock;
-import io.github.daniel366cobra.vs_marine_propulsion.blocks.steering.rudder_bearing.RudderBearingBlock;
+import io.github.daniel366cobra.vs_marine_propulsion.blocks.attitude.ballast_tank.*;
+import io.github.daniel366cobra.vs_marine_propulsion.blocks.attitude.rudder.RudderBlock;
+import io.github.daniel366cobra.vs_marine_propulsion.blocks.attitude.rudder_bearing.RudderBearingBlock;
 import io.github.daniel366cobra.vs_marine_propulsion.items.EngineOrderTelegraphBlockItem;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.registries.Registries;
@@ -57,7 +57,7 @@ public class VSMarinePropulsionBlocks {
             .addLayer(() -> RenderType::cutoutMipped)
             .transform(BlockStressDefaults.setNoImpact())
             .transform(axeOrPickaxe())
-            .blockstate((ctx, prov) -> prov.directionalBlock(ctx.get(), state ->
+            .blockstate((ctx, prov) -> BlockStateGen.axisBlock(ctx, prov, state ->
                             partialBaseModel(ctx, prov, state.getValue(LINKED) ? "linked" : "unlinked", state.getValue(ORDER).toString())
                     )
             )

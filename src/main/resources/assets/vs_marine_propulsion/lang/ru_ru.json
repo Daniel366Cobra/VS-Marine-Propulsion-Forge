@@ -60,12 +60,15 @@
   "itemGroup.vs_marine_propulsion.main": "VS Marine Propulsion",
   "sound.engine_order_telegraph.bell": "Колокол Машинного телеграфа",
   "sound.engine_order_telegraph.ding": "Звонок Машинного телеграфа",
+  "sound.helm.promotion": "Приоритет штурвала повышен",
+
   "vs_marine_propulsion.engine_order_telegraph.add": "Блок привязан к Машинному телеграфу",
   "vs_marine_propulsion.engine_order_telegraph.clear": "Привязка Машинного телеграфа отменена!",
   "vs_marine_propulsion.engine_order_telegraph.failure": "Блок уже привязан к другому Машинному телеграфу!",
   "vs_marine_propulsion.engine_order_telegraph.remove": "Блок отвязан от Машинного телеграфа",
   "vs_marine_propulsion.engine_order_telegraph.success": "Машинный телеграф успешно настроен!",
   "vs_marine_propulsion.propeller.rotation_direction": "Вращение винта при ходе вперед",
-  "vs_marine_propulsion.helm.set_direction": "Штурвал установлен, направление на нос:",
-  "vs_marine_propulsion.helm.mismatched_facing": "Установка отменена - неверное направление, требуется:"
+  "vs_marine_propulsion.helm.set_captain": "Главный штурвал установлен, направление на нос:",
+  "vs_marine_propulsion.helm.update_captain": "Главный штурвал изменен, направление на нос:",
+  "vs_marine_propulsion.helm.no_ship_found": "Невозможно использовать штурвал не на корабле!"
 }

@@ -1,7 +1,7 @@
 package io.github.daniel366cobra.vs_marine_propulsion;
 
 import com.simibubi.create.content.contraptions.ContraptionType;
-import io.github.daniel366cobra.vs_marine_propulsion.blocks.steering.RudderContraption;
+import io.github.daniel366cobra.vs_marine_propulsion.blocks.attitude.RudderContraption;
 
 public class VSMarinePropulsionContraptionTypes {
 

@@ -1,4 +1,4 @@
-package io.github.daniel366cobra.vs_marine_propulsion.blocks.steering.rudder;
+package io.github.daniel366cobra.vs_marine_propulsion.blocks.attitude.rudder;
 
 import com.simibubi.create.foundation.placement.IPlacementHelper;
 import com.simibubi.create.foundation.placement.PlacementHelpers;

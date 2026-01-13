@@ -7,8 +7,9 @@
   "vs_marine_propulsion.engine_order_telegraph.success": "Engine Order Telegraph configured!",
   "vs_marine_propulsion.engine_order_telegraph.failure": "Target already connected to an Engine Order Telegraph!",
 
-  "vs_marine_propulsion.helm.set_direction": "Helm active, ship forward direction set:",
-  "vs_marine_propulsion.helm.mismatched_facing": "Cannot place helm: mismatched facing, must be",
+  "vs_marine_propulsion.helm.set_captain": "Captain helm set, ship forward direction:",
+  "vs_marine_propulsion.helm.update_captain": "Helm promoted, ship forward direction:",
+  "vs_marine_propulsion.helm.no_ship_found": "Cannot use helm: not on ship!",
 
   "itemGroup.vs_marine_propulsion.main": "VS Marine Propulsion",
 
@@ -16,5 +17,6 @@
   "gui.assembly.exception.mismatched_rudders": "Some Rudder blocks have mismatched directions",
 
   "sound.engine_order_telegraph.ding": "Engine Order Telegraph dings",
-  "sound.engine_order_telegraph.bell": "Engine Order Telegraph bell rings"
+  "sound.engine_order_telegraph.bell": "Engine Order Telegraph bell rings",
+  "sound.helm.promotion": "Helm promoted to Captain"
 }

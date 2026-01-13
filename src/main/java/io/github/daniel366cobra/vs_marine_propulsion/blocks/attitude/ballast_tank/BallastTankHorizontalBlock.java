@@ -1,4 +1,4 @@
-package io.github.daniel366cobra.vs_marine_propulsion.blocks.steering.ballast_tank;
+package io.github.daniel366cobra.vs_marine_propulsion.blocks.attitude.ballast_tank;
 
 import io.github.daniel366cobra.vs_marine_propulsion.VSMarinePropulsionEntities;
 import net.minecraft.core.BlockPos;

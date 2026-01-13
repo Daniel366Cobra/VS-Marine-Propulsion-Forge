@@ -42,7 +42,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class VSMarinePropulsionAttachment implements ShipForcesInducer {
 
     private String dimensionId = null;
-    private Direction shipForwardDirection = Direction.NORTH;
+    private Direction shipForwardDirection = null;
     private Set<HelmData> helms = ConcurrentHashMap.newKeySet();
     private Set<PropulsorData> propulsors = ConcurrentHashMap.newKeySet();
     private Set<ControlSurfaceData> controlSurfaces = ConcurrentHashMap.newKeySet();
@@ -86,9 +86,10 @@ public class VSMarinePropulsionAttachment implements ShipForcesInducer {
             newHelmData = new HelmData(helmPos, helmFacing, true);
         } else {
             // Additional helms must face the same direction as captain
-            if (data.getFacing() != getShipForwardDirection()) return false;
+            if (helmFacing != getShipForwardDirection())
+                helmFacing = getShipForwardDirection();
 
-            newHelmData = new HelmData(helmPos, data.getFacing(), false);
+            newHelmData = new HelmData(helmPos, helmFacing, false);
         }
 
         // Set automatically handles duplicates based on position
@@ -117,7 +118,7 @@ public class VSMarinePropulsionAttachment implements ShipForcesInducer {
                 ));
                 shipForwardDirection = newCaptainCandidate.getFacing();
             } else if (helms.isEmpty()) {
-                shipForwardDirection = Direction.NORTH;
+                shipForwardDirection = null;
             }
         }
     }
@@ -130,9 +131,10 @@ public class VSMarinePropulsionAttachment implements ShipForcesInducer {
         this.shipForwardDirection = direction;
     }
 
+    //TODO address null handling in control surface forces
     @JsonIgnore
     public Vector3d getForwardVector() {
-        return VectorConversionsMCKt.toJOMLD(shipForwardDirection.getNormal());
+        return hasValidOrientation()? VectorConversionsMCKt.toJOMLD(shipForwardDirection.getNormal()) : new Vector3d(0, 0, 0);
     }
 
     @JsonIgnore

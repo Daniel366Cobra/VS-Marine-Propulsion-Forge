@@ -1,4 +1,4 @@
-package io.github.daniel366cobra.vs_marine_propulsion.blocks.steering.rudder_bearing;
+package io.github.daniel366cobra.vs_marine_propulsion.blocks.attitude.rudder_bearing;
 
 import com.jozufozu.flywheel.api.MaterialManager;
 import com.jozufozu.flywheel.api.instance.DynamicInstance;

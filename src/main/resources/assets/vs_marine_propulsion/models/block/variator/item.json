@@ -2,7 +2,7 @@
   "credit": "Made with Blockbench",
   "parent": "block/block",
   "textures": {
-    "0": "vs_marine_propulsion:block/variator/variator_unlinked",
+    "0": "vs_marine_propulsion:block/variator/variator_item",
     "1": "create:block/gearbox",
     "4": "create:block/funnel/andesite_funnel_frame",
     "particle": "create:block/axis",

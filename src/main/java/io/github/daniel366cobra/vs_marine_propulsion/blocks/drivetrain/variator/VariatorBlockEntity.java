@@ -1,7 +1,6 @@
 package io.github.daniel366cobra.vs_marine_propulsion.blocks.drivetrain.variator;
 
 import com.simibubi.create.content.kinetics.transmission.SplitShaftBlockEntity;
-import io.github.daniel366cobra.vs_marine_propulsion.VSMarinePropulsionMod;
 import io.github.daniel366cobra.vs_marine_propulsion.blocks.control.engine_order_telegraph.EngineOrderTelegraphBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -100,7 +99,6 @@ public class VariatorBlockEntity extends SplitShaftBlockEntity implements IEngin
             level.setBlock(getBlockPos(), getBlockState().setValue(ORDER, throttleOrder + 3), UPDATE_ALL);
             attachKinetics();
             notifyUpdate();
-
         }
     }
 

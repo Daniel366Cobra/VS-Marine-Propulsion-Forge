@@ -20,10 +20,14 @@ public class VSMarinePropulsionSounds {
             () -> SoundEvent.createVariableRangeEvent(new ResourceLocation(VSMarinePropulsionMod.MOD_ID, "engine_order_telegraph_bell"))
     );
 
+    public static final RegistryObject<SoundEvent> HELM_PROMOTION = SOUND_EVENTS.register(
+            "helm_promotion",
+            () -> SoundEvent.createVariableRangeEvent(new ResourceLocation(VSMarinePropulsionMod.MOD_ID, "helm_promotion"))
+    );
+
 
     public static void register(IEventBus eventBus) {
         VSMarinePropulsionMod.LOGGER.info("Registering sound events for " + VSMarinePropulsionMod.NAME);
         SOUND_EVENTS.register(eventBus);
-        VSMarinePropulsionMod.LOGGER.info("Sound event IDs: " + ENGINE_ORDER_TELEGRAPH_DING.getId() + ", " + ENGINE_ORDER_TELEGRAPH_BELL.getId());
     }
 }

@@ -4,6 +4,7 @@ import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import com.simibubi.create.foundation.utility.animation.LerpedFloat;
 import io.github.daniel366cobra.vs_marine_propulsion.VSMarinePropulsionPacketHandler;
+import io.github.daniel366cobra.vs_marine_propulsion.VSMarinePropulsionSounds;
 import io.github.daniel366cobra.vs_marine_propulsion.network.WheelAnglePacket;
 import io.github.daniel366cobra.vs_marine_propulsion.ship.VSMarinePropulsionAttachment;
 import io.github.daniel366cobra.vs_marine_propulsion.ship.data.HelmData;
@@ -60,33 +61,6 @@ public class HelmBlockEntity extends SmartBlockEntity {
         syncWithAttachment();
     }
 
-    /**
-     * Sync this block entity with the ship attachment data
-     */
-    private void syncWithAttachment() {
-
-        if (level == null || level.isClientSide()) return;
-
-        VSMarinePropulsionAttachment shipControl = VSMarinePropulsionAttachment.get(level, worldPosition);
-        if (shipControl != null) {
-            HelmData existingData = shipControl.getHelmAtPos(worldPosition);
-            if (existingData != null) {
-                //Pull from attachment
-                this.helmData = existingData;
-                this.wheelAngle = 360 + (int) (existingData.rudderAngle * 9f);
-                this.clientWheelAngle.chase(wheelAngle, 0.2f, LerpedFloat.Chaser.EXP);
-            } else {
-                shipControl.addHelm(worldPosition, this.helmData);
-                // Get the actual object from attachment
-                HelmData actualData = shipControl.getHelmAtPos(worldPosition);
-                if (actualData != null) {
-                    this.helmData = actualData;
-                }
-            }
-        }
-    }
-
-
     @Override
     public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
     }
@@ -132,7 +106,99 @@ public class HelmBlockEntity extends SmartBlockEntity {
     }
 
     public boolean sit(Player player) {
+        if (!canPlayerUseHelm(player)) {
+            return false;
+        }
         return startRiding(player, false, this.getBlockPos(), this.getBlockState(), (ServerLevel) level);
+    }
+
+    private void updateBlockFacing(Direction newFacing) {
+        if (level == null || level.isClientSide) return;
+
+        BlockState currentState = getBlockState();
+        Direction currentFacing = currentState.getValue(HelmBlock.FACING);
+
+        if (currentFacing != newFacing) {
+            level.setBlock(worldPosition, currentState.setValue(HelmBlock.FACING, newFacing), 3);
+            setChanged();
+        }
+    }
+
+    /**
+     * Sync this block entity with the ship attachment data
+     */
+    private void syncWithAttachment() {
+
+        if (level == null || level.isClientSide()) return;
+
+        VSMarinePropulsionAttachment shipControl = VSMarinePropulsionAttachment.get(level, worldPosition);
+        if (shipControl == null) return;
+
+        // Get or create helm data in attachment
+        HelmData existingData = shipControl.getHelmAtPos(worldPosition);
+
+        boolean wasPromoted = false;
+
+        if (existingData == null) {
+            // New helm added
+
+            boolean isFirstHelm = !shipControl.hasValidOrientation();
+
+            if (!isFirstHelm) {
+                // Ship already has captain helm
+                Direction requiredFacing = shipControl.getShipForwardDirection();
+                Direction currentFacing = getBlockState().getValue(HelmBlock.FACING);
+
+                if (currentFacing != requiredFacing) {
+                    updateBlockFacing(requiredFacing);
+                }
+
+                // Create non-captain helm data with correct facing
+                this.helmData = new HelmData(worldPosition, requiredFacing, false);
+
+            }
+
+            // Handles captaincy automatically for first helm
+            shipControl.addHelm(worldPosition, this.helmData);
+
+            // Will have isCaptain == true for first helm
+            // Local this.helmData.isCaptain will stay false yet
+            existingData = shipControl.getHelmAtPos(worldPosition);
+
+            if (existingData != null && existingData.isCaptain) {
+                // Play sound
+                level.playSound(null, getBlockPos(), VSMarinePropulsionSounds.HELM_PROMOTION.get(),
+                        SoundSource.BLOCKS, 0.5f, 1.0f);
+
+                // Show message
+                if (isFirstHelm) {
+                    sendMessageToClosestPlayer(Component.translatable("vs_marine_propulsion.helm.set_captain")
+                            .append(" " + existingData.getFacing()));
+                } else {
+                    sendMessageToClosestPlayer(Component.translatable("vs_marine_propulsion.helm.update_captain")
+                            .append(" " + existingData.getFacing()));
+                }
+            }
+
+        } else {
+            // Existing helm updated
+            if (!this.helmData.isCaptain && existingData.isCaptain) {
+                // Play sound
+                level.playSound(null, getBlockPos(), VSMarinePropulsionSounds.HELM_PROMOTION.get(),
+                        SoundSource.BLOCKS, 0.5f, 1.0f);
+
+                // Show message (helm was promoted due to captain removal)
+                sendMessageToClosestPlayer(Component.translatable("vs_marine_propulsion.helm.update_captain")
+                        .append(" " + existingData.getFacing()));
+            }
+        }
+
+        if (existingData != null) {
+            // Sync data
+            this.helmData = existingData;
+            this.wheelAngle = 360 + (int) (existingData.rudderAngle * 9f);
+            this.clientWheelAngle.chase(wheelAngle, 0.2f, LerpedFloat.Chaser.EXP);
+        }
     }
 
     @Override
@@ -146,9 +212,9 @@ public class HelmBlockEntity extends SmartBlockEntity {
 
         if (!VSGameUtilsKt.isBlockInShipyard(level, blockPos)) return;
 
-        //syncWithAttachment();
-
         if (!level.isClientSide && !isVirtual()) {
+
+            syncWithAttachment();
 
             VSMarinePropulsionAttachment shipControl = VSMarinePropulsionAttachment.get(level, blockPos);
             if (shipControl == null) return;
@@ -157,7 +223,6 @@ public class HelmBlockEntity extends SmartBlockEntity {
             if (ship == null) return;
 
             SeatedControllingPlayer playerControl = ship.getAttachment(SeatedControllingPlayer.class);
-            HelmData persistentData = shipControl.getHelmAtPos(shipControl.getCaptainHelmPosition());
 
             if (playerControl != null) {
                 if (playerControl.getLeftImpulse() < 0) {
@@ -167,18 +232,12 @@ public class HelmBlockEntity extends SmartBlockEntity {
                 }
             }
 
+            HelmData persistentData = shipControl.getHelmAtPos(blockPos);
+
             if (persistentData != null) {
                 persistentData.rudderAngle = this.getRudderAngle();
+                // Ensure our local reference is up-to-date
                 this.helmData = persistentData;
-
-                /*
-                Player nearbyPlayer = level.getNearestPlayer(blockPos.getX(), blockPos.getY(), blockPos.getZ(), 10, false);
-
-                nearbyPlayer.displayClientMessage(
-                        Component.literal("NEW ANGLE: " + persistentData.rudderAngle),
-                        true
-                );
-                */
             }
 
             notifyUpdate();
@@ -212,6 +271,26 @@ public class HelmBlockEntity extends SmartBlockEntity {
             mountingEntity.kill();
         });
         seats.clear();
+    }
+
+    private boolean canPlayerUseHelm(Player player) {
+        if (level == null || level.isClientSide) return false;
+
+        VSMarinePropulsionAttachment shipControl = VSMarinePropulsionAttachment.get(level, worldPosition);
+        if (shipControl == null) {
+            sendMessageToClosestPlayer(Component.translatable("vs_marine_propulsion.helm.no_ship_found"));
+            return false;
+        }
+
+        return true;
+    }
+
+    private void sendMessageToClosestPlayer(Component message) {
+        BlockPos blockPos = this.getBlockPos();
+        Player nearbyPlayer = level.getNearestPlayer(blockPos.getX(), blockPos.getY(), blockPos.getZ(), 10, false);
+        if (nearbyPlayer != null) {
+            nearbyPlayer.displayClientMessage(message,true);
+        }
     }
 
     public void rotateWheelRight(ServerLevel world, BlockPos pos) {

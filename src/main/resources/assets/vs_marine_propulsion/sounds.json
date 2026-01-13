@@ -18,5 +18,15 @@
         "pitch": 1.0
       }
     ]
+  },
+  "helm_promotion": {
+    "subtitle": "sound.helm.promotion",
+    "sounds": [
+      {
+        "name": "vs_marine_propulsion:helm_promotion",
+        "volume": 2.0,
+        "pitch": 1.0
+      }
+    ]
   }
 }

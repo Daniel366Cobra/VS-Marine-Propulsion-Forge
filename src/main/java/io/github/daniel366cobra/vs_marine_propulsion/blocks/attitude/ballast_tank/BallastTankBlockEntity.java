@@ -1,4 +1,4 @@
-package io.github.daniel366cobra.vs_marine_propulsion.blocks.steering.ballast_tank;
+package io.github.daniel366cobra.vs_marine_propulsion.blocks.attitude.ballast_tank;
 
 import com.simibubi.create.api.connectivity.ConnectivityHandler;
 import com.simibubi.create.content.equipment.goggles.IHaveGoggleInformation;
@@ -30,9 +30,9 @@ import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Objects;
 
-import static io.github.daniel366cobra.vs_marine_propulsion.blocks.steering.ballast_tank.BallastTankHorizontalBlock.*;
-import static io.github.daniel366cobra.vs_marine_propulsion.blocks.steering.ballast_tank.BallastTankVerticalBlock.BOTTOM;
-import static io.github.daniel366cobra.vs_marine_propulsion.blocks.steering.ballast_tank.BallastTankVerticalBlock.TOP;
+import static io.github.daniel366cobra.vs_marine_propulsion.blocks.attitude.ballast_tank.BallastTankHorizontalBlock.*;
+import static io.github.daniel366cobra.vs_marine_propulsion.blocks.attitude.ballast_tank.BallastTankVerticalBlock.BOTTOM;
+import static io.github.daniel366cobra.vs_marine_propulsion.blocks.attitude.ballast_tank.BallastTankVerticalBlock.TOP;
 
 public class BallastTankBlockEntity extends SmartBlockEntity implements IHaveGoggleInformation, IMultiBlockEntityContainer.Fluid {
 

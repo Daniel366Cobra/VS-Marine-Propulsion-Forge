@@ -1,6 +1,6 @@
 package io.github.daniel366cobra.vs_marine_propulsion;
 
-import io.github.daniel366cobra.vs_marine_propulsion.blocks.steering.ballast_tank.BallastTankBlockEntity;
+import io.github.daniel366cobra.vs_marine_propulsion.blocks.attitude.ballast_tank.BallastTankBlockEntity;
 import kotlin.Pair;
 import kotlin.Triple;
 import net.minecraft.core.BlockPos;
@@ -19,7 +19,7 @@ import org.valkyrienskies.physics_api.voxel.Lod1SolidBlockState;
 
 import java.util.List;
 
-import static io.github.daniel366cobra.vs_marine_propulsion.blocks.steering.ballast_tank.BallastTankBlockEntity.EMPTY_TANK_MASS;
+import static io.github.daniel366cobra.vs_marine_propulsion.blocks.attitude.ballast_tank.BallastTankBlockEntity.EMPTY_TANK_MASS;
 
 /** My immense gratitude goes to KindaVibey for allowing me to use their code.
  *  <a href="https://github.com/KindaVibey/Imitari/blob/master/src/main/java/com/vibey/imitari/vs2/VS2CopyBlockIntegrationImpl.java">...</a>

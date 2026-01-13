@@ -1,368 +1,186 @@
 {
   "variants": {
-    "facing=down,linked=false,order=0": {
-      "model": "vs_marine_propulsion:block/variator/block_unlinked_0",
-      "x": 180
-    },
-    "facing=down,linked=false,order=1": {
-      "model": "vs_marine_propulsion:block/variator/block_unlinked_1",
-      "x": 180
-    },
-    "facing=down,linked=false,order=2": {
-      "model": "vs_marine_propulsion:block/variator/block_unlinked_2",
-      "x": 180
-    },
-    "facing=down,linked=false,order=3": {
-      "model": "vs_marine_propulsion:block/variator/block_unlinked_3",
-      "x": 180
-    },
-    "facing=down,linked=false,order=4": {
-      "model": "vs_marine_propulsion:block/variator/block_unlinked_4",
-      "x": 180
-    },
-    "facing=down,linked=false,order=5": {
-      "model": "vs_marine_propulsion:block/variator/block_unlinked_5",
-      "x": 180
-    },
-    "facing=down,linked=false,order=6": {
-      "model": "vs_marine_propulsion:block/variator/block_unlinked_6",
-      "x": 180
-    },
-    "facing=down,linked=true,order=0": {
-      "model": "vs_marine_propulsion:block/variator/block_linked_0",
-      "x": 180
-    },
-    "facing=down,linked=true,order=1": {
-      "model": "vs_marine_propulsion:block/variator/block_linked_1",
-      "x": 180
-    },
-    "facing=down,linked=true,order=2": {
-      "model": "vs_marine_propulsion:block/variator/block_linked_2",
-      "x": 180
-    },
-    "facing=down,linked=true,order=3": {
-      "model": "vs_marine_propulsion:block/variator/block_linked_3",
-      "x": 180
-    },
-    "facing=down,linked=true,order=4": {
-      "model": "vs_marine_propulsion:block/variator/block_linked_4",
-      "x": 180
-    },
-    "facing=down,linked=true,order=5": {
-      "model": "vs_marine_propulsion:block/variator/block_linked_5",
-      "x": 180
-    },
-    "facing=down,linked=true,order=6": {
-      "model": "vs_marine_propulsion:block/variator/block_linked_6",
-      "x": 180
-    },
-    "facing=east,linked=false,order=0": {
+    "axis=x,linked=false,order=0": {
       "model": "vs_marine_propulsion:block/variator/block_unlinked_0",
       "x": 90,
       "y": 90
     },
-    "facing=east,linked=false,order=1": {
+    "axis=x,linked=false,order=1": {
       "model": "vs_marine_propulsion:block/variator/block_unlinked_1",
       "x": 90,
       "y": 90
     },
-    "facing=east,linked=false,order=2": {
+    "axis=x,linked=false,order=2": {
       "model": "vs_marine_propulsion:block/variator/block_unlinked_2",
       "x": 90,
       "y": 90
     },
-    "facing=east,linked=false,order=3": {
+    "axis=x,linked=false,order=3": {
       "model": "vs_marine_propulsion:block/variator/block_unlinked_3",
       "x": 90,
       "y": 90
     },
-    "facing=east,linked=false,order=4": {
+    "axis=x,linked=false,order=4": {
       "model": "vs_marine_propulsion:block/variator/block_unlinked_4",
       "x": 90,
       "y": 90
     },
-    "facing=east,linked=false,order=5": {
+    "axis=x,linked=false,order=5": {
       "model": "vs_marine_propulsion:block/variator/block_unlinked_5",
       "x": 90,
       "y": 90
     },
-    "facing=east,linked=false,order=6": {
+    "axis=x,linked=false,order=6": {
       "model": "vs_marine_propulsion:block/variator/block_unlinked_6",
       "x": 90,
       "y": 90
     },
-    "facing=east,linked=true,order=0": {
+    "axis=x,linked=true,order=0": {
       "model": "vs_marine_propulsion:block/variator/block_linked_0",
       "x": 90,
       "y": 90
     },
-    "facing=east,linked=true,order=1": {
+    "axis=x,linked=true,order=1": {
       "model": "vs_marine_propulsion:block/variator/block_linked_1",
       "x": 90,
       "y": 90
     },
-    "facing=east,linked=true,order=2": {
+    "axis=x,linked=true,order=2": {
       "model": "vs_marine_propulsion:block/variator/block_linked_2",
       "x": 90,
       "y": 90
     },
-    "facing=east,linked=true,order=3": {
+    "axis=x,linked=true,order=3": {
       "model": "vs_marine_propulsion:block/variator/block_linked_3",
       "x": 90,
       "y": 90
     },
-    "facing=east,linked=true,order=4": {
+    "axis=x,linked=true,order=4": {
       "model": "vs_marine_propulsion:block/variator/block_linked_4",
       "x": 90,
       "y": 90
     },
-    "facing=east,linked=true,order=5": {
+    "axis=x,linked=true,order=5": {
       "model": "vs_marine_propulsion:block/variator/block_linked_5",
       "x": 90,
       "y": 90
     },
-    "facing=east,linked=true,order=6": {
+    "axis=x,linked=true,order=6": {
       "model": "vs_marine_propulsion:block/variator/block_linked_6",
       "x": 90,
       "y": 90
     },
-    "facing=north,linked=false,order=0": {
-      "model": "vs_marine_propulsion:block/variator/block_unlinked_0",
-      "x": 90
-    },
-    "facing=north,linked=false,order=1": {
-      "model": "vs_marine_propulsion:block/variator/block_unlinked_1",
-      "x": 90
-    },
-    "facing=north,linked=false,order=2": {
-      "model": "vs_marine_propulsion:block/variator/block_unlinked_2",
-      "x": 90
-    },
-    "facing=north,linked=false,order=3": {
-      "model": "vs_marine_propulsion:block/variator/block_unlinked_3",
-      "x": 90
-    },
-    "facing=north,linked=false,order=4": {
-      "model": "vs_marine_propulsion:block/variator/block_unlinked_4",
-      "x": 90
-    },
-    "facing=north,linked=false,order=5": {
-      "model": "vs_marine_propulsion:block/variator/block_unlinked_5",
-      "x": 90
-    },
-    "facing=north,linked=false,order=6": {
-      "model": "vs_marine_propulsion:block/variator/block_unlinked_6",
-      "x": 90
-    },
-    "facing=north,linked=true,order=0": {
-      "model": "vs_marine_propulsion:block/variator/block_linked_0",
-      "x": 90
-    },
-    "facing=north,linked=true,order=1": {
-      "model": "vs_marine_propulsion:block/variator/block_linked_1",
-      "x": 90
-    },
-    "facing=north,linked=true,order=2": {
-      "model": "vs_marine_propulsion:block/variator/block_linked_2",
-      "x": 90
-    },
-    "facing=north,linked=true,order=3": {
-      "model": "vs_marine_propulsion:block/variator/block_linked_3",
-      "x": 90
-    },
-    "facing=north,linked=true,order=4": {
-      "model": "vs_marine_propulsion:block/variator/block_linked_4",
-      "x": 90
-    },
-    "facing=north,linked=true,order=5": {
-      "model": "vs_marine_propulsion:block/variator/block_linked_5",
-      "x": 90
-    },
-    "facing=north,linked=true,order=6": {
-      "model": "vs_marine_propulsion:block/variator/block_linked_6",
-      "x": 90
-    },
-    "facing=south,linked=false,order=0": {
-      "model": "vs_marine_propulsion:block/variator/block_unlinked_0",
-      "x": 90,
-      "y": 180
-    },
-    "facing=south,linked=false,order=1": {
-      "model": "vs_marine_propulsion:block/variator/block_unlinked_1",
-      "x": 90,
-      "y": 180
-    },
-    "facing=south,linked=false,order=2": {
-      "model": "vs_marine_propulsion:block/variator/block_unlinked_2",
-      "x": 90,
-      "y": 180
-    },
-    "facing=south,linked=false,order=3": {
-      "model": "vs_marine_propulsion:block/variator/block_unlinked_3",
-      "x": 90,
-      "y": 180
-    },
-    "facing=south,linked=false,order=4": {
-      "model": "vs_marine_propulsion:block/variator/block_unlinked_4",
-      "x": 90,
-      "y": 180
-    },
-    "facing=south,linked=false,order=5": {
-      "model": "vs_marine_propulsion:block/variator/block_unlinked_5",
-      "x": 90,
-      "y": 180
-    },
-    "facing=south,linked=false,order=6": {
-      "model": "vs_marine_propulsion:block/variator/block_unlinked_6",
-      "x": 90,
-      "y": 180
-    },
-    "facing=south,linked=true,order=0": {
-      "model": "vs_marine_propulsion:block/variator/block_linked_0",
-      "x": 90,
-      "y": 180
-    },
-    "facing=south,linked=true,order=1": {
-      "model": "vs_marine_propulsion:block/variator/block_linked_1",
-      "x": 90,
-      "y": 180
-    },
-    "facing=south,linked=true,order=2": {
-      "model": "vs_marine_propulsion:block/variator/block_linked_2",
-      "x": 90,
-      "y": 180
-    },
-    "facing=south,linked=true,order=3": {
-      "model": "vs_marine_propulsion:block/variator/block_linked_3",
-      "x": 90,
-      "y": 180
-    },
-    "facing=south,linked=true,order=4": {
-      "model": "vs_marine_propulsion:block/variator/block_linked_4",
-      "x": 90,
-      "y": 180
-    },
-    "facing=south,linked=true,order=5": {
-      "model": "vs_marine_propulsion:block/variator/block_linked_5",
-      "x": 90,
-      "y": 180
-    },
-    "facing=south,linked=true,order=6": {
-      "model": "vs_marine_propulsion:block/variator/block_linked_6",
-      "x": 90,
-      "y": 180
-    },
-    "facing=up,linked=false,order=0": {
+    "axis=y,linked=false,order=0": {
       "model": "vs_marine_propulsion:block/variator/block_unlinked_0"
     },
-    "facing=up,linked=false,order=1": {
+    "axis=y,linked=false,order=1": {
       "model": "vs_marine_propulsion:block/variator/block_unlinked_1"
     },
-    "facing=up,linked=false,order=2": {
+    "axis=y,linked=false,order=2": {
       "model": "vs_marine_propulsion:block/variator/block_unlinked_2"
     },
-    "facing=up,linked=false,order=3": {
+    "axis=y,linked=false,order=3": {
       "model": "vs_marine_propulsion:block/variator/block_unlinked_3"
     },
-    "facing=up,linked=false,order=4": {
+    "axis=y,linked=false,order=4": {
       "model": "vs_marine_propulsion:block/variator/block_unlinked_4"
     },
-    "facing=up,linked=false,order=5": {
+    "axis=y,linked=false,order=5": {
       "model": "vs_marine_propulsion:block/variator/block_unlinked_5"
     },
-    "facing=up,linked=false,order=6": {
+    "axis=y,linked=false,order=6": {
       "model": "vs_marine_propulsion:block/variator/block_unlinked_6"
     },
-    "facing=up,linked=true,order=0": {
+    "axis=y,linked=true,order=0": {
       "model": "vs_marine_propulsion:block/variator/block_linked_0"
     },
-    "facing=up,linked=true,order=1": {
+    "axis=y,linked=true,order=1": {
       "model": "vs_marine_propulsion:block/variator/block_linked_1"
     },
-    "facing=up,linked=true,order=2": {
+    "axis=y,linked=true,order=2": {
       "model": "vs_marine_propulsion:block/variator/block_linked_2"
     },
-    "facing=up,linked=true,order=3": {
+    "axis=y,linked=true,order=3": {
       "model": "vs_marine_propulsion:block/variator/block_linked_3"
     },
-    "facing=up,linked=true,order=4": {
+    "axis=y,linked=true,order=4": {
       "model": "vs_marine_propulsion:block/variator/block_linked_4"
     },
-    "facing=up,linked=true,order=5": {
+    "axis=y,linked=true,order=5": {
       "model": "vs_marine_propulsion:block/variator/block_linked_5"
     },
-    "facing=up,linked=true,order=6": {
+    "axis=y,linked=true,order=6": {
       "model": "vs_marine_propulsion:block/variator/block_linked_6"
     },
-    "facing=west,linked=false,order=0": {
+    "axis=z,linked=false,order=0": {
       "model": "vs_marine_propulsion:block/variator/block_unlinked_0",
       "x": 90,
-      "y": 270
+      "y": 180
     },
-    "facing=west,linked=false,order=1": {
+    "axis=z,linked=false,order=1": {
       "model": "vs_marine_propulsion:block/variator/block_unlinked_1",
       "x": 90,
-      "y": 270
+      "y": 180
     },
-    "facing=west,linked=false,order=2": {
+    "axis=z,linked=false,order=2": {
       "model": "vs_marine_propulsion:block/variator/block_unlinked_2",
       "x": 90,
-      "y": 270
+      "y": 180
     },
-    "facing=west,linked=false,order=3": {
+    "axis=z,linked=false,order=3": {
       "model": "vs_marine_propulsion:block/variator/block_unlinked_3",
       "x": 90,
-      "y": 270
+      "y": 180
     },
-    "facing=west,linked=false,order=4": {
+    "axis=z,linked=false,order=4": {
       "model": "vs_marine_propulsion:block/variator/block_unlinked_4",
       "x": 90,
-      "y": 270
+      "y": 180
     },
-    "facing=west,linked=false,order=5": {
+    "axis=z,linked=false,order=5": {
       "model": "vs_marine_propulsion:block/variator/block_unlinked_5",
       "x": 90,
-      "y": 270
+      "y": 180
     },
-    "facing=west,linked=false,order=6": {
+    "axis=z,linked=false,order=6": {
       "model": "vs_marine_propulsion:block/variator/block_unlinked_6",
       "x": 90,
-      "y": 270
+      "y": 180
     },
-    "facing=west,linked=true,order=0": {
+    "axis=z,linked=true,order=0": {
       "model": "vs_marine_propulsion:block/variator/block_linked_0",
       "x": 90,
-      "y": 270
+      "y": 180
     },
-    "facing=west,linked=true,order=1": {
+    "axis=z,linked=true,order=1": {
       "model": "vs_marine_propulsion:block/variator/block_linked_1",
       "x": 90,
-      "y": 270
+      "y": 180
     },
-    "facing=west,linked=true,order=2": {
+    "axis=z,linked=true,order=2": {
       "model": "vs_marine_propulsion:block/variator/block_linked_2",
       "x": 90,
-      "y": 270
+      "y": 180
     },
-    "facing=west,linked=true,order=3": {
+    "axis=z,linked=true,order=3": {
       "model": "vs_marine_propulsion:block/variator/block_linked_3",
       "x": 90,
-      "y": 270
+      "y": 180
     },
-    "facing=west,linked=true,order=4": {
+    "axis=z,linked=true,order=4": {
       "model": "vs_marine_propulsion:block/variator/block_linked_4",
       "x": 90,
-      "y": 270
+      "y": 180
     },
-    "facing=west,linked=true,order=5": {
+    "axis=z,linked=true,order=5": {
       "model": "vs_marine_propulsion:block/variator/block_linked_5",
       "x": 90,
-      "y": 270
+      "y": 180
     },
-    "facing=west,linked=true,order=6": {
+    "axis=z,linked=true,order=6": {
       "model": "vs_marine_propulsion:block/variator/block_linked_6",
       "x": 90,
-      "y": 270
+      "y": 180
     }
   }
 }

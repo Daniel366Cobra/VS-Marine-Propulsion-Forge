@@ -1,4 +1,4 @@
-package io.github.daniel366cobra.vs_marine_propulsion.blocks.steering.rudder_bearing;
+package io.github.daniel366cobra.vs_marine_propulsion.blocks.attitude.rudder_bearing;
 
 import com.simibubi.create.content.contraptions.bearing.BearingBlock;
 import com.simibubi.create.foundation.block.IBE;

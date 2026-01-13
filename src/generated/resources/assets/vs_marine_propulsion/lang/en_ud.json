@@ -51,12 +51,14 @@
   "itemGroup.vs_marine_propulsion.main": "uoısןndoɹԀ ǝuıɹɐW SΛ",
   "sound.engine_order_telegraph.bell": "sbuıɹ ןןǝq ɥdɐɹbǝןǝ⟘ ɹǝpɹO ǝuıbuƎ",
   "sound.engine_order_telegraph.ding": "sbuıp ɥdɐɹbǝןǝ⟘ ɹǝpɹO ǝuıbuƎ",
+  "sound.helm.promotion": "uıɐʇdɐƆ oʇ pǝʇoɯoɹd ɯןǝH",
   "vs_marine_propulsion.engine_order_telegraph.add": "pǝppɐ ʇǝbɹɐʇ ɥdɐɹbǝןǝ⟘ ɹǝpɹO ǝuıbuƎ",
   "vs_marine_propulsion.engine_order_telegraph.clear": "¡pǝʞuıןun ɥdɐɹbǝןǝ⟘ ɹǝpɹO ǝuıbuƎ",
   "vs_marine_propulsion.engine_order_telegraph.failure": "¡ɥdɐɹbǝןǝ⟘ ɹǝpɹO ǝuıbuƎ uɐ oʇ pǝʇɔǝuuoɔ ʎpɐǝɹןɐ ʇǝbɹɐ⟘",
   "vs_marine_propulsion.engine_order_telegraph.remove": "pǝʌoɯǝɹ ʇǝbɹɐʇ ɥdɐɹbǝןǝ⟘ ɹǝpɹO ǝuıbuƎ",
   "vs_marine_propulsion.engine_order_telegraph.success": "¡pǝɹnbıɟuoɔ ɥdɐɹbǝןǝ⟘ ɹǝpɹO ǝuıbuƎ",
-  "vs_marine_propulsion.helm.mismatched_facing": "ǝq ʇsnɯ 'buıɔɐɟ pǝɥɔʇɐɯsıɯ :ɯןǝɥ ǝɔɐןd ʇouuɐƆ",
-  "vs_marine_propulsion.helm.set_direction": ":ʇǝs uoıʇɔǝɹıp pɹɐʍɹoɟ dıɥs 'ǝʌıʇɔɐ ɯןǝH",
+  "vs_marine_propulsion.helm.no_ship_found": "¡dıɥs uo ʇou :ɯןǝɥ ǝsn ʇouuɐƆ",
+  "vs_marine_propulsion.helm.set_captain": ":uoıʇɔǝɹıp pɹɐʍɹoɟ dıɥs 'ʇǝs ɯןǝɥ uıɐʇdɐƆ",
+  "vs_marine_propulsion.helm.update_captain": ":uoıʇɔǝɹıp pɹɐʍɹoɟ dıɥs 'pǝʇoɯoɹd ɯןǝH",
   "vs_marine_propulsion.propeller.rotation_direction": "uoıʇɔǝɹıp uoıʇɐʇoɹ ʇsnɹɥʇ pɹɐʍɹoℲ"
 }

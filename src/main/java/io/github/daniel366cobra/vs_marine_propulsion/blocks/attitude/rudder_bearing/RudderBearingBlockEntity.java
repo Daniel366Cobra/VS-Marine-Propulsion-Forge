@@ -1,4 +1,4 @@
-package io.github.daniel366cobra.vs_marine_propulsion.blocks.steering.rudder_bearing;
+package io.github.daniel366cobra.vs_marine_propulsion.blocks.attitude.rudder_bearing;
 
 import com.simibubi.create.AllSoundEvents;
 import com.simibubi.create.content.contraptions.AbstractContraptionEntity;
@@ -13,7 +13,7 @@ import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour
 import com.simibubi.create.foundation.blockEntity.behaviour.scrollValue.ScrollOptionBehaviour;
 import com.simibubi.create.foundation.utility.animation.LerpedFloat;
 import io.github.daniel366cobra.vs_marine_propulsion.VSMarinePropulsionMod;
-import io.github.daniel366cobra.vs_marine_propulsion.blocks.steering.RudderContraption;
+import io.github.daniel366cobra.vs_marine_propulsion.blocks.attitude.RudderContraption;
 import io.github.daniel366cobra.vs_marine_propulsion.ship.VSMarinePropulsionAttachment;
 import io.github.daniel366cobra.vs_marine_propulsion.ship.data.ControlSurfaceData;
 import io.github.daniel366cobra.vs_marine_propulsion.ship.data.HelmData;

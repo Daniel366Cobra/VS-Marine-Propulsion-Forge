@@ -20,10 +20,10 @@ import io.github.daniel366cobra.vs_marine_propulsion.blocks.propulsion.ShipPrope
 import io.github.daniel366cobra.vs_marine_propulsion.blocks.propulsion.ShipPropellerBlockEntityRendererFactory;
 import io.github.daniel366cobra.vs_marine_propulsion.blocks.propulsion.ShipPropellerInstanceFactory;
 import io.github.daniel366cobra.vs_marine_propulsion.blocks.propulsion.utility.PropellerThrustCalculator;
-import io.github.daniel366cobra.vs_marine_propulsion.blocks.steering.ballast_tank.BallastTankBlockEntity;
-import io.github.daniel366cobra.vs_marine_propulsion.blocks.steering.rudder_bearing.RudderBearingBlockEntity;
-import io.github.daniel366cobra.vs_marine_propulsion.blocks.steering.rudder_bearing.RudderBearingBlockEntityRenderer;
-import io.github.daniel366cobra.vs_marine_propulsion.blocks.steering.rudder_bearing.RudderBearingInstance;
+import io.github.daniel366cobra.vs_marine_propulsion.blocks.attitude.ballast_tank.BallastTankBlockEntity;
+import io.github.daniel366cobra.vs_marine_propulsion.blocks.attitude.rudder_bearing.RudderBearingBlockEntity;
+import io.github.daniel366cobra.vs_marine_propulsion.blocks.attitude.rudder_bearing.RudderBearingBlockEntityRenderer;
+import io.github.daniel366cobra.vs_marine_propulsion.blocks.attitude.rudder_bearing.RudderBearingInstance;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
