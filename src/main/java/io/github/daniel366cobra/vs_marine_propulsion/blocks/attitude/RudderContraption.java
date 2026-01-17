@@ -30,6 +30,7 @@ public class RudderContraption extends Contraption {
     protected int rudderBlocks;
     protected Direction facing;
     protected Axis normalAxis;
+    protected Axis rotationAxis;
 
     public RudderContraption() {}
 
@@ -63,6 +64,7 @@ public class RudderContraption extends Contraption {
             throw new AssemblyException(Component.translatable("gui.assembly.exception.mismatched_rudders"));
 
         this.normalAxis = firstRudderAxis;
+        this.rotationAxis = this.facing.getAxis();
         return !blocks.isEmpty();
     }
 
@@ -95,7 +97,9 @@ public class RudderContraption extends Contraption {
     public CompoundTag writeNBT(boolean spawnPacket) {
         CompoundTag tag = super.writeNBT(spawnPacket);
         tag.putInt("Rudders", rudderBlocks);
+        tag.putInt("Facing", facing.get3DDataValue());
         tag.putString("NormalAxis", normalAxis.getName());
+        tag.putString("RotationAxis", rotationAxis.getName());
         return tag;
     }
 
@@ -104,6 +108,7 @@ public class RudderContraption extends Contraption {
         rudderBlocks = tag.getInt("Rudders");
         facing = Direction.from3DDataValue(tag.getInt("Facing"));
         normalAxis = Axis.byName(tag.getString("NormalAxis"));
+        rotationAxis = Axis.byName(tag.getString("RotationAxis"));
         super.readNBT(world, tag, spawnData);
     }
 
@@ -123,10 +128,18 @@ public class RudderContraption extends Contraption {
     }
 
     /**
-     * @return a new Vector3d pointing in the direction of this contraption's axis of rotation.
+     * @return a new Vector3d pointing in the positive direction of this contraption's axis of rotation.
      */
     public Vector3d getRotationAxisVector() {
-        return new Vector3d(facing.getStepX(), facing.getStepY(), facing.getStepZ());
+        return switch (rotationAxis) {
+            case X -> new Vector3d(1, 0, 0);
+            case Y -> new Vector3d(0, 1, 0);
+            default -> new Vector3d(0, 0, 1);
+        };
+    }
+
+    public Vector3d getCenter() {
+        return new Vector3d(this.bounds.getCenter().toVector3f());
     }
 
     public Direction getFacing() {

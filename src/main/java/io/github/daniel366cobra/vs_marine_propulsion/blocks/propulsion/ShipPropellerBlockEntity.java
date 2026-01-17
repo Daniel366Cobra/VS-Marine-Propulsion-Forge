@@ -21,6 +21,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.levelgen.structure.BoundingBox;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3d;
 import org.valkyrienskies.core.api.ships.Ship;
@@ -181,11 +183,23 @@ public class ShipPropellerBlockEntity extends KineticBlockEntity {
 
     }
 
+    private void damageEntities(Ship ship) {
+
+        Vec3 blockCenterShipyard = this.getBlockPos().getCenter();
+        Vector3d BlockCenterWorld = ship.getTransform().getShipToWorld()
+                .transformPosition(new Vector3d(blockCenterShipyard.x, blockCenterShipyard.y, blockCenterShipyard.z));
+
+        Vector3d propellerFacingShipyard = new Vector3d(propulsorData.thrustDirection);
+
+        //AABB sweptAabb = new AABB()
+    }
+
     //FIXME particles out of water
     public void updateParticles(Ship ship) {
 
         Vec3 shipyardBlockCenter = this.getBlockPos().getCenter();
-        Vector3d worldBlockCenter = ship.getTransform().getShipToWorld().transformPosition(new Vector3d(shipyardBlockCenter.x, shipyardBlockCenter.y, shipyardBlockCenter.z));
+        Vector3d worldBlockCenter = ship.getTransform().getShipToWorld()
+                .transformPosition(new Vector3d(shipyardBlockCenter.x, shipyardBlockCenter.y, shipyardBlockCenter.z));
 
         Vector3d shipyardFacingVector = new Vector3d(propulsorData.thrustDirection).negate();
 
@@ -202,7 +216,6 @@ public class ShipPropellerBlockEntity extends KineticBlockEntity {
         float propellerSpeed = this.actualSpeed.getValue();
         int absSpeed = (int) Math.abs(propellerSpeed);
 
-        //TODO: get rid of (-1) in particles speed direction?
         float particleSpeedScalar = (float) (Math.PI * propellerRadius * Math.tan(Math.toRadians(propellerPitchAngle))
                 * propellerSpeed * this.propellerHandedness * (-dirMultiplier) / 30.0f);
         Vector3d particleSpeed = new Vector3d().set(worldFacingVector).mul(particleSpeedScalar);

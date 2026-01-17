@@ -58,7 +58,7 @@
   "vs_marine_propulsion.engine_order_telegraph.remove": "Engine Order Telegraph target removed",
   "vs_marine_propulsion.engine_order_telegraph.success": "Engine Order Telegraph configured!",
   "vs_marine_propulsion.helm.no_ship_found": "Cannot use helm: not on ship!",
-  "vs_marine_propulsion.helm.set_captain": "Captain helm set, ship forward direction:",
-  "vs_marine_propulsion.helm.update_captain": "Helm promoted, ship forward direction:",
+  "vs_marine_propulsion.helm.set_captain": "Captain helm set!",
+  "vs_marine_propulsion.helm.update_captain": "Helm promoted!",
   "vs_marine_propulsion.propeller.rotation_direction": "Forward thrust rotation direction"
 }

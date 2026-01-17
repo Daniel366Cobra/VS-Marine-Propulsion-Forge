@@ -13,6 +13,7 @@ import org.joml.Vector3d;
 public class ControlSurfaceData {
 
     public Vector3d position;
+    public Vector3d center;
     public Vector3d normalDirection;
     public Vector3d axisDirection;
     public int rudderBlocks;
@@ -21,6 +22,7 @@ public class ControlSurfaceData {
 
     public ControlSurfaceData() {
         this.position = new Vector3d(0, 0, 0);
+        this.center = new Vector3d(0, 0, 0);
         this.normalDirection = new Vector3d(0, 0, 0);
         this.axisDirection = new Vector3d(0, 0, 0);
         this.rudderBlocks = 0;
@@ -28,8 +30,9 @@ public class ControlSurfaceData {
         this.submergedPercentage = 0.0f;
     }
 
-    public ControlSurfaceData(BlockPos pos, Vector3d normalDir, Vector3d axisDir, int rudderBlocks) {
-        this.position = new Vector3d(pos.getX(), pos.getY(), pos.getZ());
+    public ControlSurfaceData(BlockPos anchorPos, Vector3d center, Vector3d normalDir, Vector3d axisDir, int rudderBlocks) {
+        this.position = new Vector3d(anchorPos.getX(), anchorPos.getY(), anchorPos.getZ());
+        this.center = center;
         this.normalDirection = normalDir;
         this.axisDirection = axisDir;
         this.rudderBlocks = rudderBlocks;
@@ -38,7 +41,7 @@ public class ControlSurfaceData {
     }
 
     public BlockPos getBlockPos() {
-        return new BlockPos((int)position.x(), (int)position.y(), (int)position.z());
+        return new BlockPos((int) position.x(), (int) position.y(), (int) position.z());
     }
 
     // For Set operations if needed later

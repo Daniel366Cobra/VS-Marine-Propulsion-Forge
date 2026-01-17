@@ -68,7 +68,7 @@
   "vs_marine_propulsion.engine_order_telegraph.remove": "Блок отвязан от Машинного телеграфа",
   "vs_marine_propulsion.engine_order_telegraph.success": "Машинный телеграф успешно настроен!",
   "vs_marine_propulsion.propeller.rotation_direction": "Вращение винта при ходе вперед",
-  "vs_marine_propulsion.helm.set_captain": "Главный штурвал установлен, направление на нос:",
-  "vs_marine_propulsion.helm.update_captain": "Главный штурвал изменен, направление на нос:",
+  "vs_marine_propulsion.helm.set_captain": "Главный штурвал установлен!",
+  "vs_marine_propulsion.helm.update_captain": "Главный штурвал изменен!",
   "vs_marine_propulsion.helm.no_ship_found": "Невозможно использовать штурвал не на корабле!"
 }

@@ -299,6 +299,7 @@ public class RudderBearingBlockEntity extends KineticBlockEntity implements IBea
 
         this.controlSurfaceData = new ControlSurfaceData(
                 this.worldPosition,
+                rudder.getCenter(),
                 rudder.getNormalVector(),
                 rudder.getRotationAxisVector(),
                 rudder.getRudderBlocks()
@@ -416,6 +417,7 @@ public class RudderBearingBlockEntity extends KineticBlockEntity implements IBea
 
             this.controlSurfaceData = new ControlSurfaceData(
                     this.worldPosition,
+                    rudder.getCenter(),
                     rudder.getNormalVector(),
                     rudder.getRotationAxisVector(),
                     rudder.getRudderBlocks()

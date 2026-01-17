@@ -14,7 +14,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.network.PacketDistributor;
 import org.apache.commons.lang3.tuple.Pair;
@@ -131,7 +130,7 @@ public class VSMarinePropulsionAttachment implements ShipForcesInducer {
         this.shipForwardDirection = direction;
     }
 
-    //TODO address null handling in control surface forces
+    //TODO remove dependence on "forward" for rudder calculations
     @JsonIgnore
     public Vector3d getForwardVector() {
         return hasValidOrientation()? VectorConversionsMCKt.toJOMLD(shipForwardDirection.getNormal()) : new Vector3d(0, 0, 0);
@@ -207,7 +206,7 @@ public class VSMarinePropulsionAttachment implements ShipForcesInducer {
 
     //---------------CONTROL SURFACES--------------
     public void addControlSurface(BlockPos pos, ControlSurfaceData data) {
-        ControlSurfaceData newData = new ControlSurfaceData(pos, data.normalDirection, data.axisDirection,
+        ControlSurfaceData newData = new ControlSurfaceData(pos, data.center, data.normalDirection, data.axisDirection,
                 data.rudderBlocks);
         newData.angle = data.angle;
         newData.submergedPercentage = data.submergedPercentage;
@@ -216,14 +215,14 @@ public class VSMarinePropulsionAttachment implements ShipForcesInducer {
 
     public void removeControlSurface(BlockPos pos) {
         // Create temporary object for removal (uses position-based equality)
-        ControlSurfaceData tempForRemoval = new ControlSurfaceData(pos, new Vector3d(), new Vector3d(), 0);
+        ControlSurfaceData tempForRemoval = new ControlSurfaceData(pos, new Vector3d(), new Vector3d(), new Vector3d(), 0);
         controlSurfaces.remove(tempForRemoval);
     }
 
     @Nullable
     public ControlSurfaceData getControlSurfaceAtPos(BlockPos pos) {
         // Create temporary object for lookup
-        ControlSurfaceData tempForLookup = new ControlSurfaceData(pos, new Vector3d(), new Vector3d(), 0);
+        ControlSurfaceData tempForLookup = new ControlSurfaceData(pos, new Vector3d(), new Vector3d(), new Vector3d(), 0);
         for (ControlSurfaceData data : controlSurfaces) {
             if (data.equals(tempForLookup)) {
                 return data;
@@ -275,6 +274,12 @@ public class VSMarinePropulsionAttachment implements ShipForcesInducer {
         applyControlSurfaceForces(physShip);
     }
 
+    /**
+     * Calculates and applies propulsion forces.
+     * All force calculations done in shipyard coordinates.
+     *
+     * @param physShip the ship to which forces are applied
+     */
     private void applyPropulsionForces(PhysShipImpl physShip) {
 
         final ShipTransform transform = physShip.getTransform();
@@ -282,26 +287,28 @@ public class VSMarinePropulsionAttachment implements ShipForcesInducer {
         propulsors.forEach(data -> {
 
             float thrust = data.thrust;
-            Vector3d thrustDir = data.thrustDirection;
             boolean submerged = data.submerged;
 
             if (thrust == 0.0f || !submerged) return;
 
             // Calculate position relative to ship's center of mass in ship coordinates
-            Vector3d thrustPos = VectorConversionsMCKt.toJOMLD(data.getBlockPos())
+            Vector3d thrustPosShipyard = VectorConversionsMCKt.toJOMLD(data.getBlockPos())
                     .add(0.5, 0.5, 0.5, new Vector3d());
 
-            Vector3d thrustPosShip = thrustPos.sub(transform.getPositionInShip(), new Vector3d());
+            Vector3d comPositionShipyard = new Vector3d(transform.getPositionInShip());
 
-            Vector3d thrustDirShip = thrustDir.mul(thrust, new Vector3d());
+            Vector3d thrustRelativePosShipyard = thrustPosShipyard.sub(comPositionShipyard, new Vector3d());
 
-            physShip.applyRotDependentForceToPos(thrustDirShip, thrustPosShip);
+            Vector3d thrustDirShipyard = new Vector3d(data.thrustDirection);
+
+            Vector3d thrustForceShipyard = thrustDirShipyard.mul(thrust, new Vector3d());
+
+            physShip.applyRotDependentForceToPos(thrustForceShipyard, thrustRelativePosShipyard);
 
             // ===== DEBUG VISUALIZATION in WORLD=====
-            Vector3d worldBlockCenter = transform.getShipToWorld().transformPosition(thrustPos, new Vector3d());
+            Vector3d worldBlockCenter = transform.getShipToWorld().transformPosition(thrustPosShipyard, new Vector3d());
 
-            Vector3d thrustDirWorld = transform.getShipToWorld().transformDirection(thrustDirShip, new Vector3d());
-            thrustDirWorld.normalize().mul(thrust);
+            Vector3d thrustDirWorld = transform.getShipToWorld().transformDirection(thrustForceShipyard, new Vector3d());
 
             Vector3d worldThrustEnd = new Vector3d(worldBlockCenter).add(new Vector3d(thrustDirWorld).mul(0.001));
 
@@ -314,49 +321,96 @@ public class VSMarinePropulsionAttachment implements ShipForcesInducer {
     }
 
 
-    //TODO verify all sailing directions
+    /**
+     * Calculates and applies hydrodynamic forces to control surfaces.
+     * All force calculations done in shipyard coordinates.
+     *
+     * @param physShip the ship to which forces are applied
+     */
     private void applyControlSurfaceForces(PhysShipImpl physShip) {
 
+        // FIXME apply forces to rudder center, not hinge. Also transform the axis
         final ShipTransform transform = physShip.getTransform();
 
         controlSurfaces.forEach(data -> {
             if (data.submergedPercentage < 0.05f || Math.abs(data.angle) < 0.1f) return;
 
-            // Rudder position in shipyard coordinates
-            Vector3d rudderPos = VectorConversionsMCKt.toJOMLD(data.getBlockPos())
+            // Rudder position in SHIPYARD coordinates
+            Vector3d rudderPosShipyard = VectorConversionsMCKt.toJOMLD(data.getBlockPos())
                     .add(0.5, 0.5, 0.5, new Vector3d());
 
-            // Rudder position in ship-centric coordinates
-            Vector3d rudderPosShip = rudderPos.sub(transform.getPositionInShip(), new Vector3d());
+            //TODO finish this
+            Vector3d centerPosShipyard = new Vector3d(data.center);
 
-            // Get ship's forward direction in shipyard coordinates
-            Vector3d shipForwardShip = getForwardVector();
+            Vector3d comPositionShipyard = new Vector3d(transform.getPositionInShip());
 
-            // Get ship velocity - already in world coordinates
-            Vector3d shipVelocityWorld = new Vector3d(physShip.getPoseVel().getVel());
+            // Rudder position in SHIP-CENTRIC coordinates (CoM = zero) for later application of force
+            Vector3d rudderRelativePosShipyard = rudderPosShipyard.sub(comPositionShipyard, new Vector3d());
 
-            // Ship velocity transformed to shipyard coordinates
-            Vector3d shipVelocityShip = transform.getWorldToShip().transformDirection(shipVelocityWorld, new Vector3d());
+            // Get ship velocity - already in WORLD coordinates (rotated + translated to the ship movement)
+            Vector3d linearVelocityWorld = new Vector3d(physShip.getPoseVel().getVel());
+            Vector3d angularVelocityWorld = new Vector3d(physShip.getPoseVel().getOmega());
 
-            // Calculate water velocity (opposite of ship motion)
-            Vector3d waterVelocityShip = new Vector3d(shipVelocityShip).negate();
-            double waterSpeed = waterVelocityShip.length();
+            // Ship velocity transformed to SHIPYARD coordinates
+            Vector3d linearVelocityShipyard = transform.getWorldToShip().transformDirection(linearVelocityWorld, new Vector3d());
+            Vector3d angularVelocityShipyard = transform.getWorldToShip().transformDirection(angularVelocityWorld, new Vector3d());
+            Vector3d rotationalVelocityShipyard = angularVelocityShipyard.cross(rudderRelativePosShipyard, new Vector3d());
 
-            Vector3d waterFlowDir = new Vector3d(waterVelocityShip).normalize();
+            Vector3d totalVelocityShipyard = linearVelocityShipyard.add(rotationalVelocityShipyard, new Vector3d());
 
-            double directionModifier = Math.signum(waterFlowDir.dot(shipForwardShip));
+            // Calculate water velocity (opposite of ship motion) in SHIPYARD coordinates
+            Vector3d waterVelocityShipyard = new Vector3d(totalVelocityShipyard).negate();
 
-            waterSpeed = Math.min(waterSpeed, 50.0); // Max 50 m/s (~100 knots)
-            if (waterSpeed < 0.05) return;
+            double maxWaterVelocity = 50.0; // 50 m/s
+            double waterVelocityMagnitude = waterVelocityShipyard.length();
 
-            // Rudder deflection in ship coordinates
-            double rudderAngleRad = Mth.clamp(Math.toRadians(data.angle * directionModifier),
-                    Math.toRadians(-40.0),
-                    Math.toRadians(40.0));
+            if (waterVelocityMagnitude < 0.05) return;
+
+            if (waterVelocityMagnitude > maxWaterVelocity) {
+                waterVelocityShipyard.mul(maxWaterVelocity / waterVelocityMagnitude);
+            }
+
+            Vector3d waterFlowDirUnitShipyard = new Vector3d(waterVelocityShipyard).normalize();
+
+            // Calculate chordwise unit vector from normal and axis ones
+            // By chosen convention, axis and normal vectors are directed at the positive half of respective world axis,
+            // set upon assembly of rudder contraption
+            Vector3d rudderNeutralNormalUnitShipyard = new Vector3d(data.normalDirection).normalize();
+            Vector3d rudderNeutralSpanUnitShipyard = new Vector3d(data.axisDirection).normalize();
+            Vector3d rudderNeutralChordUnitShipyard = new Vector3d(rudderNeutralNormalUnitShipyard).cross(rudderNeutralSpanUnitShipyard)
+                    .normalize()
+                    .negate();
+
+            double rudderDeflection = Math.toRadians(data.angle);
+
+            // Deflected rudder vectors
+            Vector3d rudderDeflectedChordUnitShipyard = new Vector3d(rudderNeutralChordUnitShipyard)
+                    .rotateAxis(rudderDeflection,
+                            rudderNeutralSpanUnitShipyard.x,
+                            rudderNeutralSpanUnitShipyard.y,
+                            rudderNeutralSpanUnitShipyard.z);
+
+            Vector3d rudderDeflectedNormalUnitShipyard = new Vector3d(rudderNeutralNormalUnitShipyard)
+                    .rotateAxis(rudderDeflection,
+                            rudderNeutralSpanUnitShipyard.x,
+                            rudderNeutralSpanUnitShipyard.y,
+                            rudderNeutralSpanUnitShipyard.z);
+
+            // From which side the flow is hitting the rudder
+            double sideSign = Math.signum(waterFlowDirUnitShipyard.dot(rudderDeflectedNormalUnitShipyard));
+
+            // From which edge the flow comes at the rudder
+            double flowSign = Math.signum(waterFlowDirUnitShipyard.dot(rudderDeflectedChordUnitShipyard));
+
+            // Angle of attack between flow vector and deflected chordwise
+            double totalAoA = waterFlowDirUnitShipyard.angleSigned(
+                    rudderDeflectedChordUnitShipyard,  // Vector to compare against
+                    rudderNeutralSpanUnitShipyard      // Normal/axis for sign determination
+            );
 
             // Calculate hydrodynamic force magnitudes
-            Pair<Double, Double> forces = calculateHydrodynamicForces(
-                    rudderAngleRad, waterSpeed,
+            Pair<Double, Double> forces = calculateSimpleHydroForces(
+                    totalAoA, waterVelocityMagnitude,
                     data.rudderBlocks * data.submergedPercentage
             );
 
@@ -364,138 +418,145 @@ public class VSMarinePropulsionAttachment implements ShipForcesInducer {
             double dragMagnitude = forces.getRight();
 
             // Force directions
-            // Rudder normal direction in shipyard coordinates
-            Vector3d rudderNormalShip = new Vector3d(data.normalDirection).normalize();
 
-            // Lift direction along rudder normal (perpendicular to chord)
-            Vector3d liftForceShip = new Vector3d(rudderNormalShip)
-                    .normalize()
-                    .mul(liftMagnitude);
+            // Lift is perpendicular to both flow direction and spanwise direction
+            // Forward/reverse flow flips - cross direction should also flip!
+            Vector3d liftDirShipyard = waterFlowDirUnitShipyard.cross(rudderNeutralSpanUnitShipyard, new Vector3d())
+                    .normalize();
 
-            // Drag opposite to ship velocity
-            Vector3d dragForceShip = new Vector3d(shipVelocityShip)
-                    .negate()
+            // Scale the magnitude
+            Vector3d liftForceShipyard = new Vector3d(liftDirShipyard).mul(flowSign * liftMagnitude);
+
+            // Drag opposite to ship velocity (along relative water flow)
+            Vector3d dragForceShipyard = new Vector3d(waterVelocityShipyard)
                     .normalize()
                     .mul(dragMagnitude);
 
             // Combine forces
-            Vector3d totalForceShip = new Vector3d()
-                    .add(liftForceShip)
-                    .add(dragForceShip);
+            Vector3d totalForceShipyard = new Vector3d()
+                    .add(liftForceShipyard)
+                    .add(dragForceShipyard);
 
             // Limit maximum force (safety)
             double maxForce = 200000.0; // 200 kN max (big ship rudder)
-            double forceMagnitude = totalForceShip.length();
+            double forceMagnitude = totalForceShipyard.length();
             if (forceMagnitude > maxForce) {
-                totalForceShip.mul(maxForce / forceMagnitude);
+                totalForceShipyard.mul(maxForce / forceMagnitude);
             }
 
             // Apply to ship as rotation dependent
-            physShip.applyRotDependentForceToPos(totalForceShip, rudderPosShip);
+            physShip.applyRotDependentForceToPos(totalForceShipyard, rudderRelativePosShipyard);
 
             // ===== DEBUG VISUALIZATION in WORLD =====
-            Vector3d worldBlockCenter = transform.getShipToWorld().transformPosition(rudderPos, new Vector3d());
 
+            // Positions
+            Vector3d rudderPosWorld = transform.getShipToWorld().transformPosition(rudderPosShipyard, new Vector3d());
+
+            // Velocities
+            Vector3d waterVelocityWorld = transform.getShipToWorld().transformDirection(waterVelocityShipyard);
+
+            // Forces and directions
             Vector3d liftForceWorld = transform.getShipToWorld()
-                    .transformDirection(liftForceShip, new Vector3d());
+                    .transformDirection(liftForceShipyard, new Vector3d());
 
             Vector3d dragForceWorld = transform.getShipToWorld()
-                    .transformDirection(dragForceShip, new Vector3d());
+                    .transformDirection(dragForceShipyard, new Vector3d());
 
-            Vector3d worldLiftForceEnd = new Vector3d(worldBlockCenter).add(new Vector3d(liftForceWorld).mul(0.001));
-            Vector3d worldDragForceEnd = new Vector3d(worldBlockCenter).add(new Vector3d(dragForceWorld).mul(0.001));
+            Vector3d chordUnitDirectionWorld = transform.getShipToWorld()
+                    .transformDirection(rudderDeflectedChordUnitShipyard, new Vector3d());
 
-            int liftColor = data.angle * directionModifier > 0 ? 0xFF00FF00 : 0xFFFF0000; // Green for starboard, red for port
-            int dragColor = 0xFF951529;
+            Vector3d normalUnitDirectionWorld = transform.getShipToWorld()
+                    .transformDirection(rudderDeflectedNormalUnitShipyard, new Vector3d());
 
-            sendDebugVector(physShip, worldBlockCenter, worldLiftForceEnd,
+
+            // Vector endpoints
+            Vector3d worldWaterVelocityEnd = new Vector3d(rudderPosWorld).add(new Vector3d(waterVelocityWorld).mul(5));
+
+            Vector3d worldChordDirectionEnd = new Vector3d(rudderPosWorld).add(new Vector3d(chordUnitDirectionWorld).mul(5));
+            Vector3d worldNormalDirectionEnd = new Vector3d(rudderPosWorld).add(new Vector3d(normalUnitDirectionWorld).mul(5));
+
+            Vector3d worldLiftForceEnd = new Vector3d(rudderPosWorld).add(new Vector3d(liftForceWorld).mul(0.001));
+            Vector3d worldDragForceEnd = new Vector3d(rudderPosWorld).add(new Vector3d(dragForceWorld).mul(0.001));
+
+            // Vector colors
+            int liftColor = 0xFF00FFFF; // Cyan
+            int dragColor = 0xFF951529; // Dark red
+            int velocityColor = 0xFFFFFF00; // Yellow
+            int normalDirectionColor = 0xFFFFFFFF; // White
+            int chordDirectionColor = 0xFF00FF00; // Green
+
+
+            sendDebugVector(physShip, rudderPosWorld, worldLiftForceEnd,
                     liftColor,
-                    String.format("Rudder lift: %.1f° (%.1fN)", data.angle, liftForceWorld.length()));
+                    "Rudder lift");
 
-            sendDebugVector(physShip, worldBlockCenter, worldDragForceEnd,
+            sendDebugVector(physShip, rudderPosWorld, worldDragForceEnd,
                     dragColor,
-                    String.format("Rudder drag: %.1f° (%.1fN)", data.angle, dragForceWorld.length()));
+                    "Rudder drag: %.1f° (%.1fN)");
+
+            sendDebugVector(physShip, rudderPosWorld, worldWaterVelocityEnd,
+                    velocityColor,
+                    "Flow velocity");
+
+            sendDebugVector(physShip, rudderPosWorld, worldNormalDirectionEnd,
+                    normalDirectionColor,
+                    "Deflected normal");
+
+            sendDebugVector(physShip, rudderPosWorld, worldChordDirectionEnd,
+                    chordDirectionColor,
+                    "Deflected chord");
+
         });
     }
 
-    private Pair<Double, Double> calculateHydrodynamicForces(double angleRad, double speed, double area) {
+    /**
+     * Simplified calculation of lift and drag coefficients for a flat plate foil in water.
+     *
+     * @param angleRad angle of attack (positive or negative from neutral), in radians
+     * @param speed flow speed, in m/s
+     * @param area foil area, in blocks
+     * @return Pair of Cl and Cd. Cl is signed.
+     */
+    private Pair<Double, Double> calculateSimpleHydroForces(double angleRad, double speed, double area) {
 
-        double absAngle = Math.abs(angleRad);
-        double sign = Math.signum(angleRad);
+        final double waterDensity = 1000.0;
+        final double STALL_START_RAD = Math.toRadians(15.0);      // 0.2618
+        final double DEEP_STALL_RAD = Math.toRadians(25.0);       // 0.4363
+        final double STALL_RANGE_RAD = DEEP_STALL_RAD - STALL_START_RAD;  // 0.1745
 
-        // Critical angles (in radians)
-        double linearLimit = Math.toRadians(12.0);  // Reduced from 15° - stall starts earlier
-        double fullStallAngle = Math.toRadians(35.0); // Stall is more gradual
-        double maxClAngle = Math.toRadians(15.0);    // Max Cl occurs after linear region ends
+        double dynPressure = 0.5 * waterDensity * speed * speed;
 
-        // Lift coefficient with more realistic stall
-        double cl;
+        double angleSign = Math.signum(angleRad);
 
-        if (absAngle <= linearLimit) {
-            // Linear region: Cl = 2π * α (thin airfoil theory)
-            cl = 2.0 * Math.PI * absAngle;
-        } else if (absAngle <= maxClAngle) {
-            // Post-linear, pre-stall: Cl continues to increase but slower
-            double linearCl = 2.0 * Math.PI * linearLimit;
-            double theta = (absAngle - linearLimit) / (maxClAngle - linearLimit);
-            // Cubic interpolation for smooth transition
-            cl = linearCl + (0.1 * Math.PI) * (3 * theta * theta - 2 * theta * theta * theta);
-        } else if (absAngle <= fullStallAngle) {
-            // Stall region: Cl decreases from max value
-            double maxCl = 2.0 * Math.PI * linearLimit + 0.1 * Math.PI; // Max Cl value
-            double stallProgress = (absAngle - maxClAngle) / (fullStallAngle - maxClAngle);
-            // Drop to about 60% of max Cl at full stall
-            cl = maxCl * (1.0 - 0.4 * stallProgress * stallProgress);
+        double angleAbs = Math.abs(angleRad);
+        double sinAlpha = Math.sin(angleAbs);
+
+        double CL, CD;
+
+        if (angleAbs <= STALL_START_RAD) {
+            CL = angleAbs / STALL_START_RAD;
+            CD = 0.05 + 0.8 * sinAlpha * sinAlpha;
+        } else if (angleAbs <= DEEP_STALL_RAD) {
+            double fraction = (angleAbs - STALL_START_RAD) / STALL_RANGE_RAD;
+            CL = 1.0 - 0.5 * fraction;
+            CD = 0.05 + 1.5 * sinAlpha * sinAlpha;
         } else {
-            // Deep stall: Cl stabilizes at lower value with some oscillation
-            double deepStallCl = 0.6 * (2.0 * Math.PI * linearLimit); // ~60% of max
-            // Add some variation but much less than your version
-            cl = deepStallCl * (0.9 + 0.1 * Math.sin(2.0 * (absAngle - fullStallAngle)));
+            CL = 0.5;
+            CD = 0.05 + 2.0 * sinAlpha * sinAlpha;
         }
 
-        // Apply sign and realistic bounds
-        cl *= sign;
-        cl = Math.max(-1.8, Math.min(1.8, cl));  // Slightly higher max for foil sections
-
-        // Drag coefficient - improved modeling
-        double cd0 = 0.03;  // Lower base drag for streamlined foil
-        double clForDrag = Math.abs(cl);
-
-        // Induced drag (proportional to Cl²)
-        double aspectRatio = 2.0;  // Typical for rudders
-        double inducedDragFactor = (clForDrag * clForDrag) / (Math.PI * aspectRatio * 0.9);
-
-        // Separation drag - increases dramatically post-stall
-        double separationFactor;
-        if (absAngle <= maxClAngle) {
-            separationFactor = 0.5 * Math.sin(2.0 * absAngle);  // Sin² approximation
-        } else {
-            // Post-stall: rapid increase in drag
-            double stallSeverity = (absAngle - maxClAngle) / (fullStallAngle - maxClAngle);
-            separationFactor = 0.5 + 1.5 * stallSeverity * stallSeverity;
+        // Speed effect: cavitation-like reduction at high speed
+        double speedFactor = 1.0;
+        if (speed > 15.0) { // ~30 knots
+            speedFactor = Math.max(0.3, 1.0 - 0.05 * (speed - 15.0));
         }
 
-        double cd = cd0 + inducedDragFactor + separationFactor;
-        cd = Math.max(cd0, Math.min(3.0, cd));  // Higher max drag in stall
+        CL *= speedFactor;
+        CD *= speedFactor;
 
-        // Force calculation with improved damping
-        double waterDensity = 1025.0;  // Seawater density
-        double dynamicPressure = 0.5 * waterDensity * speed * speed;
+        double liftMagnitude = angleSign * dynPressure * area * CL;
+        double dragMagnitude = dynPressure * area * CD;
 
-        // Reynolds number effect (simplified)
-        double reynoldsFactor = Math.log10(1.0 + speed * 5.0) / Math.log10(11.0);
-        reynoldsFactor = Math.max(0.7, Math.min(1.3, reynoldsFactor));
-
-        // Cavitation/stall effect at high angles and speeds
-        double cavitationFactor = 1.0;
-        if (absAngle > Math.toRadians(20.0) && speed > 5.0) {
-            double cavitationSeverity = (speed - 5.0) / 10.0 * (absAngle - Math.toRadians(20.0)) / Math.toRadians(15.0);
-            cavitationFactor = 1.0 / (1.0 + Math.max(0, cavitationSeverity));
-        }
-
-        double lift = dynamicPressure * area * cl * reynoldsFactor * cavitationFactor;
-        double drag = dynamicPressure * area * cd * reynoldsFactor * cavitationFactor;
-
-        return Pair.of(lift, drag);
+        return Pair.of(liftMagnitude, dragMagnitude);
     }
 }

@@ -4,6 +4,7 @@ import com.simibubi.create.CreateClient;
 import com.simibubi.create.foundation.utility.LangBuilder;
 import io.github.daniel366cobra.vs_marine_propulsion.VSMarinePropulsionBlocks;
 import io.github.daniel366cobra.vs_marine_propulsion.VSMarinePropulsionMod;
+import io.github.daniel366cobra.vs_marine_propulsion.VSMarinePropulsionParticleTypes;
 import io.github.daniel366cobra.vs_marine_propulsion.blocks.drivetrain.variator.VariatorBlockEntity;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;

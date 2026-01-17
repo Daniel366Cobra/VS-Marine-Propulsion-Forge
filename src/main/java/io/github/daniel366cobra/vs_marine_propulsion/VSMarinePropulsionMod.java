@@ -6,6 +6,7 @@ import com.simibubi.create.foundation.item.KineticStats;
 import com.simibubi.create.foundation.item.TooltipHelper;
 import com.simibubi.create.foundation.item.TooltipModifier;
 import com.tterrag.registrate.util.nullness.NonNullSupplier;
+import io.github.daniel366cobra.vs_marine_propulsion.client.VSMarinePropulsionModClientEvents;
 import io.github.daniel366cobra.vs_marine_propulsion.config.VSMarinePropulsionConfig;
 import io.github.daniel366cobra.vs_marine_propulsion.creative_tabs.VSMarinePropulsionCreativeTab;
 import io.github.daniel366cobra.vs_marine_propulsion.data.VSMarinePropulsionDatagen;
@@ -14,10 +15,12 @@ import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 
 /**
  * Temporary borrows:
@@ -55,6 +58,7 @@ public class VSMarinePropulsionMod {
         VSMarinePropulsionWeights.register();
         VSMarinePropulsionBlocks.register();
         VSMarinePropulsionEntities.register();
+        VSMarinePropulsionParticleTypes.register(eventBus);
         VSMarinePropulsionSounds.register(eventBus);
         VSMarinePropulsionPartialModels.init();
         VSMarinePropulsionContraptionTypes.init();

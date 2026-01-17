@@ -8,7 +8,8 @@ import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.RegistryObject;
 
 public class VSMarinePropulsionSounds {
-    private static final DeferredRegister<SoundEvent> SOUND_EVENTS = DeferredRegister.create(Registries.SOUND_EVENT, VSMarinePropulsionMod.MOD_ID);
+    private static final DeferredRegister<SoundEvent> SOUND_EVENTS = DeferredRegister.create(
+            Registries.SOUND_EVENT, VSMarinePropulsionMod.MOD_ID);
 
     public static final RegistryObject<SoundEvent> ENGINE_ORDER_TELEGRAPH_DING = SOUND_EVENTS.register(
             "engine_order_telegraph_ding",

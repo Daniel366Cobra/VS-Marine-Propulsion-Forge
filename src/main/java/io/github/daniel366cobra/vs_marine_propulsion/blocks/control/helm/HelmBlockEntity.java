@@ -4,10 +4,12 @@ import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import com.simibubi.create.foundation.utility.animation.LerpedFloat;
 import io.github.daniel366cobra.vs_marine_propulsion.VSMarinePropulsionPacketHandler;
+import io.github.daniel366cobra.vs_marine_propulsion.VSMarinePropulsionParticleTypes;
 import io.github.daniel366cobra.vs_marine_propulsion.VSMarinePropulsionSounds;
 import io.github.daniel366cobra.vs_marine_propulsion.network.WheelAnglePacket;
 import io.github.daniel366cobra.vs_marine_propulsion.ship.VSMarinePropulsionAttachment;
 import io.github.daniel366cobra.vs_marine_propulsion.ship.data.HelmData;
+import net.minecraft.ChatFormatting;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -26,6 +28,7 @@ import net.minecraftforge.network.PacketDistributor;
 import org.joml.Vector3d;
 import org.joml.Vector3dc;
 import org.valkyrienskies.core.api.ships.LoadedServerShip;
+import org.valkyrienskies.core.api.ships.Ship;
 import org.valkyrienskies.mod.api.SeatedControllingPlayer;
 import org.valkyrienskies.mod.common.VSGameUtilsKt;
 import org.valkyrienskies.mod.common.ValkyrienSkiesMod;
@@ -36,7 +39,7 @@ import java.util.List;
 
 public class HelmBlockEntity extends SmartBlockEntity {
 
-    private HelmData helmData;
+    private HelmData localHelmData;
     public static int wheelInterval;
     private List<ShipMountingEntity> seats = new ArrayList<>();
 
@@ -51,14 +54,12 @@ public class HelmBlockEntity extends SmartBlockEntity {
         wheelInterval = 5;
         clientWheelAngle = LerpedFloat.angular();
         clientWheelAngle.setValue(360f);
-        helmData = new HelmData(pos, blockState.getValue(HelmBlock.FACING), false);
+        localHelmData = new HelmData(pos, blockState.getValue(HelmBlock.FACING), false);
     }
 
     @Override
     public void initialize() {
         super.initialize();
-        // Sync with helm attachment when block entity loads
-        syncWithAttachment();
     }
 
     @Override
@@ -127,21 +128,13 @@ public class HelmBlockEntity extends SmartBlockEntity {
     /**
      * Sync this block entity with the ship attachment data
      */
-    private void syncWithAttachment() {
+    private void syncWithAttachment(VSMarinePropulsionAttachment shipControl) {
 
-        if (level == null || level.isClientSide()) return;
+        // Get helm data from attachment
+        HelmData persistentHelmData = shipControl.getHelmAtPos(worldPosition);
 
-        VSMarinePropulsionAttachment shipControl = VSMarinePropulsionAttachment.get(level, worldPosition);
-        if (shipControl == null) return;
-
-        // Get or create helm data in attachment
-        HelmData existingData = shipControl.getHelmAtPos(worldPosition);
-
-        boolean wasPromoted = false;
-
-        if (existingData == null) {
+        if (persistentHelmData == null) {
             // New helm added
-
             boolean isFirstHelm = !shipControl.hasValidOrientation();
 
             if (!isFirstHelm) {
@@ -154,50 +147,66 @@ public class HelmBlockEntity extends SmartBlockEntity {
                 }
 
                 // Create non-captain helm data with correct facing
-                this.helmData = new HelmData(worldPosition, requiredFacing, false);
-
+                this.localHelmData = new HelmData(worldPosition, requiredFacing, false);
             }
 
             // Handles captaincy automatically for first helm
-            shipControl.addHelm(worldPosition, this.helmData);
+            shipControl.addHelm(worldPosition, this.localHelmData);
 
             // Will have isCaptain == true for first helm
             // Local this.helmData.isCaptain will stay false yet
-            existingData = shipControl.getHelmAtPos(worldPosition);
+            persistentHelmData = shipControl.getHelmAtPos(worldPosition);
 
-            if (existingData != null && existingData.isCaptain) {
-                // Play sound
-                level.playSound(null, getBlockPos(), VSMarinePropulsionSounds.HELM_PROMOTION.get(),
-                        SoundSource.BLOCKS, 0.5f, 1.0f);
-
-                // Show message
+            if (persistentHelmData != null && persistentHelmData.isCaptain) {
                 if (isFirstHelm) {
-                    sendMessageToClosestPlayer(Component.translatable("vs_marine_propulsion.helm.set_captain")
-                            .append(" " + existingData.getFacing()));
+                    displayPromotion(Component.translatable("vs_marine_propulsion.helm.set_captain")
+                            .withStyle(ChatFormatting.BOLD, ChatFormatting.GOLD));
                 } else {
-                    sendMessageToClosestPlayer(Component.translatable("vs_marine_propulsion.helm.update_captain")
-                            .append(" " + existingData.getFacing()));
+                    displayPromotion(Component.translatable("vs_marine_propulsion.helm.update_captain")
+                            .withStyle(ChatFormatting.GREEN));
                 }
             }
 
         } else {
             // Existing helm updated
-            if (!this.helmData.isCaptain && existingData.isCaptain) {
-                // Play sound
-                level.playSound(null, getBlockPos(), VSMarinePropulsionSounds.HELM_PROMOTION.get(),
-                        SoundSource.BLOCKS, 0.5f, 1.0f);
-
-                // Show message (helm was promoted due to captain removal)
-                sendMessageToClosestPlayer(Component.translatable("vs_marine_propulsion.helm.update_captain")
-                        .append(" " + existingData.getFacing()));
+            if (!this.localHelmData.isCaptain && persistentHelmData.isCaptain) {
+                displayPromotion(Component.translatable("vs_marine_propulsion.helm.update_captain")
+                        .withStyle(ChatFormatting.GREEN));
             }
         }
 
-        if (existingData != null) {
+        if (persistentHelmData != null) {
             // Sync data
-            this.helmData = existingData;
-            this.wheelAngle = 360 + (int) (existingData.rudderAngle * 9f);
-            this.clientWheelAngle.chase(wheelAngle, 0.2f, LerpedFloat.Chaser.EXP);
+            persistentHelmData.rudderAngle = this.getRudderAngle();
+            this.localHelmData = persistentHelmData;
+        }
+    }
+
+    private void displayPromotion(Component promotionMessage) {
+
+        BlockPos pos = getBlockPos();
+
+        Ship ship = VSGameUtilsKt.getShipManagingPos(level, pos);
+
+        if (ship != null) {
+            Vec3 shipyardBlockCenter = pos.getCenter();
+            Vector3d worldBlockCenter = ship.getTransform().getShipToWorld().transformPosition(new Vector3d(shipyardBlockCenter.x, shipyardBlockCenter.y, shipyardBlockCenter.z));
+
+            double x = worldBlockCenter.x();
+            double y = worldBlockCenter.y() + 1.5;
+            double z = worldBlockCenter.z();
+
+            ((ServerLevel) level).sendParticles(VSMarinePropulsionParticleTypes.PROMOTION_PARTICLE.get(),
+                    x, y, z,
+                    1,
+                    0, 0, 0,
+                    0);
+
+            // Play sound
+            level.playSound(null, getBlockPos(), VSMarinePropulsionSounds.HELM_PROMOTION.get(),
+                    SoundSource.BLOCKS, 0.5f, 1.0f);
+
+            sendMessageToClosestPlayer(promotionMessage);
         }
     }
 
@@ -205,45 +214,42 @@ public class HelmBlockEntity extends SmartBlockEntity {
     public void tick() {
         super.tick();
 
-        if (helmData == null) return;
-
         Level level = this.getLevel();
+        if (level == null) return;
+
         BlockPos blockPos = this.getBlockPos();
 
         if (!VSGameUtilsKt.isBlockInShipyard(level, blockPos)) return;
 
         if (!level.isClientSide && !isVirtual()) {
 
-            syncWithAttachment();
+            LoadedServerShip ship = VSGameUtilsKt.getShipObjectManagingPos((ServerLevel) level, blockPos);
+            if (ship == null) return;
 
             VSMarinePropulsionAttachment shipControl = VSMarinePropulsionAttachment.get(level, blockPos);
             if (shipControl == null) return;
 
-            LoadedServerShip ship = VSGameUtilsKt.getShipObjectManagingPos((ServerLevel) level, blockPos);
-            if (ship == null) return;
+            syncWithAttachment(shipControl);
 
             SeatedControllingPlayer playerControl = ship.getAttachment(SeatedControllingPlayer.class);
+            if (playerControl == null) return;
 
-            if (playerControl != null) {
-                if (playerControl.getLeftImpulse() < 0) {
-                    this.rotateWheelRight((ServerLevel) level, blockPos);
-                } else if (playerControl.getLeftImpulse() > 0) {
-                    this.rotateWheelLeft((ServerLevel) level, blockPos);
-                }
-            }
-
-            HelmData persistentData = shipControl.getHelmAtPos(blockPos);
-
-            if (persistentData != null) {
-                persistentData.rudderAngle = this.getRudderAngle();
-                // Ensure our local reference is up-to-date
-                this.helmData = persistentData;
-            }
+            handlePlayerInput(playerControl, (ServerLevel) level, blockPos);
 
             notifyUpdate();
 
         } else {
             clientWheelAngle.tickChaser();
+        }
+    }
+
+    private void handlePlayerInput(SeatedControllingPlayer playerControl, ServerLevel level, BlockPos blockPos) {
+        if (playerControl != null) {
+            if (playerControl.getLeftImpulse() < 0) {
+                this.rotateWheelRight(level, blockPos);
+            } else if (playerControl.getLeftImpulse() > 0) {
+                this.rotateWheelLeft(level, blockPos);
+            }
         }
     }
 
@@ -278,7 +284,8 @@ public class HelmBlockEntity extends SmartBlockEntity {
 
         VSMarinePropulsionAttachment shipControl = VSMarinePropulsionAttachment.get(level, worldPosition);
         if (shipControl == null) {
-            sendMessageToClosestPlayer(Component.translatable("vs_marine_propulsion.helm.no_ship_found"));
+            sendMessageToClosestPlayer(Component.translatable("vs_marine_propulsion.helm.no_ship_found")
+                    .withStyle(ChatFormatting.RED));
             return false;
         }
 
@@ -362,6 +369,6 @@ public class HelmBlockEntity extends SmartBlockEntity {
     }
 
     public boolean isCaptain() {
-        return this.helmData.isCaptain();
+        return this.localHelmData.isCaptain();
     }
 }
